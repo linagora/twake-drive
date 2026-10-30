@@ -22,6 +22,7 @@ import {
   writeSlideLines
 } from './presentation.js'
 import {
+  checkSheetSupport,
   insertChart,
   readChartPlace,
   readSheetCells,
@@ -131,30 +132,45 @@ function keepSheet(read) {
   sheetTarget = read.sheetTarget
 }
 
+// Tells the user when the cells of an answer, or a chart, are not written
+// (see the `notApplied` keys of Drive)
+function sendNotApplied(reason) {
+  if (reason && hostOrigin) {
+    host.postMessage({ type: 'twake-scribe:notApplied', reason }, hostOrigin)
+  }
+}
+
 // The cells of an answer, written at their addresses in the cells last
 // given to the app: see planSheetWrite
-// @returns {Promise<boolean>} whether a cell was written
+// @returns {Promise<string|null>} why nothing or not all was written:
+// `noCells` when the answer has none to write, `notWritten` when the editor
+// did not write them; null once written
 async function writeSheetAnswer(text) {
-  if (!sheetTarget) return false
+  if (!sheetTarget) return 'noCells'
   const { sheetName, range, isEmpty } = sheetTarget
   const cells = readAnswerCells(text, getAnswerOrigins({ range, isEmpty }))
-  const box = makeUnionBox(range, cells)
-  if (cells.length === 0 || getBoxSize(box) > MAX_ANSWER_CELLS) return false
+  if (cells.length === 0) return 'noCells'
+  // The cells of the answer only are read: the range may be a whole column
+  const [{ row, col }] = cells
+  const box = makeUnionBox({ r1: row, c1: col, r2: row, c2: col }, cells)
+  if (getBoxSize(box) > MAX_ANSWER_CELLS) return 'notWritten'
 
   const read = await runInFreeEditor(readSheetCells, {
     scope: { sheetName, box }
   })
-  if (!read) return false
+  if (!read) return 'notWritten'
   const plan = planSheetWrite({ cells, range, box, ...read })
-  if (plan.writes.length === 0) return false
-  await runInFreeEditor(writeSheetPlan, {
+  if (plan.writes.length === 0) return 'noCells'
+  const refused = await runInFreeEditor(writeSheetPlan, {
     scope: { sheetName, plan },
     isRecalculated: true
   })
-  // The cells written are left selected: they are not other cells to work on
+  // The cells written are left selected: they are not other cells to work
+  // on. The next answers still go in the cells the assistant was given, as
+  // it knows them.
   const after = await readSheet()
-  if (after) keepSheet(after)
-  return true
+  if (after) lastContent = after.key
+  return refused === 0 ? null : 'notWritten'
 }
 
 // The editor gives the selected text of a presentation to the plugin only,
@@ -204,7 +220,8 @@ const CHART_HEIGHT = 2520000
 // A chart the assistant has made, of a range of the cells last given to the
 // app, or of all of them, beside the data. The app has checked it already.
 async function addChart({ chartType, title, range }) {
-  if (!isSpreadsheet() || !sheetTarget || typeof chartType !== 'string') return
+  const isChart = typeof chartType === 'string'
+  if (!isSpreadsheet() || !sheetTarget || !isChart || isWriting) return
   const { sheetName } = sheetTarget
   // The areas of the data, as the names and one column of values of a pie
   const areas = (typeof range === 'string' && parseRanges(range)) || [
@@ -223,13 +240,18 @@ async function addChart({ chartType, title, range }) {
     const read = await runInFreeEditor(readChartPlace, {
       scope: { sheetName, r1: data.r1, rowCount: CHART_ROWS }
     })
-    if (!read) return
-    await runInFreeEditor(insertChart, {
+    if (!read) {
+      sendNotApplied('notWritten')
+      return
+    }
+    const isAdded = await runInFreeEditor(insertChart, {
       scope: {
         sheetName,
         range: makeChartRange(sheetName, [data]),
         areas,
-        isInRows: isChartInRows(data),
+        // The series of separate areas run along them, as the names and one
+        // column of values of a pie, whatever the shape of their box
+        isInRows: isChartInRows(areas.length > 1 ? areas.at(-1) : data),
         type: chartType,
         title: typeof title === 'string' ? title : '',
         place: placeChart({ range: data, ...read }),
@@ -238,6 +260,7 @@ async function addChart({ chartType, title, range }) {
       },
       isRecalculated: true
     })
+    if (!isAdded) sendNotApplied('notWritten')
   } finally {
     isWriting = false
   }
@@ -360,14 +383,17 @@ async function writeAnswer({ answerAction, text }) {
 }
 
 async function applyAnswer(answer) {
+  // A second click on Apply while the answer is written would plan its cells
+  // on the sheet before the first one: the answer would be written twice
+  if (isWriting) return
   isWriting = true
   try {
     if (isSpreadsheet()) {
+      // An older Drive offers to insert or replace an answer in a sheet, as
+      // in a text: that answer is no cells at their addresses
+      if (answer.answerAction !== 'apply') return
       // An explanation has no cells: the app tells the user nothing changed
-      const isWritten = await writeSheetAnswer(answer.text)
-      if (!isWritten && hostOrigin) {
-        host.postMessage({ type: 'twake-scribe:notApplied' }, hostOrigin)
-      }
+      sendNotApplied(await writeSheetAnswer(answer.text))
       return
     }
     await writeAnswer(answer)
@@ -389,7 +415,7 @@ async function addSlide({ title, bullets }) {
     typeof title === 'string' &&
     Array.isArray(bullets) &&
     bullets.every(bullet => typeof bullet === 'string')
-  if (!isPresentation() || !isSlide) return
+  if (!isPresentation() || !isSlide || isWriting) return
 
   isWriting = true
   try {
@@ -433,12 +459,17 @@ async function handleMessage(event) {
 }
 
 // The editor starts the plugin again each time the selection changes
-window.Asc.plugin.init = () => {
+window.Asc.plugin.init = async () => {
   if (isStarted) {
     handleSelectionChange()
     return
   }
   isStarted = true
+  // Drive shows no button in a spreadsheet editor the scribe cannot work in.
+  // An editor still busy does not tell: the button is shown.
+  if (isSpreadsheet() && (await runInFreeEditor(checkSheetSupport)) === false) {
+    return
+  }
   window.addEventListener('message', handleMessage)
   watchUndoRedo()
   // The app is not known yet: this first message holds nothing of the document

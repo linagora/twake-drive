@@ -21,6 +21,11 @@ const box = (r1, c1, r2, c2) => ({ r1, c1, r2, c2 })
 // B2:C5, the cells of a request
 const RANGE = box(1, 1, 4, 2)
 const ORIGINS = getAnswerOrigins({ range: RANGE, isEmpty: false })
+// E2, an empty cell
+const EMPTY_ORIGINS = getAnswerOrigins({
+  range: box(1, 4, 1, 4),
+  isEmpty: true
+})
 
 describe('column names', () => {
   it('names the columns as the editor does', () => {
@@ -94,6 +99,23 @@ describe('makeSheetContent', () => {
     expect(content.split('\n')[4]).toBe('| 1 | C:\\\\ | T1 | Total |')
   })
 
+  it('escapes a mark that would make a whole cell bold or code', () => {
+    const content = makeSheetContent({
+      ...sheet,
+      texts: [['**Total**', '`x`', '2*3'], ...sheet.texts.slice(1)]
+    })
+
+    expect(content.split('\n')[4]).toBe('| 1 | \\**Total** | \\`x` | 2*3 |')
+    // The answer that gives it back as it is gives the same text
+    expect(
+      readAnswerCells(content.split('\n').slice(2, 5).join('\n'), ORIGINS)
+    ).toEqual([
+      { row: 0, col: 0, text: '**Total**' },
+      { row: 0, col: 1, text: '`x`' },
+      { row: 0, col: 2, text: '2*3' }
+    ])
+  })
+
   it('names the selected cell of a block, and the part of a range given', () => {
     const content = makeSheetContent({
       ...sheet,
@@ -163,34 +185,71 @@ describe('readAnswerCells', () => {
     ])
   })
 
-  it('takes labels that look like addresses for labels', () => {
+  it('reads an address list whatever the marks and the case of its addresses', () => {
+    const list =
+      '| Cells | Formula |\n|---|---|\n| `B6` | `=SUM(B2:B5)` |\n| **c6** | =SUM(C2:C5) |'
+
+    expect(readAnswerCells(list, ORIGINS)).toEqual([
+      { row: 5, col: 1, text: '=SUM(B2:B5)' },
+      { row: 5, col: 2, text: '=SUM(C2:C5)' }
+    ])
+  })
+
+  it('reads row numbers and column letters in bold or as code', () => {
+    const answer = [
+      '|   | `A` | **B** |',
+      '|---|---|---|',
+      '| 5 | Ouest | 760 |',
+      '| **6** | **Total** | **=SUM(B2:B5)** |'
+    ].join('\n')
+
+    expect(readAnswerCells(answer, ORIGINS)).toEqual([
+      { row: 4, col: 0, text: 'Ouest' },
+      { row: 4, col: 1, text: '760' },
+      { row: 5, col: 0, text: 'Total' },
+      { row: 5, col: 1, text: '=SUM(B2:B5)' }
+    ])
+  })
+
+  it('lays a table without addresses at an empty cell, its header first', () => {
     const quarters = '| Trimestre | Objectif |\n|---|---|\n| T1 | 1000 |'
 
-    expect(readAnswerCells(quarters, ORIGINS)).toEqual([
-      { row: 1, col: 1, text: 'Trimestre' },
-      { row: 1, col: 2, text: 'Objectif' },
-      { row: 2, col: 1, text: 'T1' },
-      { row: 2, col: 2, text: '1000' }
+    expect(readAnswerCells(quarters, EMPTY_ORIGINS)).toEqual([
+      { row: 1, col: 4, text: 'Trimestre' },
+      { row: 1, col: 5, text: 'Objectif' },
+      { row: 2, col: 4, text: 'T1' },
+      { row: 2, col: 5, text: '1000' }
     ])
   })
 
-  it('lays a table without letters nor numbers from the top-left cell', () => {
-    const answer = '| Q1 | Q2 |\n|---|---|\n| 10 | 20 |'
-
-    expect(readAnswerCells(answer, ORIGINS)).toEqual([
-      { row: 1, col: 1, text: 'Q1' },
-      { row: 1, col: 2, text: 'Q2' },
-      { row: 2, col: 1, text: '10' },
-      { row: 2, col: 2, text: '20' }
-    ])
+  it('writes nothing of a table without addresses over cells', () => {
+    ;[
+      '| Région | Total |\n|---|---|\n| Nord | 2550 |',
+      '| ID | CA |\n|---|---|\n| 12 | 300 |',
+      '| B | C |\n|---|---|\n| x | y |',
+      '|   | Ratio |\n|---|---|\n| 2 | =B2/C2 |',
+      '| # | Ratio |\n|---|---|\n| 2 | =B2/C2 |',
+      '|   | d |\n|---|---|\n| 2 | =B2/C2 |',
+      '|   | B |\n|---|---|\n| 6 | =SUM(B2:B5) |\n| Total | x |'
+    ].forEach(answer => expect(readAnswerCells(answer, ORIGINS)).toEqual([]))
   })
 
-  it('lays the rows of a table with letters only from the first row', () => {
-    const answer = '| B | C |\n|---|---|\n| x | y |'
+  it('reads the text of a cell as the content gives it', () => {
+    const answer = [
+      '|   | A | B |',
+      '|---|---|---|',
+      '| 2 | 20*30*40 cm | __init__ |',
+      '| 3 | R&amp;D | [doc](http://a.b) |',
+      '| 4 | \\**Total** | a<br>b \\| c |'
+    ].join('\n')
 
-    expect(readAnswerCells(answer, ORIGINS)).toEqual([
-      { row: 1, col: 1, text: 'x' },
-      { row: 1, col: 2, text: 'y' }
+    expect(readAnswerCells(answer, ORIGINS).map(({ text }) => text)).toEqual([
+      '20*30*40 cm',
+      '__init__',
+      'R&amp;D',
+      '[doc](http://a.b)',
+      '**Total**',
+      'a\nb | c'
     ])
   })
 
@@ -208,6 +267,25 @@ describe('readAnswerCells', () => {
       { row: 5, col: 0, text: 'Total' },
       { row: 5, col: 1, text: '=SUM(B2:B5)' }
     ])
+  })
+
+  it('reads formulas by address under `Formulas:` only, without words after them', () => {
+    const explain = [
+      '- D2: =B2+C2 — adds the two quarters',
+      '- D5: =SUM(D2:D4) sums the totals'
+    ].join('\n')
+    const quarters = '- Q1: =SUM(B2:B4)\n- Q2: =SUM(C2:C4)'
+    const table = '|   | D |\n|---|---|\n| 2 | =B2+C2 |'
+
+    expect(readAnswerCells(explain, ORIGINS)).toEqual([])
+    expect(readAnswerCells(`Formulas:\n${explain}`, ORIGINS)).toEqual([])
+    expect(readAnswerCells(quarters, ORIGINS)).toEqual([])
+    expect(
+      readAnswerCells(`${table}\n\nD2: =B2*2 doubles it`, ORIGINS)
+    ).toEqual([{ row: 1, col: 3, text: '=B2+C2' }])
+    expect(
+      readAnswerCells('**Formulas:**\n- `D2`: `=IF(B2>0, "a b", 0)`', ORIGINS)
+    ).toEqual([{ row: 1, col: 3, text: '=IF(B2>0, "a b", 0)' }])
   })
 
   it('lays formulas under the range', () => {
@@ -259,6 +337,7 @@ describe('readLooseNumber', () => {
   it('takes a single separator before three digits for the thousands', () => {
     expect(readLooseNumber('1,200')).toBe(1200)
     expect(readLooseNumber('1.200')).toBe(1200)
+    expect(readLooseNumber('0,125')).toBe(0.125)
   })
 
   it('reads no number in a text', () => {
@@ -278,6 +357,16 @@ describe('isSameCell', () => {
     expect(isSameCell('2500', cell)).toBe(false)
     expect(isSameCell('Loyer', { shown: 'Loyer ', formula: null })).toBe(true)
   })
+
+  it('takes a value written another way for a change, but a plain number', () => {
+    const phone = { shown: '06 12 34 56 78', formula: null }
+    const price = { shown: '1,200.00 €', formula: null }
+
+    expect(isSameCell('06.12.34.56.78', phone)).toBe(false)
+    expect(isSameCell('125', { shown: '0,125', formula: null })).toBe(false)
+    expect(isSameCell('1200', price)).toBe(true)
+    expect(isSameCell('1 200,00 €', price)).toBe(false)
+  })
 })
 
 describe('planSheetWrite', () => {
@@ -285,16 +374,19 @@ describe('planSheetWrite', () => {
   const read = (cells, area) => {
     const texts = []
     const formulas = []
+    const merged = []
     for (let row = area.r1; row <= area.r2; row += 1) {
       texts.push([])
       formulas.push([])
+      merged.push([])
       for (let col = area.c1; col <= area.c2; col += 1) {
         const cell = cells[`${row},${col}`]
         texts.at(-1).push(cell?.shown ?? '')
         formulas.at(-1).push(cell?.formula ?? null)
+        merged.at(-1).push(cell?.isMerged ?? false)
       }
     }
-    return { texts, formulas }
+    return { texts, formulas, merged }
   }
   const SHEET = {
     '0,0': { shown: 'Région' },
@@ -319,7 +411,7 @@ describe('planSheetWrite', () => {
   it('writes the cells that change, and leaves the others', () => {
     const result = plan([
       { row: 1, col: 0, text: 'North' },
-      { row: 1, col: 1, text: '1 200' },
+      { row: 1, col: 1, text: '1200' },
       { row: 2, col: 2, text: '1100' }
     ])
 
@@ -351,6 +443,45 @@ describe('planSheetWrite', () => {
 
     expect(result.insertRows).toEqual({ at: 3, count: 2 })
     expect(result.writes).toHaveLength(2)
+  })
+
+  it('writes every cell under the range once rows are inserted, the ones given as they are too', () => {
+    const result = plan([
+      { row: 3, col: 0, text: 'Moyenne' },
+      { row: 3, col: 1, text: '3,0' },
+      { row: 3, col: 2, text: '=AVERAGE(C2:C3)' }
+    ])
+
+    expect(result.insertRows).toEqual({ at: 3, count: 1 })
+    expect(result.writes.map(({ text }) => text)).toEqual([
+      'Moyenne',
+      '3,0',
+      '=AVERAGE(C2:C3)'
+    ])
+  })
+
+  it('takes a cell of a merge that starts elsewhere for a cell that holds something', () => {
+    // A note merged over A5:C5, under an empty row 4
+    const sheet = {
+      ...SHEET,
+      '3,1': undefined,
+      '3,2': undefined,
+      '4,0': { shown: 'Source : export CRM' },
+      '4,1': { isMerged: true },
+      '4,2': { isMerged: true }
+    }
+
+    expect(
+      plan([{ row: 4, col: 1, text: '=SUM(B2:B3)' }], sheet)
+    ).toMatchObject({ insertRows: { at: 3, count: 2 } })
+    expect(
+      planSheetWrite({
+        cells: [{ row: 4, col: 1, text: 'x' }],
+        range: box(0, 0, 4, 2),
+        box: box(4, 1, 4, 1),
+        ...read(sheet, box(4, 1, 4, 1))
+      })
+    ).toMatchObject({ writes: [], skipped: [{ row: 4, col: 1 }] })
   })
 
   it('leaves a cell under the range that the answer gives as it is', () => {
@@ -442,6 +573,15 @@ describe('charts', () => {
     expect(
       placeChart({ range: box(0, 0, 4, 2), lastColumns, drawings })
     ).toEqual({ row: 16, col: 4 })
+  })
+
+  it('keeps a chart pushed under another one clear of the cells of its new rows', () => {
+    const lastColumns = [...Array(CHART_ROWS).fill(2), ...Array(30).fill(8)]
+    const drawings = [box(0, 4, 14, 10)]
+
+    expect(
+      placeChart({ range: box(0, 0, 4, 2), lastColumns, drawings })
+    ).toEqual({ row: 16, col: 10 })
   })
 
   it('leaves a chart elsewhere in the sheet where it is', () => {

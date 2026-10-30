@@ -1,6 +1,6 @@
 import { Lexer } from 'marked'
 
-import { makeInlineText, unwrapAnswer } from './markdown.js'
+import { unwrapAnswer } from './markdown.js'
 
 // The cells of a sheet the assistant gets at most: the first rows of a
 // bigger range
@@ -14,9 +14,17 @@ const ROW_NUMBER = /^[1-9]\d{0,6}$/
 const ROW_HEADER = /^(|#|n°|no\.?|row|ligne)$/i
 // Non-breaking spaces included: a number format groups digits with them
 const SPACES = /\s+/g
+// The line over the formulas of the content, and of an answer that gives
+// them back the same way
+const FORMULAS_HEADER = /^\W*(formulas|formules)\W*$/i
 // A formula given by its address, as the content lists them: `D5: =B5+C5`
 const FORMULA_LINE =
   /^\s*(?:[-*]\s+)?`?(\$?[A-Z]{1,3}\$?[1-9]\d{0,6})`?\s*:\s*`?(=[^`]*?)`?\s*$/
+// Words after a formula, out of its quotes: `=SUM(D2:D4) sums the totals`,
+// `=B2+C2 — adds the quarters`
+const PROSE = /[—–]|[A-Za-z]{2,}\s+[A-Za-z]{2,}/
+// A number of an answer: in English, without a thousands separator
+const PLAIN_NUMBER = /^[-+]?\d+(\.\d+)?$/
 
 /**
  * A position in a sheet, 0-based
@@ -57,7 +65,7 @@ export function findColumnIndex(name) {
 // The address of a cell, absolute or not: B3, $B$3
 const ADDRESS = /^\$?([A-Z]{1,3})\$?([1-9]\d{0,6})$/
 const ADDRESS_HEADER =
-  /^(address|cell|ref(erence)?|adresse|cellule|référence)$/i
+  /^(address|cells?|ref(erence)?|adresse|cellules?|référence|zelle|celda|cella|célula)$/i
 
 function parseAddress(address) {
   const [, letters, number] = address.match(ADDRESS)
@@ -75,8 +83,13 @@ export function makeBoxAddress({ r1, c1, r2, c2 }) {
     : `${start}:${makeAddress({ row: r2, col: c2 })}`
 }
 
+// What readCellText reads back: a backslash, a pipe, and a mark at the start
+// that would make the whole cell bold or code
 const escapeCell = text =>
-  text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>')
+  text
+    .replace(/[\\|]/g, '\\$&')
+    .replace(/^[*`]/, '\\$&')
+    .replace(/\r?\n/g, '<br>')
 
 function makeSheetPlace({ sheet, range, given, around, isCell }) {
   const parts = [
@@ -156,80 +169,80 @@ export function makeSheetContent({
   ].join('\n\n')
 }
 
-// A formula is written as the LLM gave it: its `*` are no emphasis. A cell
-// in backquotes is code, its text as it is.
+// A cell of an answer as the content gives it (see escapeCell): its text as
+// it is, but for a mark around all of it, as **Total** or `=SUM(B2:B5)`. A
+// `*` inside is no emphasis: `20*30*40 cm`, `=B2*C2`.
 function readCellText(raw) {
   const text = raw.trim()
-  const code = text.match(/^`([^`]*)`$/)?.[1]
-  if (code !== undefined) return code.trim()
-  if (text.startsWith('=')) return text
-  return makeInlineText(text).trim()
+  const inner = text.match(/^(\*\*|`)(.*)\1$/s)?.[2] ?? text
+  return inner
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/\\([\\|*`])/g, '$1')
+    .trim()
 }
 
 // A table of cells by address, one per row, under a header as
 // `| Address | Value |`. The header tells it: a label as T1 or Q2 looks like
 // an address.
 function readAddressList(header, lines) {
-  const isAddress = line => ADDRESS.test(line[0]?.trim() ?? '')
+  const findAddress = line => {
+    const address = (line[0] ?? '').toUpperCase()
+    return ADDRESS.test(address) ? address : null
+  }
   const isList =
-    ADDRESS_HEADER.test(header[0]?.trim() ?? '') &&
+    ADDRESS_HEADER.test(header[0] ?? '') &&
     lines.length > 0 &&
-    lines.every(isAddress)
+    lines.every(line => findAddress(line) !== null)
   if (!isList) return null
 
   return lines.map(line => ({
-    ...parseAddress(line[0].trim()),
-    text: readCellText(line[1] ?? '')
+    ...parseAddress(findAddress(line)),
+    text: line[1] ?? ''
   }))
 }
 
-const isColumnName = text => findColumnIndex(text) !== null
-const hasRowNumber = line => ROW_NUMBER.test(line[0]?.trim() ?? '')
+// A table at the addresses it gives: its first header cell is a corner,
+// empty or a mark, the others are column letters, and each row starts with
+// its number
+function readAddressedTable([corner, ...letters], lines) {
+  const isAddressed =
+    ROW_HEADER.test(corner ?? '') &&
+    letters.length > 0 &&
+    letters.every(letter => findColumnIndex(letter) !== null) &&
+    lines.every(line => ROW_NUMBER.test(line[0] ?? ''))
+  if (!isAddressed) return null
 
-function readTableHeader(headerTexts, lines) {
-  const hasRowHeader = ROW_HEADER.test(headerTexts[0] ?? '')
-  const start = hasRowHeader ? 1 : 0
-  const letters = headerTexts.slice(start)
-  const hasLetters = letters.length > 0 && letters.every(isColumnName)
-  const hasNumbers = hasRowHeader && lines.every(hasRowNumber)
-  return {
-    letters,
-    hasLetters,
-    hasNumbers,
-    firstColumn: hasLetters || hasNumbers ? start : 0
-  }
-}
-
-function readTableLine(line, lineIndex, layout, origin) {
-  const { letters, hasLetters, hasNumbers, firstColumn } = layout
-  const row = hasNumbers ? Number(line[0].trim()) - 1 : origin.row + lineIndex
-  const getColumn = hasLetters
-    ? index => findColumnIndex(letters[index] ?? '') ?? -1
-    : index => origin.col + index
-  return line.slice(firstColumn).map((raw, index) => ({
-    row,
-    col: getColumn(index),
-    text: readCellText(raw ?? '')
-  }))
-}
-
-function readTable({ header, rows }, origin) {
-  const headerTexts = header.map(cell => cell.text)
-  const lines = rows.map(row => row.map(cell => cell.text))
-  const list = readAddressList(headerTexts, lines)
-  if (list) return list
-  const layout = readTableHeader(
-    headerTexts.map(text => text.trim()),
-    lines
-  )
-
-  // Without the letters, the header row is the first row of cells
-  const grid = layout.hasLetters ? lines : [headerTexts, ...lines]
-  return grid
-    .flatMap((line, lineIndex) =>
-      readTableLine(line, lineIndex, layout, origin)
+  return lines
+    .flatMap(([number, ...texts]) =>
+      texts.map((text, index) => ({
+        row: Number(number) - 1,
+        col: findColumnIndex(letters[index] ?? '') ?? -1,
+        text
+      }))
     )
     .filter(cell => cell.col >= 0)
+}
+
+// Without addresses a table goes at the empty cell the request was about,
+// its header as its first row. Laid over cells, it would overwrite them
+// with what the LLM meant for somewhere else, as a table of the answer to a
+// question.
+function readTable({ header, rows }, origin) {
+  const headerTexts = header.map(cell => readCellText(cell.text))
+  const lines = rows.map(row => row.map(cell => readCellText(cell.text ?? '')))
+  const cells =
+    readAddressList(headerTexts, lines) ??
+    readAddressedTable(headerTexts, lines)
+  if (cells) return cells
+  if (!origin) return []
+
+  return [headerTexts, ...lines].flatMap((line, rowIndex) =>
+    line.map((text, colIndex) => ({
+      row: origin.row + rowIndex,
+      col: origin.col + colIndex,
+      text
+    }))
+  )
 }
 
 // The lines of an answer without a table, when they are formulas: one cell
@@ -244,7 +257,6 @@ function readLines(tokens, origin) {
       }
       return []
     })
-    .filter(line => !FORMULA_LINE.test(line))
     .map(readCellText)
     .filter(text => text !== '')
   if (!lines.every(text => text.startsWith('='))) return []
@@ -256,26 +268,47 @@ function readLines(tokens, origin) {
   }))
 }
 
-function readFormulaLines(markdown) {
-  return markdown.split('\n').flatMap(line => {
-    const match = line.match(FORMULA_LINE)
-    return match ? [{ ...parseAddress(match[1]), text: match[2].trim() }] : []
-  })
+// The formulas an answer lists as the content does, under `Formulas:`, and
+// the answer without them. A list whose lines go on after their formula is
+// an explanation: none of them is read.
+function splitFormulaList(text) {
+  const lines = text.split('\n')
+  const start = lines.findIndex(line => FORMULAS_HEADER.test(line))
+  if (start === -1) return { formulas: [], rest: text }
+  let end = start + 1
+  while (end < lines.length && FORMULA_LINE.test(lines[end])) end += 1
+  const matches = lines
+    .slice(start + 1, end)
+    .map(line => line.match(FORMULA_LINE))
+  const isList =
+    matches.length > 0 &&
+    matches.every(
+      ([, , formula]) => !PROSE.test(formula.replace(/"[^"]*"/g, '""'))
+    )
+  if (!isList) return { formulas: [], rest: text }
+
+  return {
+    formulas: matches.map(([, address, formula]) => ({
+      ...parseAddress(address),
+      text: formula.trim()
+    })),
+    rest: [...lines.slice(0, start), ...lines.slice(end)].join('\n')
+  }
 }
 
 /**
- * Where the cells of an answer without addresses go: a table from the
- * top-left cell of the range, lines under it, or both at an empty cell
+ * Where the cells of an answer without addresses go: at an empty cell, a
+ * table or lines from it; else lines under the range, and no table
  *
  * @param {object} target
  * @param {Box} target.range
  * @param {boolean} target.isEmpty - whether the range is an empty cell
- * @returns {{ tableOrigin: Cell, linesOrigin: Cell }}
+ * @returns {{ tableOrigin: Cell|null, linesOrigin: Cell }}
  */
 export function getAnswerOrigins({ range, isEmpty }) {
   const topLeft = { row: range.r1, col: range.c1 }
   return {
-    tableOrigin: topLeft,
+    tableOrigin: isEmpty ? topLeft : null,
     linesOrigin: isEmpty ? topLeft : { row: range.r2 + 1, col: range.c1 }
   }
 }
@@ -283,24 +316,25 @@ export function getAnswerOrigins({ range, isEmpty }) {
 /**
  * The cells of an answer: those of its first table, at the addresses its
  * letters and numbers give, or laid from `tableOrigin` without them; else
- * lines of formulas, one cell each, laid from `linesOrigin`, in a column. A formula given on a
- * line with its address, as the content lists them, takes its cell. An empty
- * cell is not given: the LLM leaves a cell empty to keep it as it is.
+ * lines of formulas, one cell each, laid from `linesOrigin`, in a column.
+ * The formulas listed with their addresses under `Formulas:`, as the content
+ * lists them, take their cells. An empty cell is not given: the LLM leaves a
+ * cell empty to keep it as it is.
  *
  * @param {string} markdown - the answer
  * @param {object} origins
- * @param {Cell} origins.tableOrigin
+ * @param {Cell|null} origins.tableOrigin - null when a table needs addresses
  * @param {Cell} origins.linesOrigin
  * @returns {{ row: number, col: number, text: string }[]} the last one given
  * for a cell wins
  */
 export function readAnswerCells(markdown, { tableOrigin, linesOrigin }) {
-  const text = unwrapAnswer(markdown)
-  const tokens = new Lexer().lex(text)
+  const { formulas, rest } = splitFormulaList(unwrapAnswer(markdown))
+  const tokens = new Lexer().lex(rest)
   const table = tokens.find(token => token.type === 'table')
   const cells = [
     ...(table ? readTable(table, tableOrigin) : readLines(tokens, linesOrigin)),
-    ...readFormulaLines(text)
+    ...formulas
   ]
 
   const byAddress = new Map(
@@ -332,12 +366,14 @@ export function getBoxSize({ r1, c1, r2, c2 }) {
   return (r2 - r1 + 1) * (c2 - c1 + 1)
 }
 
-// A single separator before three digits groups the thousands
-function isDecimalSeparator(separators, decimals) {
+// A single separator before three digits groups the thousands, but after a
+// lone 0: 0,125
+function isDecimalSeparator(separators, integer, decimals) {
   if (separators.length === 0) return false
   return (
     new Set(separators).size > 1 ||
-    (separators.length === 1 && decimals.length !== 3)
+    (separators.length === 1 &&
+      (decimals.length !== 3 || /^[-+]?0$/.test(integer)))
   )
 }
 
@@ -355,7 +391,11 @@ export function readLooseNumber(text) {
   const separators = compact.match(/[.,]/g) ?? []
   const last = compact.search(/[.,][^.,]*$/)
   const decimals = compact.slice(last + 1)
-  const isDecimal = isDecimalSeparator(separators, decimals)
+  const isDecimal = isDecimalSeparator(
+    separators,
+    compact.slice(0, last),
+    decimals
+  )
   const integer = (isDecimal ? compact.slice(0, last) : compact).replace(
     /[.,]/g,
     ''
@@ -368,14 +408,19 @@ const normalize = text => text.replace(SPACES, ' ').trim()
 
 /**
  * Whether the text the answer gives a cell is the one it holds: its text as
- * shown, its formula, or the same number written another way
+ * shown, its formula, or the same number written another way. A formula is
+ * kept for its figure however written, `2400` for `2 400,00 €`; a value only
+ * for a number in English, as the instructions ask: `06.12.34.56.78` for
+ * `06 12 34 56 78` is a change.
  */
 export function isSameCell(text, { shown, formula }) {
   if (normalize(text) === normalize(shown)) return true
-  if (
-    formula &&
-    normalize(text).replace(/ /g, '') === formula.replace(SPACES, '')
-  ) {
+  if (!formula) {
+    return (
+      PLAIN_NUMBER.test(text.trim()) && Number(text) === readLooseNumber(shown)
+    )
+  }
+  if (normalize(text).replace(/ /g, '') === formula.replace(SPACES, '')) {
     return true
   }
   const number = readLooseNumber(text)
@@ -385,10 +430,11 @@ export function isSameCell(text, { shown, formula }) {
 const isInside = ({ row, col }, { r1, c1, r2, c2 }) =>
   row >= r1 && row <= r2 && col >= c1 && col <= c2
 
-function makeCellReader({ box, texts, formulas }) {
+function makeCellReader({ box, texts, formulas, merged }) {
   return ({ row, col }) => ({
     shown: texts[row - box.r1]?.[col - box.c1] ?? '',
-    formula: formulas[row - box.r1]?.[col - box.c1] ?? null
+    formula: formulas[row - box.r1]?.[col - box.c1] ?? null,
+    isMerged: merged?.[row - box.r1]?.[col - box.c1] ?? false
   })
 }
 
@@ -406,9 +452,10 @@ function groupByPlace(cells, range) {
 }
 
 // The rows or columns to insert from `at` for the cells past the range,
-// when one of them would overwrite a cell
-function makeInsert(cells, collides, at, getIndex) {
-  if (!cells.some(collides)) return null
+// when one of them would overwrite a cell. They take all these cells, the
+// ones given as they are too.
+function makeInsert(cells, overwrites, at, getIndex) {
+  if (!cells.some(overwrites)) return null
   return { at, count: Math.max(...cells.map(getIndex)) - at + 1 }
 }
 
@@ -421,9 +468,11 @@ function makeInsert(cells, collides, at, getIndex) {
  * @param {{ row: number, col: number, text: string }[]} options.cells - the
  * cells of the answer
  * @param {Box} options.range - the cells the request was about
- * @param {Box} options.box - the cells read, the range and the answer
+ * @param {Box} options.box - the cells read, those of the answer
  * @param {string[][]} options.texts - the text of each cell of the box
  * @param {(string|null)[][]} options.formulas - its formula
+ * @param {boolean[][]} [options.merged] - whether it is in a merge that
+ * starts at another cell: the editor would write that one
  * @returns {{
  *   insertRows: { at: number, count: number } | null,
  *   insertColumns: { at: number, count: number } | null,
@@ -433,25 +482,38 @@ function makeInsert(cells, collides, at, getIndex) {
  * }} `box` holds the range and the cells written, once the rows and columns
  * are inserted
  */
-export function planSheetWrite({ cells, range, box, texts, formulas }) {
-  const read = makeCellReader({ box, texts, formulas })
+export function planSheetWrite({ cells, range, box, texts, formulas, merged }) {
+  const read = makeCellReader({ box, texts, formulas, merged })
   const collides = cell => {
-    const { shown, formula } = read(cell)
-    return shown !== '' || Boolean(formula)
+    const { shown, formula, isMerged } = read(cell)
+    return shown !== '' || Boolean(formula) || isMerged
   }
+  const isChanged = cell => !isSameCell(cell.text, read(cell))
+  const overwrites = cell => isChanged(cell) && collides(cell)
 
-  const changed = cells.filter(cell => !isSameCell(cell.text, read(cell)))
-  const { inside, below, beside, before } = groupByPlace(changed, range)
-  // Above or left of the range, a cell that holds something is kept
-  const skipped = before.filter(collides)
-  const others = before.filter(cell => !collides(cell))
+  const { inside, below, beside, before } = groupByPlace(cells, range)
+  const insertRows = makeInsert(below, overwrites, range.r2 + 1, c => c.row)
+  const insertColumns = makeInsert(beside, overwrites, range.c2 + 1, c => c.col)
+  // In the range, a cell of a merge is kept: its first cell would be
+  // written. Above or left of it, a cell that holds something is kept.
+  const changedInside = inside.filter(isChanged)
+  const changedBefore = before.filter(isChanged)
+  const isKept = cell => read(cell).isMerged
+  const skipped = [
+    ...changedInside.filter(isKept),
+    ...changedBefore.filter(collides)
+  ]
 
-  const writes = [...inside, ...below, ...beside, ...others].map(
-    ({ row, col, text }) => ({ row, col, text })
-  )
+  const writes = [
+    ...changedInside.filter(cell => !isKept(cell)),
+    // Rows or columns inserted are empty: each cell of the answer goes there
+    ...(insertRows ? below : below.filter(isChanged)),
+    ...(insertColumns ? beside : beside.filter(isChanged)),
+    ...changedBefore.filter(cell => !collides(cell))
+  ].map(({ row, col, text }) => ({ row, col, text }))
   return {
-    insertRows: makeInsert(below, collides, range.r2 + 1, cell => cell.row),
-    insertColumns: makeInsert(beside, collides, range.c2 + 1, cell => cell.col),
+    insertRows,
+    insertColumns,
     writes,
     skipped: skipped.map(({ row, col }) => ({ row, col })),
     box: makeUnionBox(range, writes)
@@ -529,9 +591,16 @@ export const CHART_ROWS = 15
  * @returns {Cell} the top-left cell of the chart
  */
 export function placeChart({ range, lastColumns, drawings }) {
-  const col = Math.max(range.c2, ...lastColumns) + 2
+  const findColumn = row =>
+    Math.max(
+      range.c2,
+      ...lastColumns.slice(row - range.r1, row - range.r1 + CHART_ROWS)
+    ) + 2
   let row = range.r1
-  // A drawing in the way pushes the chart under it, until none is
+  let col = findColumn(row)
+  // A drawing in the way pushes the chart under it, until none is; lower,
+  // the chart stays in its column, or moves right of the cells used on its
+  // new rows
   for (let moved = true; moved; ) {
     moved = false
     for (const drawing of drawings) {
@@ -541,6 +610,7 @@ export function placeChart({ range, lastColumns, drawings }) {
         drawing.r1 <= row + CHART_ROWS - 1
       if (isInWay) {
         row = drawing.r2 + 2
+        col = Math.max(col, findColumn(row))
         moved = true
       }
     }

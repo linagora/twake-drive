@@ -1,4 +1,4 @@
-/* global Api, Asc, AscCommonExcel */
+/* global Api, Asc, AscCommon, AscCommonExcel */
 
 // The functions of this file run inside the spreadsheet editor: the plugin
 // sends their source to it with `callCommand`. They cannot use anything
@@ -7,6 +7,33 @@
 // The scribe works on the selected cells, or on the block of data around the
 // selected cell. It reads them as the editor shows them, with their formulas,
 // and writes the cells of an answer at their addresses (see grid.js).
+
+/**
+ * Whether the editor has what the scribe of a spreadsheet uses beside its
+ * API: the formula parser it switches to English, the decimal separator of
+ * its locale, the merges of the cells and the drawings of a sheet. A build of
+ * the editor that renames its internals has none of them.
+ *
+ * @returns {boolean}
+ */
+export function checkSheetSupport() {
+  try {
+    const locale = AscCommonExcel.oFormulaLocaleInfo
+    const sheet = Api.GetActiveSheet()
+    const cell = sheet.GetRangeByNumber(0, 0)
+    return (
+      'Parse' in locale &&
+      'DigitSep' in locale &&
+      typeof AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator ===
+        'string' &&
+      typeof cell.GetCurrentRegion === 'function' &&
+      typeof cell.range.hasMerged === 'function' &&
+      Array.isArray(sheet.worksheet.Drawings)
+    )
+  } catch {
+    return false
+  }
+}
 
 /**
  * Finds the cells the scribe works on: the first area of the selection, or
@@ -78,9 +105,10 @@ export function readSheetSelection() {
 
 /**
  * Reads the cells of `Asc.scope.box` in the sheet `Asc.scope.sheetName`:
- * the text each one shows, and its formula
+ * the text each one shows, its formula, and whether it is in a merge that
+ * starts at another cell
  *
- * @returns {{ texts: string[][], formulas: (string|null)[][] }|null}
+ * @returns {{ texts: string[][], formulas: (string|null)[][], merged: boolean[][] }|null}
  */
 export function readSheetCells() {
   const { sheetName, box } = Asc.scope
@@ -95,15 +123,24 @@ export function readSheetCells() {
       ? formula
       : null
   }
-  const getRow = (sheet, row) =>
-    getIndexes(box.c1, box.c2).map(col => sheet.GetRangeByNumber(row, col))
+  const isMerged = (cell, row, col) => {
+    const merge = cell.range.hasMerged()
+    return Boolean(merge) && (merge.r1 !== row || merge.c1 !== col)
+  }
+  const rows = getIndexes(box.r1, box.r2)
+  const cols = getIndexes(box.c1, box.c2)
 
   const sheet = Api.GetSheet(sheetName)
   if (!sheet) return null
-  const cells = getIndexes(box.r1, box.r2).map(row => getRow(sheet, row))
+  const cells = rows.map(row =>
+    cols.map(col => sheet.GetRangeByNumber(row, col))
+  )
   return {
     texts: cells.map(row => row.map(readText)),
-    formulas: cells.map(row => row.map(readFormula))
+    formulas: cells.map(row => row.map(readFormula)),
+    merged: cells.map((line, i) =>
+      line.map((cell, j) => isMerged(cell, rows[i], cols[j]))
+    )
   }
 }
 
@@ -112,8 +149,8 @@ export function readSheetCells() {
  * `Asc.scope.sheetName`: inserts its columns and rows, writes its cells, then
  * selects them with the range, in one step of the undo.
  *
- * @returns {number} the cells the editor refused to write, as the ones of a
- * protected sheet
+ * @returns {number} the cells the editor did not write, as the ones of a
+ * protected sheet or a formula it cannot read; all of them when it failed
  */
 export function writeSheetPlan() {
   const { sheetName, plan } = Asc.scope
@@ -138,30 +175,46 @@ export function writeSheetPlan() {
         .Insert('down')
     }
   }
+  // A number of the answer is in English, as 1350.5: the editor reads a
+  // value with the decimal separator of its locale
+  const separator = AscCommon.g_oDefaultCultureInfo.NumberDecimalSeparator
+  const localize = text =>
+    /^[-+]?\d+\.\d+$/.test(text) ? text.replace('.', separator) : text
+  const compact = formula => String(formula).replace(/\s/g, '').toUpperCase()
+  // The editor keeps the cell as it was when it cannot read a formula, and
+  // SetValue still says it wrote it
+  const writeCell = (sheet, { row, col, text }) => {
+    const cell = sheet.GetRangeByNumber(row, col)
+    const before = cell.GetFormula()
+    if (cell.SetValue(localize(text)) === false) return false
+    if (!text.startsWith('=')) return true
+    const after = cell.GetFormula()
+    return (
+      typeof after === 'string' &&
+      after.startsWith('=') &&
+      (after !== before || compact(after) === compact(text))
+    )
+  }
   const writeCells = sheet => {
     insertCells(sheet)
-    const refused = writes.filter(
-      ({ row, col, text }) =>
-        sheet.GetRangeByNumber(row, col).SetValue(text) === false
-    ).length
+    const refused = writes.filter(write => !writeCell(sheet, write)).length
     getRange(sheet, box.r1, box.c1, box.r2, box.c2).Select()
     return refused
   }
-  // The formulas of an answer are in English, whatever the language the
-  // editor reads the formulas typed in its cells in
-  const getLocale = () =>
-    typeof AscCommonExcel === 'undefined'
-      ? null
-      : AscCommonExcel.oFormulaLocaleInfo
 
   const sheet = Api.GetSheet(sheetName)
   if (!sheet) return writes.length
-  const locale = getLocale()
-  if (!locale) return writeCells(sheet)
+  // The formulas of an answer are in English, whatever the language the
+  // editor reads the formulas typed in its cells in
+  const locale = AscCommonExcel.oFormulaLocaleInfo
   const saved = { Parse: locale.Parse, DigitSep: locale.DigitSep }
   Object.assign(locale, { Parse: false, DigitSep: false })
+  // An exception would give nothing, as a busy editor: the plan would be
+  // written again over what it has already done, as its inserted rows
   try {
     return writeCells(sheet)
+  } catch {
+    return writes.length
   } finally {
     Object.assign(locale, saved)
   }
@@ -185,10 +238,10 @@ export function readChartPlace() {
     }
     return -1
   }
-  const getLastColumns = sheet => {
+  const getLastColumns = (sheet, count) => {
     const used = sheet.GetUsedRange()
     const lastUsed = used.GetCol() - 2 + used.GetColumnsCount()
-    return Array.from({ length: rowCount }, (_, index) =>
+    return Array.from({ length: count }, (_, index) =>
       findLastColumn(sheet, lastUsed, r1 + index)
     )
   }
@@ -208,10 +261,16 @@ export function readChartPlace() {
 
   const sheet = Api.GetSheet(sheetName)
   if (!sheet) return null
-  const { Drawings } = sheet.worksheet ?? {}
+  const drawings = sheet.worksheet.Drawings.flatMap(getDrawingBoxes)
+  // The rows a chart pushed under the drawings may take.
+  // ponytail: 1000 rows at most, a chart pushed further may cover cells
+  const lastRow = Math.max(
+    r1 + rowCount - 1,
+    ...drawings.map(drawing => drawing.r2 + rowCount + 1)
+  )
   return {
-    lastColumns: getLastColumns(sheet),
-    drawings: (Drawings ?? []).flatMap(getDrawingBoxes)
+    lastColumns: getLastColumns(sheet, Math.min(lastRow - r1 + 1, 1000)),
+    drawings
   }
 }
 
@@ -268,7 +327,10 @@ export function insertChart() {
   // of the cells between them are removed
   const removeLeftOutSeries = chart => {
     const series = chart.Chart?.getAllSeries?.() ?? []
-    const kept = series.map(serie => isKept(serie.val?.numRef?.f))
+    // The values of a scatter chart are its y values
+    const kept = series.map(serie =>
+      isKept((serie.val ?? serie.yVal)?.numRef?.f)
+    )
     if (!kept.some(Boolean)) return
     for (let index = series.length - 1; index >= 0; index -= 1) {
       if (!kept[index]) chart.RemoveSeria(index)
