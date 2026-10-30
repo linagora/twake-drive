@@ -1018,6 +1018,44 @@
           ]
         }
       }
+    },
+    {
+      "id": "T5-table-only",
+      "selection": "T1.C(1,0)@start..P2@mid",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>GG</td><td>DD</td></tr>\n</table>",
+      "next": {
+        "answerAction": "replace",
+        "answer": "<table>\n  <tr><td>G3</td><td>D3</td></tr>\n</table>\n\nTail edit"
+      },
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro p\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"G3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"D3"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Tail edit"},{"t":"aragraph"}]}
+          ],
+          "selText": "G3D3\nTail edit",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«G3»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«D3»"},
+            {"at":{"block":2},"text":"«Tail edit»aragraph"}
+          ]
+        }
+      }
     }
   ]
 }
