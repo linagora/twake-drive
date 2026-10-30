@@ -8,6 +8,8 @@ import React, {
   useState
 } from 'react'
 
+import { useI18n } from 'twake-i18n'
+
 import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
@@ -90,6 +92,7 @@ const makeCapabilityMessage = ({ capability, params }, documentType) => {
  * The scribe shows in a panel beside the editor.
  */
 export const ScribeProvider = ({ serverUrl, documentType, children }) => {
+  const { t } = useI18n()
   const serverOrigin = new URL(serverUrl).origin
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const [plugin, setPlugin] = useState(null)
@@ -220,9 +223,21 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
 
   useEffect(() => {
     if (plugin !== null && isAllowed) {
-      plugin.postMessage({ type: 'twake-scribe:showToolbar' }, serverOrigin)
+      // The editor shows the labels as they are given, in a single language
+      plugin.postMessage(
+        {
+          type: 'twake-scribe:showToolbar',
+          labels: {
+            tab: t('OnlyOffice.scribe.toolbar.tab'),
+            scribeHint: t('OnlyOffice.scribe.toolbar.scribeHint'),
+            panel: t('OnlyOffice.scribe.panel'),
+            panelHint: t('OnlyOffice.scribe.toolbar.panelHint')
+          }
+        },
+        serverOrigin
+      )
     }
-  }, [plugin, isAllowed, serverOrigin])
+  }, [plugin, isAllowed, serverOrigin, t])
 
   useEffect(() => {
     if (plugin === null || !isAllowed) return

@@ -5,7 +5,8 @@
 const GUID = 'asc.{E4B4F030-94E5-48BE-A962-A6E87CB6262B}'
 
 // The editor shows a text or a hint as it is given: a string, not a map of
-// translations
+// translations. The app gives them in the language of its user; these are
+// for an app that gives none.
 const LABELS = {
   en: {
     tab: 'Assistant',
@@ -37,8 +38,19 @@ const makeButton = (id, text, hint, icons) => ({
   lockInViewMode: true
 })
 
-export function makeToolbarItems(lang, baseUrl) {
-  const labels = LABELS[lang.startsWith('fr') ? 'fr' : 'en']
+// The labels the app gives, those that are texts
+const readLabels = given =>
+  Object.fromEntries(
+    Object.keys(LABELS.en)
+      .filter(key => typeof given?.[key] === 'string' && given[key] !== '')
+      .map(key => [key, given[key]])
+  )
+
+export function makeToolbarItems(lang, baseUrl, given = null) {
+  const labels = {
+    ...LABELS[lang.startsWith('fr') ? 'fr' : 'en'],
+    ...readLabels(given)
+  }
   return {
     guid: GUID,
     tabs: [

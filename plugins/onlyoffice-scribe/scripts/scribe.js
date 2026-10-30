@@ -328,7 +328,9 @@ async function handleMessage(event) {
   }
   // The plugin cannot tell whether the app acts on its entries: where the app
   // shows no scribe, as on a public link or in another app, it does not ask
-  if (event.data?.type === 'twake-scribe:showToolbar') showToolbar()
+  if (event.data?.type === 'twake-scribe:showToolbar') {
+    showToolbar(event.data.labels)
+  }
 }
 
 function stopGeometryLoop() {
@@ -433,14 +435,14 @@ function handleToolbarClick(id) {
 
 // The editor sends a click on an entry only to a plugin that has told it
 // it listens
-function showToolbar() {
+function showToolbar(labels) {
   if (isToolbarShown || !appOrigin) return
   isToolbarShown = true
   window.Asc.plugin.attachEditorEvent('onToolbarMenuClick', handleToolbarClick)
   const lang = readEditorLang(window.parent.location.href)
   const baseUrl = new URL('./', window.location.href).href
   window.Asc.plugin.executeMethod('AddToolbarMenuItem', [
-    makeToolbarItems(lang, baseUrl)
+    makeToolbarItems(lang, baseUrl, labels)
   ])
 }
 
