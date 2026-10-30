@@ -634,6 +634,8 @@
       "apply": "Übernehmen",
       "insertSlide": "Folie einfügen",
       "insertChart": "Diagramm einfügen",
+      "notApplied": "Diese Antwort enthält keine Zellen, die in das Blatt geschrieben werden können",
+      "notWritten": "Der Editor konnte diese Antwort nicht vollständig übernehmen",
       "suggestions": {
         "newSlide": "Neue Folie",
         "newSlideMessage": "Füge nach dieser Folie eine neue Folie zum Text hinzu",

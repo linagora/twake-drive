@@ -125,6 +125,13 @@ describe('ScribeProvider', () => {
       message: 'OnlyOffice.scribe.notApplied',
       severity: 'secondary'
     })
+
+    receive({ type: 'twake-scribe:notApplied', reason: 'notWritten' })
+
+    expect(mockShowAlert).toHaveBeenLastCalledWith({
+      message: 'OnlyOffice.scribe.notWritten',
+      severity: 'secondary'
+    })
   })
 
   it('asks the plugin for the text, and opens when it comes', () => {
@@ -348,5 +355,10 @@ describe('ScribeProvider', () => {
     fireEvent.click(screen.getAllByText('result 0')[1])
     expect(other.plugin.postMessage).not.toHaveBeenCalled()
     expect(logger.warn).toHaveBeenCalledTimes(2)
+    // The assistant shows the call as done: the user is told
+    expect(mockShowAlert).toHaveBeenCalledWith({
+      message: 'OnlyOffice.scribe.notWritten',
+      severity: 'secondary'
+    })
   })
 })

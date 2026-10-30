@@ -117,7 +117,7 @@ const INSERT_TABLE_FOR_LLM = {
 // They settle what it hesitates on: the cells to give, a label, a total
 // row, a value the user gives.
 const SHEET_INSTRUCTIONS_FOR_LLM = `You help the user work on the cells of a spreadsheet, given as a Markdown table: its header row holds the column letters and its first column the row numbers; the formulas of the cells are listed under it. Answer as follows, without weighing other forms. A request to compute something from the cells, as a sum, a ratio or an average, asks for cells with formulas.
-To compute or change cells, give one Markdown table of the cells you write, with their column letter in its header row and their row number in its first column, as | | D | then | 3 | =B3/C3 |, and no introduction. Unchanged cells may be given again or left out: they stay as they are. A new column gets its label on the header row of the data, and a formula on each row, the total row too. A new row goes under the data; when a total row ends the data, the new row takes its place and the total row moves one row down, its formulas taking the new row in. A value computed from other cells is a formula in English with commas between its arguments, as =SUM(B2:B5) or =IF(B2>0,B2,0), never a figure you computed. A value the user gives is written plain, as 90: the cell keeps its format. An empty cell stays as it is. Do not make up values.
+To compute or change cells, give one Markdown table of the cells you write, with their column letter in its header row and their row number in its first column, as | | D | then | 3 | =B3/C3 |, and no introduction. Unchanged cells may be given again or left out: they stay as they are. A new column gets its label on the header row of the data, and a formula on each row, the total row too. A new row goes under the data; when a total row ends the data, the new row takes its place and the total row moves one row down, its formulas taking the new row in. A value computed from other cells is a formula in English with commas between its arguments and a dot for decimals, as =SUM(B2:B5) or =IF(B2>0,B2*0.5,0), never a figure you computed. A value the user gives is written plain, with a dot for decimals and no thousands separator, as 1350.5: the cell keeps its format. An empty cell stays as it is. Do not make up values.
 To answer a question, write a few sentences in the language of the user. When asked both, the table, then the sentences.`
 
 const INSERT_CHART_FOR_LLM = {
@@ -277,14 +277,15 @@ export const normalizeSlide = params => {
   return { title: title.trim(), bullets: lines }
 }
 
-// The names the LLM may give a type of chart, beside the ones of the editor
-const CHART_TYPE_NAMES = {
-  ...Object.fromEntries(CHART_TYPES.map(type => [type.toLowerCase(), type])),
-  column: 'bar',
-  columns: 'bar',
-  line: 'lineNormal',
-  horizontal: 'horizontalBar'
-}
+// The names the LLM may give a type of chart, beside the ones of the editor.
+// A Map: a name as `constructor` is no type.
+const CHART_TYPE_NAMES = new Map([
+  ...CHART_TYPES.map(type => [type.toLowerCase(), type]),
+  ['column', 'bar'],
+  ['columns', 'bar'],
+  ['line', 'lineNormal'],
+  ['horizontal', 'horizontalBar']
+])
 const AREA = /^(?:.+!)?\$?[A-Z]{1,3}\$?\d+(?::\$?[A-Z]{1,3}\$?\d+)?$/i
 
 /**
@@ -297,9 +298,16 @@ const AREA = /^(?:.+!)?\$?[A-Z]{1,3}\$?\d+(?::\$?[A-Z]{1,3}\$?\d+)?$/i
  */
 export const normalizeChart = params => {
   const { type, range, title } = params ?? {}
+  // `Pie chart`, `bar graph`: the type is the name before
   const chartType =
     typeof type === 'string'
-      ? CHART_TYPE_NAMES[type.trim().replace(/\s+/g, '').toLowerCase()]
+      ? CHART_TYPE_NAMES.get(
+          type
+            .trim()
+            .replace(/\s*(chart|graph)$/i, '')
+            .replace(/\s+/g, '')
+            .toLowerCase()
+        )
       : undefined
   if (chartType === undefined) return null
 

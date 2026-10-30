@@ -39,16 +39,21 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     const handleMessage = event => {
       if (event.origin !== serverOrigin) return
 
-      const { type, content, target, canReplace } = event.data ?? {}
+      const { type, content, target, canReplace, reason } = event.data ?? {}
       const text = { content, target, canReplace }
       if (type === 'twake-scribe:ready') setPlugin(event.source)
       if (type === 'twake-scribe:content') setText(text)
       if (type === 'twake-scribe:selection') {
         setText(current => (current === null ? null : text))
       }
+      // The answer has no cells to write, or the editor did not write them
       if (type === 'twake-scribe:notApplied') {
         showAlert({
-          message: t('OnlyOffice.scribe.notApplied'),
+          message: t(
+            reason === 'notWritten'
+              ? 'OnlyOffice.scribe.notWritten'
+              : 'OnlyOffice.scribe.notApplied'
+          ),
           severity: 'secondary'
         })
       }
@@ -95,6 +100,11 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
           `Scribe: capability call ignored: ${result.capability}`,
           result.params
         )
+        // The assistant shows the call as done
+        showAlert({
+          message: t('OnlyOffice.scribe.notWritten'),
+          severity: 'secondary'
+        })
         return
       }
       plugin.postMessage(message, serverOrigin)
@@ -127,7 +137,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         )
       }
     }
-  }, [plugin, text, serverOrigin, documentType])
+  }, [plugin, text, serverOrigin, documentType, showAlert, t])
 
   return (
     <ScribeContext.Provider value={value}>{children}</ScribeContext.Provider>

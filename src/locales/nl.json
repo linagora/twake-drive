@@ -10,6 +10,8 @@
       "apply": "Toepassen",
       "insertSlide": "Dia invoegen",
       "insertChart": "Grafiek invoegen",
+      "notApplied": "Dit antwoord bevat geen cellen om in het blad te schrijven",
+      "notWritten": "De editor kon dit antwoord niet volledig toepassen",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",

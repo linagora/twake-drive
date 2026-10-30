@@ -10,6 +10,8 @@
       "apply": "应用",
       "insertSlide": "插入幻灯片",
       "insertChart": "插入图表",
+      "notApplied": "此回答没有可写入工作表的单元格",
+      "notWritten": "编辑器无法完整应用此回答",
       "suggestions": {
         "newSlide": "新幻灯片",
         "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",

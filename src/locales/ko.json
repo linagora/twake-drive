@@ -94,6 +94,8 @@
       "apply": "적용",
       "insertSlide": "슬라이드 삽입",
       "insertChart": "차트 삽입",
+      "notApplied": "이 답변에는 시트에 쓸 셀이 없습니다",
+      "notWritten": "편집기가 이 답변을 모두 적용하지 못했습니다",
       "suggestions": {
         "newSlide": "새 슬라이드",
         "newSlideMessage": "이 슬라이드 다음에 텍스트에 관한 새 슬라이드를 추가해 줘",

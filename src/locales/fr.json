@@ -635,6 +635,7 @@
       "insertSlide": "Insérer la diapositive",
       "insertChart": "Insérer le graphique",
       "notApplied": "Cette réponse n’a pas de cellules à écrire dans la feuille",
+      "notWritten": "L’éditeur n’a pas pu appliquer toute cette réponse",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",
