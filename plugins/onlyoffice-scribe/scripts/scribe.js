@@ -1,4 +1,19 @@
 import { readContent, writeBlocks } from './document.js'
+import {
+  CHART_ROWS,
+  MAX_ANSWER_CELLS,
+  MAX_CELLS,
+  getAnswerOrigins,
+  getBoxSize,
+  isChartInRows,
+  makeChartRange,
+  makeSheetContent,
+  makeUnionBox,
+  parseRanges,
+  placeChart,
+  planSheetWrite,
+  readAnswerCells
+} from './grid.js'
 import { makeBlocks, makeLineSpans, makeLines } from './markdown.js'
 import {
   findWrittenParagraphs,
@@ -6,6 +21,14 @@ import {
   readSlideContent,
   writeSlideLines
 } from './presentation.js'
+import {
+  checkSheetSupport,
+  insertChart,
+  readChartPlace,
+  readSheetCells,
+  readSheetSelection,
+  writeSheetPlan
+} from './spreadsheet.js'
 
 // The plugin is in the frame of the editor, itself in the app that shows it
 const host = window.parent.parent
@@ -18,6 +41,8 @@ const SELECTION_DELAY = 400
 const UNDO_REDO_PAUSE = 3000
 // The paragraphs of the last answer written in a presentation
 let written = null
+// The cells last given to the app in a spreadsheet: where an answer goes
+let sheetTarget = null
 // The origin of the app while its panel is open: it has asked for the text
 let hostOrigin = null
 // The text last given to the app, its plain text, and whether an answer is
@@ -49,6 +74,21 @@ function runInEditor(command, { scope = {}, isRecalculated = false } = {}) {
   return run
 }
 
+// The editor runs no command while it saves, or while a cell is being
+// edited: the command gives nothing. A command that must not be lost, as
+// the writing of an answer, is sent again for a while.
+const BUSY_DELAY = 500
+const BUSY_RETRIES = 10
+
+async function runInFreeEditor(command, options) {
+  for (let attempt = 0; attempt < BUSY_RETRIES; attempt += 1) {
+    const result = await runInEditor(command, options)
+    if (result !== undefined) return result
+    await new Promise(resolve => setTimeout(resolve, BUSY_DELAY))
+  }
+  return undefined
+}
+
 function callEditor(method, parameters) {
   return new Promise(resolve => {
     window.Asc.plugin.executeMethod(method, parameters, resolve)
@@ -57,6 +97,80 @@ function callEditor(method, parameters) {
 
 function isPresentation() {
   return window.Asc.plugin.info.editorType === 'slide'
+}
+
+function isSpreadsheet() {
+  return window.Asc.plugin.info.editorType === 'cell'
+}
+
+// The cells the app gets, and where an answer goes. `key` leaves out the
+// selected cell: another cell of the same block gives the same cells.
+async function readSheet({ isCellIgnored = false } = {}) {
+  const selection = await runInEditor(readSheetSelection, {
+    scope: { maxCells: MAX_CELLS }
+  })
+  if (!selection || (isCellIgnored && selection.around)) return null
+  const cells = await runInEditor(readSheetCells, {
+    scope: { sheetName: selection.sheet, box: selection.given }
+  })
+  if (!cells) return null
+
+  const sheet = { ...selection, ...cells }
+  const { range } = selection
+  const isEmpty =
+    getBoxSize(range) === 1 && cells.texts[0][0] === '' && !cells.formulas[0][0]
+  return {
+    content: makeSheetContent(sheet),
+    key: makeSheetContent({ ...sheet, around: null }),
+    target: selection.around ? 'region' : 'selection',
+    sheetTarget: { sheetName: selection.sheet, range, isEmpty }
+  }
+}
+
+function keepSheet(read) {
+  lastContent = read.key
+  sheetTarget = read.sheetTarget
+}
+
+// Tells the user when the cells of an answer, or a chart, are not written
+// (see the `notApplied` keys of Drive)
+function sendNotApplied(reason) {
+  if (reason && hostOrigin) {
+    host.postMessage({ type: 'twake-scribe:notApplied', reason }, hostOrigin)
+  }
+}
+
+// The cells of an answer, written at their addresses in the cells last
+// given to the app: see planSheetWrite
+// @returns {Promise<string|null>} why nothing or not all was written:
+// `noCells` when the answer has none to write, `notWritten` when the editor
+// did not write them; null once written
+async function writeSheetAnswer(text) {
+  if (!sheetTarget) return 'noCells'
+  const { sheetName, range, isEmpty } = sheetTarget
+  const cells = readAnswerCells(text, getAnswerOrigins({ range, isEmpty }))
+  if (cells.length === 0) return 'noCells'
+  // The cells of the answer only are read: the range may be a whole column
+  const [{ row, col }] = cells
+  const box = makeUnionBox({ r1: row, c1: col, r2: row, c2: col }, cells)
+  if (getBoxSize(box) > MAX_ANSWER_CELLS) return 'notWritten'
+
+  const read = await runInFreeEditor(readSheetCells, {
+    scope: { sheetName, box }
+  })
+  if (!read) return 'notWritten'
+  const plan = planSheetWrite({ cells, range, box, ...read })
+  if (plan.writes.length === 0) return 'noCells'
+  const refused = await runInFreeEditor(writeSheetPlan, {
+    scope: { sheetName, plan },
+    isRecalculated: true
+  })
+  // The cells written are left selected: they are not other cells to work
+  // on. The next answers still go in the cells the assistant was given, as
+  // it knows them.
+  const after = await readSheet()
+  if (after) lastContent = after.key
+  return refused === 0 ? null : 'notWritten'
 }
 
 // The editor gives the selected text of a presentation to the plugin only,
@@ -99,9 +213,71 @@ function fetchContent() {
 
 // The editor runs no command while it loads or saves: the text is then not
 // read, and the app asks again
+// The size of a chart, in English measure units: 12 cm by 7 cm
+const CHART_WIDTH = 4320000
+const CHART_HEIGHT = 2520000
+
+// A chart the assistant has made, of a range of the cells last given to the
+// app, or of all of them, beside the data. The app has checked it already.
+async function addChart({ chartType, title, range }) {
+  const isChart = typeof chartType === 'string'
+  if (!isSpreadsheet() || !sheetTarget || !isChart || isWriting) return
+  const { sheetName } = sheetTarget
+  // The areas of the data, as the names and one column of values of a pie
+  const areas = (typeof range === 'string' && parseRanges(range)) || [
+    sheetTarget.range
+  ]
+  const data = makeUnionBox(
+    areas[0],
+    areas.flatMap(({ r1, c1, r2, c2 }) => [
+      { row: r1, col: c1 },
+      { row: r2, col: c2 }
+    ])
+  )
+
+  isWriting = true
+  try {
+    const read = await runInFreeEditor(readChartPlace, {
+      scope: { sheetName, r1: data.r1, rowCount: CHART_ROWS }
+    })
+    if (!read) {
+      sendNotApplied('notWritten')
+      return
+    }
+    const isAdded = await runInFreeEditor(insertChart, {
+      scope: {
+        sheetName,
+        range: makeChartRange(sheetName, [data]),
+        areas,
+        // The series of separate areas run along them, as the names and one
+        // column of values of a pie, whatever the shape of their box
+        isInRows: isChartInRows(areas.length > 1 ? areas.at(-1) : data),
+        type: chartType,
+        title: typeof title === 'string' ? title : '',
+        place: placeChart({ range: data, ...read }),
+        width: CHART_WIDTH,
+        height: CHART_HEIGHT
+      },
+      isRecalculated: true
+    })
+    if (!isAdded) sendNotApplied('notWritten')
+  } finally {
+    isWriting = false
+  }
+}
+
 async function sendContent(origin) {
   contentRequest += 1
   const request = contentRequest
+  if (isSpreadsheet()) {
+    const read = await readSheet()
+    if (!read || request !== contentRequest) return
+    hostOrigin = origin
+    keepSheet(read)
+    const { content, target } = read
+    host.postMessage({ type: 'twake-scribe:content', content, target }, origin)
+    return
+  }
   const read = await fetchContent()
   const selectedText = await fetchSelectedText()
   if (!read || request !== contentRequest) return
@@ -117,8 +293,24 @@ async function sendContent(origin) {
 // text.
 // The selection is read by a command only when its text changes: a command
 // empties the redo of the editor.
+// Other cells selected. A click on a single cell is a cursor that moves.
+async function sendSheetSelection() {
+  const read = await readSheet({ isCellIgnored: true })
+  if (!hostOrigin || !read || read.key === lastContent) return
+  keepSheet(read)
+  const { content, target } = read
+  host.postMessage(
+    { type: 'twake-scribe:selection', content, target },
+    hostOrigin
+  )
+}
+
 async function sendSelection() {
   if (!hostOrigin || isWriting || Date.now() < pausedUntil) return
+  if (isSpreadsheet()) {
+    await sendSheetSelection()
+    return
+  }
   const selectedText = await fetchSelectedText()
   // The panel may have been closed while the selection was read
   if (!hostOrigin || !selectedText?.trim()) return
@@ -191,8 +383,19 @@ async function writeAnswer({ answerAction, text }) {
 }
 
 async function applyAnswer(answer) {
+  // A second click on Apply while the answer is written would plan its cells
+  // on the sheet before the first one: the answer would be written twice
+  if (isWriting) return
   isWriting = true
   try {
+    if (isSpreadsheet()) {
+      // An older Drive offers to insert or replace an answer in a sheet, as
+      // in a text: that answer is no cells at their addresses
+      if (answer.answerAction !== 'apply') return
+      // An explanation has no cells: the app tells the user nothing changed
+      sendNotApplied(await writeSheetAnswer(answer.text))
+      return
+    }
     await writeAnswer(answer)
     // The answer is left selected: it is not another text to work on
     const selectedText = await fetchSelectedText()
@@ -212,7 +415,7 @@ async function addSlide({ title, bullets }) {
     typeof title === 'string' &&
     Array.isArray(bullets) &&
     bullets.every(bullet => typeof bullet === 'string')
-  if (!isPresentation() || !isSlide) return
+  if (!isPresentation() || !isSlide || isWriting) return
 
   isWriting = true
   try {
@@ -241,6 +444,7 @@ async function handleMessage(event) {
     contentRequest += 1
     hostOrigin = null
     written = null
+    sheetTarget = null
     clearTimeout(selectionTimer)
   }
   if (event.data?.type === 'twake-scribe:applyAnswer') {
@@ -248,6 +452,9 @@ async function handleMessage(event) {
   }
   if (event.data?.type === 'twake-scribe:insertSlide') {
     await addSlide(event.data)
+  }
+  if (event.data?.type === 'twake-scribe:insertChart') {
+    await addChart(event.data)
   }
 }
 
@@ -266,12 +473,17 @@ function findHostOrigin() {
 }
 
 // The editor starts the plugin again each time the selection changes
-window.Asc.plugin.init = () => {
+window.Asc.plugin.init = async () => {
   if (isStarted) {
     handleSelectionChange()
     return
   }
   isStarted = true
+  // Drive shows no button in a spreadsheet editor the scribe cannot work in.
+  // An editor still busy does not tell: the button is shown.
+  if (isSpreadsheet() && (await runInFreeEditor(checkSheetSupport)) === false) {
+    return
+  }
   window.addEventListener('message', handleMessage)
   watchUndoRedo()
   // Without the origin of the app, the plugin stays silent: no AI button

@@ -90,6 +90,47 @@ describe('ScribePanel', () => {
         theme: { type: 'light' }
       }
     })
+    // A text keeps the instructions of the assistant
+    expect(getIntentProps().data.instructions).toBeUndefined()
+  })
+
+  it('gives a spreadsheet its cells, its instructions, one action to apply them and its chips', () => {
+    setup({
+      documentType: 'cell',
+      target: 'region',
+      content: 'Sheet "Ventes", cells A1:C5, around B3'
+    })
+
+    const { content, instructions, answerActions, capabilities, suggestions } =
+      getIntentProps().data
+    expect(content).toBe('Sheet "Ventes", cells A1:C5, around B3')
+    expect(instructions).toContain('cells of a spreadsheet')
+    expect(answerActions).toEqual([{ name: 'apply', label: 'Apply' }])
+    expect(capabilities.map(({ name }) => name)).toEqual(['insert_chart'])
+    expect(suggestions).toEqual([
+      {
+        name: 'explain',
+        label: 'Explain',
+        message: 'Explain what these cells and their formulas do'
+      },
+      {
+        name: 'clean_up',
+        label: 'Clean up',
+        message:
+          'Fix the typos and make the spelling, the case and the format of these cells consistent'
+      },
+      {
+        name: 'totals',
+        label: 'Add totals',
+        message: 'Add a total row under the data, with formulas'
+      },
+      {
+        name: 'chart',
+        capability: 'insert_chart',
+        label: 'Make a chart',
+        message: 'Make a chart of these cells'
+      }
+    ])
   })
 
   it('lets the assistant add a table to a text document, and offers it as a chip', () => {

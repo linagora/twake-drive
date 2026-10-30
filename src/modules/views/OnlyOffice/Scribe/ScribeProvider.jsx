@@ -6,11 +6,16 @@ import React, {
   useState
 } from 'react'
 
+import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
+
 import logger from '@/lib/logger'
 import {
+  INSERT_CHART,
   INSERT_SLIDE,
   INSERT_TABLE,
   makeTableMarkdown,
+  normalizeChart,
   normalizeSlide,
   normalizeTable
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
@@ -27,23 +32,36 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const serverOrigin = new URL(serverUrl).origin
   const [plugin, setPlugin] = useState(null)
   const [text, setText] = useState(null)
+  const { showAlert } = useAlert()
+  const { t } = useI18n()
 
   useEffect(() => {
     const handleMessage = event => {
       if (event.origin !== serverOrigin) return
 
-      const { type, content, target, canReplace } = event.data ?? {}
+      const { type, content, target, canReplace, reason } = event.data ?? {}
       const text = { content, target, canReplace }
       if (type === 'twake-scribe:ready') setPlugin(event.source)
       if (type === 'twake-scribe:content') setText(text)
       if (type === 'twake-scribe:selection') {
         setText(current => (current === null ? null : text))
       }
+      // The answer has no cells to write, or the editor did not write them
+      if (type === 'twake-scribe:notApplied') {
+        showAlert({
+          message: t(
+            reason === 'notWritten'
+              ? 'OnlyOffice.scribe.notWritten'
+              : 'OnlyOffice.scribe.notApplied'
+          ),
+          severity: 'secondary'
+        })
+      }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [serverOrigin])
+  }, [serverOrigin, showAlert, t])
 
   const value = useMemo(() => {
     // The plugin has no message for a table: it goes in as a Markdown
@@ -54,6 +72,12 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         return slide === null
           ? null
           : { type: 'twake-scribe:insertSlide', ...slide }
+      }
+      if (capability === INSERT_CHART && documentType === 'cell') {
+        const chart = normalizeChart(params)
+        return chart === null
+          ? null
+          : { type: 'twake-scribe:insertChart', ...chart }
       }
       if (capability === INSERT_TABLE && documentType === 'word') {
         const table = normalizeTable(params)
@@ -76,6 +100,11 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
           `Scribe: capability call ignored: ${result.capability}`,
           result.params
         )
+        // The assistant shows the call as done
+        showAlert({
+          message: t('OnlyOffice.scribe.notWritten'),
+          severity: 'secondary'
+        })
         return
       }
       plugin.postMessage(message, serverOrigin)
@@ -108,7 +137,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         )
       }
     }
-  }, [plugin, text, serverOrigin, documentType])
+  }, [plugin, text, serverOrigin, documentType, showAlert, t])
 
   return (
     <ScribeContext.Provider value={value}>{children}</ScribeContext.Provider>

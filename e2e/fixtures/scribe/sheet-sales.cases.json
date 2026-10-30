@@ -1,0 +1,480 @@
+{
+  "document": "sheet-sales.xlsx",
+  "cases": [
+    {
+      "id": "read-selection",
+      "selection": "Ventes!B2:C5",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells B2:C5\n\n|   | B | C |\n|---|---|---|\n| 2 | 1200 | 1350 |\n| 3 | 980 | 1100 |\n| 4 | 1500 | 1420 |\n| 5 | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "read-region",
+      "selection": "Ventes!B3",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5, around B3\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "region"
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "read-column",
+      "selection": "Ventes!B:B",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells B1:B8\n\n|   | B |\n|---|---|\n| 1 | Ventes 2024 |\n| 2 | 1200 |\n| 3 | 980 |\n| 4 | 1500 |\n| 5 | 760 |\n| 6 |  |\n| 7 |  |\n| 8 |  |",
+          "target": "selection"
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "read-empty-cell",
+      "selection": "Ventes!D10",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cell D10, empty: the cells of an answer start there",
+          "target": "region"
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "read-formulas",
+      "selection": "Budget!A1:D5",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Sheet \"Budget\", cells A1:D5\n\n|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Poste | T1 | T2 | Total |\n| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Courses | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |\n\nFormulas:\nD2: =B2+C2\nD3: =B3+C3\nD4: =B4+C4\nB5: =SUM(B2:B4)\nC5: =SUM(C2:C4)\nD5: =SUM(D2:D4)",
+          "target": "selection"
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "sum-under-selection",
+      "selection": "Ventes!B2:C5",
+      "answerAction": "apply",
+      "answer": "|   | B | C |\n|---|---|---|\n| 6 | =SUM(B2:B5) | =SUM(C2:C5) |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells B2:C5\n\n|   | B | C |\n|---|---|---|\n| 2 | 1200 | 1350 |\n| 3 | 980 | 1100 |\n| 4 | 1500 | 1420 |\n| 5 | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "B2:C6",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["","4440","4780","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {"B6":"=SUM(B2:B5)","C6":"=SUM(C2:C5)"}
+        }
+      }
+    },
+    {
+      "id": "total-row-with-the-range",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |\n| 6 | **Total** | =SUM(B2:B5) | =SUM(C2:C5) |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:C6",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["Total","4440","4780","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {"B6":"=SUM(B2:B5)","C6":"=SUM(C2:C5)"}
+        }
+      }
+    },
+    {
+      "id": "columns-inserted-beside",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "|   | D | E |\n|---|---|---|\n| 1 | Progression | Écart |\n| 2 | =C2/B2-1 | =C2-B2 |\n| 3 | =C3/B3-1 | =C3-B3 |\n| 4 | =C4/B4-1 | =C4-B4 |\n| 5 | =C5/B5-1 | =C5-B5 |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:E5",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","Progression","Écart","","Objectif"],
+            ["Nord","1200","1350","0.125","150","","1300"],
+            ["Sud","980","1100","0.12244898","120","",""],
+            ["Est","1500","1420","-0.053333333","-80","",""],
+            ["Ouest","760","910","0.197368421","150","",""],
+            ["","","","","","",""],
+            ["","","","","","",""],
+            ["Source : export CRM","","","","","",""]
+          ],
+          "formulas": {
+            "D2": "=C2/B2-1",
+            "E2": "=C2-B2",
+            "D3": "=C3/B3-1",
+            "E3": "=C3-B3",
+            "D4": "=C4/B4-1",
+            "E4": "=C4-B4",
+            "D5": "=C5/B5-1",
+            "E5": "=C5-B5"
+          }
+        }
+      }
+    },
+    {
+      "id": "rows-inserted-under",
+      "selection": "Budget!A1:D5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C | D |\n|---|---|---|---|---|\n| 6 | Moyenne | =AVERAGE(B2:B4) | =AVERAGE(C2:C4) | =AVERAGE(D2:D4) |\n| 7 | Part du loyer | =B2/B5 | =C2/C5 | =D2/D5 |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Budget\", cells A1:D5\n\n|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Poste | T1 | T2 | Total |\n| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Courses | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |\n\nFormulas:\nD2: =B2+C2\nD3: =B3+C3\nD4: =B4+C4\nB5: =SUM(B2:B4)\nC5: =SUM(C2:C4)\nD5: =SUM(D2:D4)",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Budget",
+          "selection": "A1:D7",
+          "cells": [
+            ["Poste","T1","T2","Total"],
+            ["Loyer","1,200.00 €","1,200.00 €","2,400.00 €"],
+            ["Courses","800.00 €","950.00 €","1,750.00 €"],
+            ["Transport","150.00 €","180.00 €","330.00 €"],
+            ["Total","2,150.00 €","2,330.00 €","4,480.00 €"],
+            ["Moyenne","716.67 €","776.67 €","1,493.33 €"],
+            ["Part du loyer","0.56 €","0.52 €","0.54 €"],
+            ["","","",""],
+            ["Note : budget provisoire","","",""]
+          ],
+          "formulas": {
+            "D2": "=B2+C2",
+            "D3": "=B3+C3",
+            "D4": "=B4+C4",
+            "B5": "=SUM(B2:B4)",
+            "C5": "=SUM(C2:C4)",
+            "D5": "=SUM(D2:D4)",
+            "B6": "=AVERAGE(B2:B4)",
+            "C6": "=AVERAGE(C2:C4)",
+            "D6": "=AVERAGE(D2:D4)",
+            "B7": "=B2/B5",
+            "C7": "=C2/C5",
+            "D7": "=D2/D5"
+          }
+        }
+      }
+    },
+    {
+      "id": "translate-keeps-formulas",
+      "selection": "Budget!A1:D5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Item | Q1 | Q2 | Total |\n| 2 | Rent | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Groceries | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Budget\", cells A1:D5\n\n|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Poste | T1 | T2 | Total |\n| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Courses | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |\n\nFormulas:\nD2: =B2+C2\nD3: =B3+C3\nD4: =B4+C4\nB5: =SUM(B2:B4)\nC5: =SUM(C2:C4)\nD5: =SUM(D2:D4)",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Budget",
+          "selection": "A1:D5",
+          "cells": [
+            ["Item","Q1","Q2","Total"],
+            ["Rent","1,200.00 €","1,200.00 €","2,400.00 €"],
+            ["Groceries","800.00 €","950.00 €","1,750.00 €"],
+            ["Transport","150.00 €","180.00 €","330.00 €"],
+            ["Total","2,150.00 €","2,330.00 €","4,480.00 €"],
+            ["","","",""],
+            ["Note : budget provisoire","","",""]
+          ],
+          "formulas": {"D2":"=B2+C2","D3":"=B3+C3","D4":"=B4+C4","B5":"=SUM(B2:B4)","C5":"=SUM(C2:C4)","D5":"=SUM(D2:D4)"}
+        }
+      }
+    },
+    {
+      "id": "formulas-given-by-address",
+      "selection": "Budget!A1:D5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C | D |\n|---|---|---|---|---|\n| 5 | Énergie | 90 | 110 | 200 |\n| 6 | Total | 2240 | 2440 | 4680 |\n\nFormulas:\nD5: =B5+C5\nB6: =SUM(B2:B5)\nC6: =SUM(C2:C5)\nD6: =SUM(D2:D5)",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Budget\", cells A1:D5\n\n|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Poste | T1 | T2 | Total |\n| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Courses | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |\n\nFormulas:\nD2: =B2+C2\nD3: =B3+C3\nD4: =B4+C4\nB5: =SUM(B2:B4)\nC5: =SUM(C2:C4)\nD5: =SUM(D2:D4)",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Budget",
+          "selection": "A1:D6",
+          "cells": [
+            ["Poste","T1","T2","Total"],
+            ["Loyer","1,200.00 €","1,200.00 €","2,400.00 €"],
+            ["Courses","800.00 €","950.00 €","1,750.00 €"],
+            ["Transport","150.00 €","180.00 €","330.00 €"],
+            ["Énergie","90.00 €","110.00 €","200.00 €"],
+            ["Total","2240","2440","4680"],
+            ["Note : budget provisoire","","",""]
+          ],
+          "formulas": {
+            "D2": "=B2+C2",
+            "D3": "=B3+C3",
+            "D4": "=B4+C4",
+            "D5": "=B5+C5",
+            "B6": "=SUM(B2:B5)",
+            "C6": "=SUM(C2:C5)",
+            "D6": "=SUM(D2:D5)"
+          }
+        }
+      }
+    },
+    {
+      "id": "one-formula",
+      "selection": "Ventes!C2:C5",
+      "answerAction": "apply",
+      "answer": "`=AVERAGE(C2:C5)`",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells C2:C5\n\n|   | C |\n|---|---|\n| 2 | 1350 |\n| 3 | 1100 |\n| 4 | 1420 |\n| 5 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "C2:C6",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["","","1195","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {"C6":"=AVERAGE(C2:C5)"}
+        }
+      }
+    },
+    {
+      "id": "explanation-writes-nothing",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "La région **Ouest** a le plus progressé : ses ventes passent de 760 à 910, soit environ +19,7 %.\n\nL'Est est la seule région en recul.",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:C5",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["","","","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {}
+        }
+      }
+    },
+    {
+      "id": "table-at-an-empty-cell",
+      "selection": "Ventes!D10",
+      "answerAction": "apply",
+      "answer": "| Trimestre | Objectif |\n|---|---|\n| T1 | 1000 |\n| T2 | 1000 |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cell D10, empty: the cells of an answer start there",
+          "target": "region"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "D10:E12",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["","","","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""],
+            ["","","","",""],
+            ["","","","Trimestre","Objectif"],
+            ["","","","T1","1000"],
+            ["","","","T2","1000"]
+          ],
+          "formulas": {}
+        }
+      }
+    },
+    {
+      "id": "region-around-a-cell",
+      "selection": "Ventes!B3",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C |\n|---|---|---|---|\n| 6 | Total | =SUM(B2:B5) | =SUM(C2:C5) |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5, around B3\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "region"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:C6",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Nord","1200","1350","","1300"],
+            ["Sud","980","1100","",""],
+            ["Est","1500","1420","",""],
+            ["Ouest","760","910","",""],
+            ["Total","4440","4780","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {"B6":"=SUM(B2:B5)","C6":"=SUM(C2:C5)"}
+        }
+      }
+    },
+    {
+      "id": "sort-rows",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Est | 1500 | 1420 |\n| 3 | Nord | 1200 | 1350 |\n| 4 | Sud | 980 | 1100 |\n| 5 | Ouest | 760 | 910 |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:C5",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["Est","1500","1420","","1300"],
+            ["Nord","1200","1350","",""],
+            ["Sud","980","1100","",""],
+            ["Ouest","760","910","",""],
+            ["","","","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {}
+        }
+      }
+    },
+    {
+      "id": "empty-cells-kept",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "|   | A | B | C |\n|---|---|---|---|\n| 2 | NORD |  |  |\n| 3 | SUD |\n| 4 | EST |  |  |\n| 5 | OUEST |  |  |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:C5",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","","Objectif"],
+            ["NORD","1200","1350","","1300"],
+            ["SUD","980","1100","",""],
+            ["EST","1500","1420","",""],
+            ["OUEST","760","910","",""],
+            ["","","","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {}
+        }
+      }
+    },
+    {
+      "id": "table-then-sentences",
+      "selection": "Ventes!A1:C5",
+      "answerAction": "apply",
+      "answer": "|   | D |\n|---|---|\n| 1 | Progression |\n| 2 | =C2/B2-1 |\n| 3 | =C3/B3-1 |\n| 4 | =C4/B4-1 |\n| 5 | =C5/B5-1 |\n\nLa région **Ouest** progresse le plus, d'environ 19,7 %.",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Ventes\", cells A1:C5\n\n|   | A | B | C |\n|---|---|---|---|\n| 1 | Région | Ventes 2024 | Ventes 2025 |\n| 2 | Nord | 1200 | 1350 |\n| 3 | Sud | 980 | 1100 |\n| 4 | Est | 1500 | 1420 |\n| 5 | Ouest | 760 | 910 |",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Ventes",
+          "selection": "A1:D5",
+          "cells": [
+            ["Région","Ventes 2024","Ventes 2025","Progression","Objectif"],
+            ["Nord","1200","1350","0.125","1300"],
+            ["Sud","980","1100","0.12244898",""],
+            ["Est","1500","1420","-0.053333333",""],
+            ["Ouest","760","910","0.197368421",""],
+            ["","","","",""],
+            ["","","","",""],
+            ["Source : export CRM","","","",""]
+          ],
+          "formulas": {"D2":"=C2/B2-1","D3":"=C3/B3-1","D4":"=C4/B4-1","D5":"=C5/B5-1"}
+        }
+      }
+    },
+    {
+      "id": "cells-by-address",
+      "selection": "Budget!A1:D5",
+      "answerAction": "apply",
+      "answer": "| Address | Value |\n|---|---|\n| A1 | Item |\n| B1 | Q1 |\n| C1 | Q2 |\n| A2 | Rent |\n| A3 | Groceries |",
+      "expected": {
+        "content": {
+          "content": "Sheet \"Budget\", cells A1:D5\n\n|   | A | B | C | D |\n|---|---|---|---|---|\n| 1 | Poste | T1 | T2 | Total |\n| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |\n| 3 | Courses | 800.00 € | 950.00 € | 1,750.00 € |\n| 4 | Transport | 150.00 € | 180.00 € | 330.00 € |\n| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |\n\nFormulas:\nD2: =B2+C2\nD3: =B3+C3\nD4: =B4+C4\nB5: =SUM(B2:B4)\nC5: =SUM(C2:C4)\nD5: =SUM(D2:D4)",
+          "target": "selection"
+        },
+        "model": {
+          "sheet": "Budget",
+          "selection": "A1:D5",
+          "cells": [
+            ["Item","Q1","Q2","Total"],
+            ["Rent","1,200.00 €","1,200.00 €","2,400.00 €"],
+            ["Groceries","800.00 €","950.00 €","1,750.00 €"],
+            ["Transport","150.00 €","180.00 €","330.00 €"],
+            ["Total","2,150.00 €","2,330.00 €","4,480.00 €"],
+            ["","","",""],
+            ["Note : budget provisoire","","",""]
+          ],
+          "formulas": {"D2":"=B2+C2","D3":"=B3+C3","D4":"=B4+C4","B5":"=SUM(B2:B4)","C5":"=SUM(C2:C4)","D5":"=SUM(D2:D4)"}
+        }
+      }
+    }
+  ]
+}
