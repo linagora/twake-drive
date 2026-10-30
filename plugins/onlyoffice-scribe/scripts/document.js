@@ -1836,6 +1836,19 @@ export function writeBlocks() {
     return content.GetElement(index).GetRange()
   }
 
+  // A text left as it is ends the answer where its selected part ends: in its
+  // run, which keeps its place as the parts before it are written
+  const findRunEnd = (paragraph, position) => {
+    const run = getRuns(paragraph).find(
+      found =>
+        found.GetRange().GetStartPos() < position &&
+        position <= found.GetRange().GetEndPos()
+    )
+    if (!run) return () => paragraph.GetRange()
+    const offset = position - run.GetRange().GetStartPos()
+    return () => run.GetRange(offset, offset)
+  }
+
   // A block takes the place of the selected text of a paragraph, in its line.
   // Each part written gives the ranges of its start and of its end, read once
   // all are written: the start of a text is a position, right for the first
@@ -1843,7 +1856,9 @@ export function writeBlocks() {
   const writeText = ({ paragraph, range }, block) => {
     const start = range.GetStartPos()
     const getStart = () => doc.GetRange(start, start)
-    if (!block) return { getStart, getEnd: () => paragraph.GetRange() }
+    if (!block) {
+      return { getStart, getEnd: findRunEnd(paragraph, range.GetEndPos()) }
+    }
     const look = findStartLook(paragraph, start)
     range.Select()
     doc.InsertContent([makeParagraph(getLineSpans(block), null, look)], true)
