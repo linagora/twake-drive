@@ -1,15 +1,21 @@
 import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import path from 'path'
 
+import { ensureAppInstalled } from '../helpers/apps'
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import type { ScribeModel } from '../helpers/scribeModel'
 import { createFile, trashById } from '../helpers/stack'
-import { ScribePluginPage, type ScribeContent } from '../pages/ScribePluginPage'
+import {
+  ScribePluginPage,
+  type ScribeApplied,
+  type ScribeContent
+} from '../pages/ScribePluginPage'
 
 // The selection cases of the scribe plugin (plugins/onlyoffice-scribe), each
 // played on a document as Drive plays them: a text is selected, the plugin
-// gives it, then writes an answer in its place or under it. See
+// gives it, then writes an answer in its place or after it. See
 // e2e/fixtures/scribe/README.md. SCRIBE_UPDATE=1 writes what the plugin does
 // as the expected result.
 
@@ -24,7 +30,24 @@ interface ScribeCase {
   // null: the text the plugin gives is the whole case
   answerAction: 'insert' | 'replace' | null
   answer: string | null
-  expected?: { content: ScribeContent; model: ScribeModel | null }
+  // The keys the user presses once the text is read, before the answer
+  keys?: string[]
+  // The next answer of the conversation, written over the first one, left
+  // selected, without the text being read again; the keys the user presses
+  // before, as an undo and a redo
+  next?: {
+    answerAction: 'insert' | 'replace'
+    answer: string
+    keys?: string[]
+  }
+  expected?: {
+    content: ScribeContent
+    model: ScribeModel | null
+    // What the plugin tells Drive once it has written the answer
+    applied?: ScribeApplied | null
+    // The document after one undo of the answer
+    undone?: ScribeModel | null
+  }
 }
 
 // Indented JSON, with what fits in 100 characters on a single line: a run, a
@@ -56,6 +79,24 @@ const suites = readdirSync(FIXTURE_DIR)
 // The documents go to the trash after their test: in a runtime kept between
 // runs, they would fill the root of the Drive of Alice
 const fileIds: string[] = []
+test.beforeAll(() => {
+  ensureAppInstalled(
+    USERS.alice.instance,
+    'assistant',
+    'registry://assistant/dev'
+  )
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': true
+  })
+})
+// The stack merges flags: DEFAULT_FLAGS alone would leave this one on
+test.afterAll(() => {
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': false
+  })
+})
 test.afterEach(async () => {
   for (const fileId of fileIds.splice(0)) {
     await trashById(USERS.alice.instance, fileId)
@@ -94,18 +135,39 @@ for (const suite of suites) {
           await scribe.select(scribeCase.selection)
           const content = await scribe.getContent()
           let model: ScribeModel | null = null
+          let applied: ScribeApplied | null = null
+          let undone: ScribeModel | null = null
+          const isUndone = scribeCase.expected?.undone !== undefined
           if (scribeCase.answerAction) {
-            await scribe.applyAnswer(
+            await scribe.press(scribeCase.keys ?? [])
+            applied = await scribe.applyAnswer(
               scribeCase.answerAction,
               scribeCase.answer ?? ''
             )
+            if (scribeCase.next) {
+              await scribe.press(scribeCase.next.keys ?? [])
+              applied = await scribe.applyAnswer(
+                scribeCase.next.answerAction,
+                scribeCase.next.answer
+              )
+            }
             model = await scribe.read()
+            if (isUndone) {
+              await scribe.undo()
+              undone = await scribe.read()
+            }
+          }
+          const result = {
+            content,
+            model,
+            ...(scribeCase.expected?.applied !== undefined && { applied }),
+            ...(isUndone && { undone })
           }
           if (isUpdate) {
-            scribeCase.expected = { content, model }
+            scribeCase.expected = result
             return
           }
-          expect.soft({ content, model }).toEqual(scribeCase.expected)
+          expect.soft(result).toEqual(scribeCase.expected)
         })
       }
 

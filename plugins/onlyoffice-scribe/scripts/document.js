@@ -8,11 +8,19 @@
  * Reads the text the scribe works on: the selection, or the whole document
  * without one. The Markdown of the editor gives the tables in HTML tags, one
  * cell after the other: the cells that take several columns or rows get
- * their `colspan` and `rowspan`.
+ * their `colspan` and `rowspan`. A footnote of the selection is the marker
+ * `[^scribe-fn-N]`, N from 1, and the N-th text of `notes` is the first
+ * paragraph of that note, in plain text. A link to a heading or a bookmark of
+ * the document is the marker `{{REF:scribe-ref-N:text}}`, and the N-th item
+ * of `refs` the `anchor` it goes to and its `kind`, `heading` or `bookmark`.
+ * The K-th drawing of the selection, K from 1 in their order, is the marker
+ * `![image K]`, and a picture of the whole document `[image]`; `imageCount`
+ * counts the drawings numbered.
  *
  * @returns {{ content: string, target: 'selection' | 'document',
- * canReplace: boolean }} the text, in Markdown, and whether an answer can take
- * its place
+ * canReplace: boolean, notes: string[], refs: object[],
+ * imageCount: number }} the text, in Markdown, whether an answer can take its
+ * place, and what its markers stand for
  */
 export function readContent() {
   const doc = Api.GetDocument()
@@ -26,6 +34,64 @@ export function readContent() {
   const selected = hasSelection ? selection.GetAllParagraphs() : []
   const isLocked = selected === null
   const paragraphs = selected ?? []
+  const selectionJson =
+    paragraphs.length > 0 ? selection.ToJSON(false, false) : ''
+  const NOTE_REFERENCE = /"type":"footnoteRef"/
+  const notes = []
+  const refs = []
+  // A note or a drawing the content gives no marker for, which an answer
+  // would lose
+  let hasUnmarkedNote = false
+  let hasUnmarkedDrawing = false
+
+  // The runs of a paragraph, those of its links included: the builder gives
+  // nothing for another element of a link, as a bookmark or a comment
+  const getRuns = paragraph => {
+    const runs = []
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        const child = element.GetElement(j)
+        if (child) runs.push(child)
+      }
+    }
+    return runs
+  }
+
+  // The positions of the drawings of a paragraph: a position counts each
+  // character and each drawing of a run, as the JSON of the run lists them
+  const findDrawingPlaces = paragraph =>
+    getRuns(paragraph).flatMap(run => {
+      const { content } = JSON.parse(run.ToJSON())
+      if (!content.some(item => item.type === 'paraDrawing')) return []
+      let at = run.GetRange().GetStartPos()
+      return content.flatMap(item => {
+        const place = at
+        at += typeof item === 'string' ? item.length : 1
+        return item.type === 'paraDrawing' ? [place] : []
+      })
+    })
+
+  // The drawings between two positions, in their order, with their places: a
+  // drawing in a drawing goes with it. Null when one cannot be placed.
+  const findSelectedDrawings = (from, to) => {
+    const found = []
+    for (const paragraph of paragraphs) {
+      const id = paragraph.GetInternalId()
+      const drawings = paragraph
+        .GetAllDrawingObjects()
+        .filter(drawing => drawing.GetParentParagraph()?.GetInternalId() === id)
+      const places = drawings.length > 0 ? findDrawingPlaces(paragraph) : []
+      if (places.length !== drawings.length) return null
+      drawings.forEach((drawing, i) => {
+        const place = places[i]
+        if (place >= from && place < to) found.push({ drawing, place })
+      })
+    }
+    return found
+  }
 
   // The cells of a table, as laid on its grid: the column each one starts
   // at, the columns it takes, and whether it starts or continues a cell
@@ -177,28 +243,60 @@ export function readContent() {
     )
   }
 
-  // An answer is text: it cannot give back an image, a chart, an equation, a
-  // note, a field, a form, a comment or a page break, nor take the place of a
-  // text and a table together, or of the end of a section
-  const KEPT =
-    /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
-  const canReplace = () => {
-    const tables = new Set(
-      paragraphs.map(
-        paragraph =>
-          paragraph.GetParentTableCell()?.GetParentTable().GetInternalId() ??
-          null
-      )
+  // The editor opens a fence on each code paragraph, after the text of a
+  // line of spaces, and closes it after the last one only:
+  // "\n```\na\n\n\n```\nb\n```\n" is a block of two lines. The spaces are
+  // the indent of the line: the first one gets its own too.
+  const joinCodeLines = markdown => {
+    let isOpen = false
+    return markdown.replace(
+      /(?:(\n\n|^)([ \t]*))?\n```\n/g,
+      (fence, paragraphEnd, indent, at) => {
+        const isNextLine = isOpen && paragraphEnd !== undefined
+        if (markdown.startsWith('```\n', at + fence.length)) {
+          isOpen = false
+          return isNextLine ? `\n${indent}\n` : fence
+        }
+        if (isNextLine) return `\n${indent}`
+        isOpen = !isOpen
+        if (!isOpen || !indent) return fence
+        return `${paragraphEnd}\`\`\`\n${indent}`
+      }
     )
-    const isCrossing = tables.size > 1
+  }
+
+  // An answer is text: it cannot give back a chart, an equation, an endnote,
+  // a field, a form, a comment or a page break, nor take the place of the end
+  // of a section. It gives back a footnote, a link to a place of the document
+  // and a drawing by their markers.
+  const KEPT =
+    /"type":"(chartSpace|paraMath|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
+  const canReplace = () => {
+    const tables = new Map()
+    paragraphs.forEach(paragraph => {
+      const table = paragraph.GetParentTableCell()?.GetParentTable()
+      if (table) tables.set(table.GetInternalId(), table)
+    })
+    const isCrossing =
+      tables.size > 1 ||
+      (tables.size === 1 &&
+        paragraphs.some(paragraph => !paragraph.GetParentTableCell()))
+    // Across the edge of a table, an answer is written in the cells of one
+    // or two tables, not of a table in a table
+    const isWritable =
+      !isCrossing ||
+      (tables.size <= 2 &&
+        [...tables.values()].every(table => !table.GetParentTableCell()))
     // The copy of the selection leaves the ends of sections out
     const isEndingSection = paragraphs
       .slice(0, -1)
       .some(paragraph => JSON.parse(paragraph.ToJSON(false, false)).pPr?.sectPr)
     return (
-      !isCrossing &&
+      isWritable &&
       !isEndingSection &&
-      !KEPT.test(selection.ToJSON(false, false))
+      !hasUnmarkedNote &&
+      !hasUnmarkedDrawing &&
+      !KEPT.test(selectionJson)
     )
   }
 
@@ -220,24 +318,470 @@ export function readContent() {
     return markdown.slice(mark.length)
   }
 
-  const content = describeMerges(doc.ToMarkdown())
+  // The editor's Markdown leaves the underline and the note references out:
+  // each run of the selection is found in it after the run before it, out of
+  // the tags and the addresses of the links, an underlined one is put between
+  // <u> tags, and a note reference gives a marker
+  const decorate = (selectedParagraphs, markdown) => {
+    const from = selection.GetStartPos()
+    const to = selection.GetEndPos()
+    const parts = []
+    let copied = 0
+    let at = 0
+    let hasParagraphText = false
+
+    const replace = (start, end, text) => {
+      parts.push(markdown.slice(copied, start), text)
+      copied = end
+      at = end
+    }
+
+    // The ends of the selection in the first and the last paragraph, null in
+    // the paragraphs between them, which are whole: the positions of the
+    // editor are read there only, each read walks the document
+    let bounds = null
+    // The JSON of a run, read once
+    const jsons = new Map()
+    const readJson = run => {
+      if (!jsons.has(run)) jsons.set(run, run.ToJSON())
+      return jsons.get(run)
+    }
+
+    // The positions of a run count its characters
+    const getSelectedText = run => {
+      const text = run.GetText()
+      if (!bounds) return text
+      const start = run.GetRange().GetStartPos()
+      const clip = position =>
+        Math.min(Math.max(position - start, 0), text.length)
+      return text.slice(clip(bounds.from), clip(bounds.to))
+    }
+
+    // The selected texts of a run, apart: a line break, a tab or a drawing
+    // between them takes a position, and the Markdown writes it its own way
+    const getSelectedParts = run => {
+      const { content = [] } = JSON.parse(readJson(run))
+      const parts = ['']
+      let position = bounds ? run.GetRange().GetStartPos() : 0
+      content.forEach(item => {
+        if (typeof item !== 'string') {
+          parts.push('')
+          position += 1
+          return
+        }
+        const clip = point =>
+          Math.min(Math.max(point - position, 0), item.length)
+        parts[parts.length - 1] += bounds
+          ? item.slice(clip(bounds.from), clip(bounds.to))
+          : item
+        position += item.length
+      })
+      return parts
+    }
+
+    // The editor gives the HTML characters of a text as entities: a < opens
+    // a tag
+    const ENTITIES = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }
+    const isInTag = index => {
+      const before = markdown.slice(at, index)
+      return before.lastIndexOf('<') > before.lastIndexOf('>')
+    }
+    const find = text => {
+      let index = markdown.indexOf(text, at)
+      while (index !== -1 && isInTag(index)) {
+        index = markdown.indexOf(text, index + 1)
+      }
+      return index
+    }
+
+    // Inside code the tags would be code: a block of code holds none, and a
+    // code span only around all of it
+    const FENCES = [...markdown.matchAll(/^[ \t]*```/gm)].map(
+      match => match.index
+    )
+    const isInFence = index =>
+      FENCES.filter(fence => fence < index).length % 2 === 1
+    const isInCode = index => {
+      const line = markdown.slice(markdown.lastIndexOf('\n', index) + 1, index)
+      return line.split('`').length % 2 === 0
+    }
+
+    // The marks the editor writes around a text: two for bold, one for italic,
+    // two for strikethrough; none in a code, which wins over them
+    const countMarks = textPr =>
+      (textPr.GetBold() ? 2 : 0) +
+      (textPr.GetItalic() ? 1 : 0) +
+      (textPr.GetStrikeout() ? 2 : 0)
+    const EMPHASIS = /[*_~]/
+    const WORD = /[\p{L}\p{N}]/u
+
+    // Between a text and the marks of an emphasis that goes on past it, the
+    // tags would break the marks that touch a word
+    const isBreakingMarks = (start, end) => {
+      let left = start
+      while (left > at && EMPHASIS.test(markdown[left - 1])) left -= 1
+      let right = end
+      while (EMPHASIS.test(markdown[right] ?? '')) right += 1
+      return (
+        (left < start && WORD.test(markdown[left - 1] ?? '')) ||
+        (right > end && WORD.test(markdown[right] ?? ''))
+      )
+    }
+
+    // Where the tags of an underlined text go: outside of the marks of its
+    // own emphasis or code, else next to it; nowhere when they would break
+    // the Markdown
+    const placeTags = (start, end, textPr) => {
+      if (isInFence(start)) return null
+      if (isInCode(start)) {
+        const isWhole =
+          start > at && markdown[start - 1] === '`' && markdown[end] === '`'
+        return isWhole ? [start - 1, end + 1] : null
+      }
+      const count = countMarks(textPr)
+      if (count === 0) return [start, end]
+      const opening = markdown.slice(start - count, start)
+      const isOwn =
+        start - count >= at &&
+        [...opening].every(char => EMPHASIS.test(char)) &&
+        markdown.slice(end, end + count) === [...opening].reverse().join('')
+      if (isOwn) return [start - count, end + count]
+      return isBreakingMarks(start, end) ? null : [start, end]
+    }
+
+    // The spaces of the run go inside the tags
+    const underline = ([placeStart, placeEnd], { lead, trail }) => {
+      let start = placeStart
+      let end = placeEnd
+      if (
+        start - lead.length >= at &&
+        markdown.startsWith(lead, start - lead.length)
+      ) {
+        start -= lead.length
+      }
+      if (markdown.startsWith(trail, end)) end += trail.length
+      replace(start, end, `<u>${markdown.slice(start, end)}</u>`)
+    }
+
+    // The Markdown writes a wide space as a space, and the HTML characters of
+    // a run that holds a drawing as they are
+    const WIDE_SPACE = /[\u2002\u3000]/g
+    const findText = text => {
+      const escaped = text.replace(/[&<>"']/g, char => ENTITIES[char])
+      const index = find(escaped)
+      if (index !== -1 || escaped === text)
+        return { index, length: escaped.length }
+      return { index: find(text), length: text.length }
+    }
+
+    const readText = (text, run) => {
+      const [, lead, core, trail] = text
+        .replace(WIDE_SPACE, ' ')
+        .match(/^(\s*)([\s\S]*?)(\s*)$/)
+      if (core === '') return
+      const { index, length } = findText(core)
+      if (index === -1) return
+      hasParagraphText = true
+      const textPr = run.GetTextPr()
+      const place = textPr.GetUnderline()
+        ? placeTags(index, index + length, textPr)
+        : null
+      if (!place) {
+        at = index + length
+        return
+      }
+      underline(place, { lead, trail })
+    }
+
+    const readRun = run => {
+      getSelectedParts(run).forEach(part => readText(part, run))
+    }
+
+    // The plain text of the first paragraph of a note, from the JSON of the
+    // run of its reference
+    const readNoteText = footnote => {
+      const readText = element =>
+        (element.content ?? [])
+          .map(item => {
+            if (typeof item === 'string') return item
+            if (['tab', 'break'].includes(item.type)) return ' '
+            return ['run', 'hyperlink'].includes(item.type)
+              ? readText(item)
+              : ''
+          })
+          .join('')
+      const [first] = footnote.content
+      return first ? readText(first).trim() : ''
+    }
+
+    // A note is given after the text before its reference, out of a link,
+    // and after the mark of its paragraph when it comes first there. A
+    // marker would be text in a code, and an answer writes no note in a cell:
+    // a note there gives none.
+    const hasNotes = NOTE_REFERENCE.test(selectionJson)
+    const PARAGRAPH_START = /[*_~]*\s*(?:#{1,6} |> ?|(?:[*+-]|\d+[.)]) )?/y
+    const findNotePoint = () => {
+      if (hasParagraphText) return at
+      PARAGRAPH_START.lastIndex = Math.max(at, paragraphStart)
+      PARAGRAPH_START.test(markdown)
+      return PARAGRAPH_START.lastIndex
+    }
+    const addNoteMarkers = (run, paragraph) => {
+      const json = readJson(run)
+      if (!NOTE_REFERENCE.test(json)) return
+      const range = bounds ? run.GetRange() : null
+      if (range?.GetStartPos() >= to || range?.GetEndPos() <= from) return
+      const point = findNotePoint()
+      if (
+        paragraph.GetParentTableCell() ||
+        isInFence(point) ||
+        isInCode(point)
+      ) {
+        hasUnmarkedNote = true
+        return
+      }
+      JSON.parse(json).footnotes.forEach(footnote => {
+        notes.push(readNoteText(footnote))
+        replace(point, point, `[^scribe-fn-${notes.length}]`)
+      })
+    }
+
+    // The builder lists no bookmark whose name starts with `_`, as the one
+    // Word and the editor put on a heading a link goes to: the JSON of the
+    // headings has them. A link whose bookmark is gone goes to the heading.
+    let headingBookmarks = null
+    const readBookmarks = paragraph =>
+      JSON.parse(paragraph.ToJSON(false, false))
+        .content.filter(element => element.type === 'bookmarkStart')
+        .map(element => element.name)
+    const getRefKind = anchor => {
+      if (!anchor.startsWith('_')) return 'bookmark'
+      if (!headingBookmarks) {
+        headingBookmarks = new Set(
+          doc.GetAllHeadingParagraphs().flatMap(readBookmarks)
+        )
+      }
+      return headingBookmarks.has(anchor) ? 'bookmark' : 'heading'
+    }
+
+    // The editor gives a link to a place of the document, which has no
+    // address, as `[text]()` with its text as it is (`[1]` gives `[[1]]()`),
+    // `[text](#anchor)` since its version 10, and the part of it a selection
+    // cuts as plain text. A `}` would end the marker; in a cell or a code the
+    // link stays, and an answer gives back its text. The marks of an emphasis
+    // of the whole text go around the marker.
+    const findRefLinkEnd = (start, anchor) =>
+      [']()', `](#${anchor})`]
+        .map(ending => ({ ending, index: markdown.indexOf(ending, start) }))
+        .filter(({ index }) => index !== -1)
+        .sort((a, b) => a.index - b.index)[0] ?? { ending: '', index: -1 }
+    const LINK_MARKS = /[*_~`\\]/g
+    const EDGE_MARKS = /^([*_~]*)[\s\S]*?([*_~]*)$/
+    const isSameText = (a, b) =>
+      a.replace(LINK_MARKS, '').trim() === b.replace(LINK_MARKS, '').trim()
+    const wrapInMarks = (marker, linkText, text) => {
+      const [, open, close] = linkText.match(EDGE_MARKS)
+      const isWrapped =
+        open !== '' &&
+        open === [...close].reverse().join('') &&
+        !text.trimStart().startsWith(open)
+      return isWrapped ? `${open}${marker}${close}` : marker
+    }
+    const addRefMarker = (hyperlink, runs, paragraph) => {
+      if (hyperlink.GetLinkedText() || paragraph.GetParentTableCell()) {
+        return false
+      }
+      const { anchor } = JSON.parse(hyperlink.ToJSON())
+      const text = runs
+        .map(getSelectedText)
+        .join('')
+        .replace(/[&<>"']/g, char => ENTITIES[char])
+      const start = markdown.indexOf('[', at)
+      const { ending, index: end } =
+        start === -1 || !anchor
+          ? { ending: '', index: -1 }
+          : findRefLinkEnd(start, anchor)
+      const linkText = markdown.slice(start + 1, end)
+      const isMarked =
+        Boolean(anchor) &&
+        end !== -1 &&
+        text.trim() !== '' &&
+        !text.includes('}') &&
+        isSameText(linkText, text) &&
+        !isInFence(start) &&
+        !isInCode(start)
+      if (!isMarked) return false
+      refs.push({ anchor, kind: getRefKind(anchor) })
+      hasParagraphText = true
+      const marker = `{{REF:scribe-ref-${refs.length}:${text}}}`
+      replace(start, end + ending.length, wrapInMarks(marker, linkText, text))
+      return true
+    }
+
+    // A drawing the editor's Markdown does not give is given after the text
+    // before it, out of a code
+    const addDrawingMarkers = run => {
+      if (unlisted.length === 0) return
+      const range = run.GetRange()
+      const isInRun = ({ place }) =>
+        place >= range?.GetStartPos() && place < range?.GetEndPos()
+      unlisted.filter(isInRun).forEach(({ number }) => {
+        const point = findNotePoint()
+        if (isInFence(point) || isInCode(point)) {
+          hasUnmarkedDrawing = true
+          return
+        }
+        const space = /\S/.test(markdown[point - 1] ?? '') ? ' ' : ''
+        replace(point, point, `${space}![image ${number}]`)
+      })
+    }
+
+    // An address may hold parentheses, in pairs, as `Mercury_(planet)`
+    const LINK_END = /[*_~`]*\]\((?:[^()]|\([^()]*\))*\)/y
+    // A paragraph of another cell is after the tag of its cell, and one out
+    // of a table after the end of the table: a marker that comes before its
+    // text goes there, not at the end of the text before
+    let lastCell = null
+    let paragraphStart = 0
+    const CELL_START = /<td\b[^>]*>/g
+    const TABLE_END = '</table>'
+    const findParagraphStart = paragraph => {
+      const id = paragraph.GetParentTableCell()?.GetInternalId() ?? null
+      const isOtherCell = id !== null && id !== lastCell
+      const isAfterTable = id === null && lastCell !== null
+      lastCell = id
+      if (isOtherCell) {
+        CELL_START.lastIndex = at
+        return CELL_START.exec(markdown) ? CELL_START.lastIndex : at
+      }
+      const index = isAfterTable ? markdown.indexOf(TABLE_END, at) : -1
+      return index === -1 ? at : index + TABLE_END.length
+    }
+
+    selectedParagraphs.forEach((paragraph, index) => {
+      hasParagraphText = false
+      paragraphStart = findParagraphStart(paragraph)
+      const isEdge = index === 0 || index === selectedParagraphs.length - 1
+      bounds = isEdge ? { from, to } : null
+      const addMarkers = run => {
+        if (hasNotes) addNoteMarkers(run, paragraph)
+        addDrawingMarkers(run)
+      }
+      for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+        const element = paragraph.GetElement(i)
+        if (element.GetClassType() === 'run') {
+          readRun(element)
+          addMarkers(element)
+        }
+        if (element.GetClassType() !== 'hyperlink') continue
+        const runs = []
+        for (let j = 0; j < element.GetElementsCount(); j += 1) {
+          const child = element.GetElement(j)
+          if (child) runs.push(child)
+        }
+        if (!addRefMarker(element, runs, paragraph)) {
+          runs.forEach(readRun)
+          LINK_END.lastIndex = at
+          if (LINK_END.test(markdown)) at = LINK_END.lastIndex
+        }
+        runs.forEach(addMarkers)
+      }
+    })
+    parts.push(markdown.slice(copied))
+    return parts.join('')
+  }
+
+  // The editor's Markdown gives each picture as `![](its address)`, in the
+  // order of the drawings, and no other drawing, as a shape. The drawings are
+  // numbered when the pictures are all there.
+  const PICTURE = /!\[\]\([^)]*\)/g
+  const markdown = joinCodeLines(doc.ToMarkdown())
+  const drawings =
+    paragraphs.length > 0
+      ? findSelectedDrawings(selection.GetStartPos(), selection.GetEndPos())
+      : []
+  const isPicture = ({ drawing }) => drawing.GetClassType() === 'image'
+  const isNumbered =
+    drawings !== null &&
+    drawings.filter(isPicture).length === (markdown.match(PICTURE)?.length ?? 0)
+  const numbered = isNumbered
+    ? drawings.map((found, index) => ({ ...found, number: index + 1 }))
+    : []
+  const pictureNumbers = numbered.filter(isPicture).map(({ number }) => number)
+  const unlisted = numbered.filter(found => !isPicture(found))
+  hasUnmarkedDrawing =
+    paragraphs.length > 0 &&
+    (drawings === null || (!isNumbered && drawings.length > 0))
+  // A marker would be text in a code
+  const isInCodeText = (text, index) => {
+    const fences = text.slice(0, index).match(/^[ \t]*```/gm)?.length ?? 0
+    const line = text.slice(text.lastIndexOf('\n', index) + 1, index)
+    return fences % 2 === 1 || line.split('`').length % 2 === 0
+  }
+  const numberPictures = text => {
+    let next = 0
+    return text.replace(PICTURE, (picture, index) => {
+      const number = pictureNumbers[next]
+      next += 1
+      if (!number) return '[image]'
+      if (!isInCodeText(text, index)) return `![image ${number}]`
+      hasUnmarkedDrawing = true
+      return '[image]'
+    })
+  }
+
+  const decorated = describeMerges(
+    hasSelection ? decorate(paragraphs, markdown) : markdown
+  )
+  const content = numberPictures(
+    hasSelection ? removeMark(decorated) : decorated
+  )
   return {
-    content: hasSelection ? removeMark(content) : content,
+    content,
     target: hasSelection ? 'selection' : 'document',
-    canReplace: hasSelection && !isLocked && canReplace()
+    canReplace: hasSelection && !isLocked && canReplace(),
+    notes,
+    refs,
+    imageCount: numbered.length
   }
 }
 
 /**
  * Writes the blocks of an answer in the document, with the styles of the
- * document: in place of the selection (`Asc.scope.isReplace`), or after its
- * paragraph. The new text is left selected: the user sees it, and the next
- * answer can replace it.
+ * document: in place of the selection (`Asc.scope.isReplace`), or else at its
+ * end or at the cursor: in the line when that is inside a text, after the
+ * paragraph otherwise. The new text is left selected: the user sees it, and
+ * the next answer can replace it. The marker of an image, `![image K]`, is a
+ * copy of the drawing of the selection it names: the K-th one, when the
+ * selection holds as many drawings as the text read gave markers
+ * (`Asc.scope.imageCount`), or, over an answer written for the same text, the
+ * copy written for K (`Asc.scope.writtenImages`, the markers its drawings
+ * were copies for).
  *
- * @returns {boolean} false when there was nowhere to write
+ * @returns {{ written: boolean, skippedCells: number, images: number[] }}
+ * whether the answer was written, not when there was nowhere to write, the
+ * count of the selected cells the answer had no cell for, and the marker each
+ * drawing of the answer left selected is a copy for, null when not known
  */
 export function writeBlocks() {
-  const { blocks, isReplace } = Asc.scope
+  const {
+    notes = [],
+    refs = [],
+    imageCount = 0,
+    writtenImages = null
+  } = Asc.scope
+  // An image block is a paragraph of its image
+  const blocks = Asc.scope.blocks.map(block =>
+    block.type === 'image'
+      ? { ...block, spans: [{ image: block.image }] }
+      : block
+  )
   const doc = Api.GetDocument()
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
@@ -245,12 +789,119 @@ export function writeBlocks() {
   // A cursor is no selection: once the document has been read, the editor
   // gives for it an empty range in the first cell of its table
   const range = doc.GetRangeBySelect()
-  const selection =
+  let selection =
     range && range.GetStartPos() < range.GetEndPos() ? range : null
-  const paragraphs = selection?.GetAllParagraphs() ?? []
+  let paragraphs = selection?.GetAllParagraphs() ?? []
+
+  // The runs of a paragraph, those of its links included: the builder gives
+  // nothing for another element of a link, as a bookmark or a comment
+  const getRuns = paragraph => {
+    const runs = []
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        const child = element.GetElement(j)
+        if (child) runs.push(child)
+      }
+    }
+    return runs
+  }
+
+  // The drawings of a range, in their order, with their places, as
+  // `readContent` numbers them: a position counts each character and each
+  // drawing of a run
+  const findDrawingPlaces = paragraph =>
+    getRuns(paragraph).flatMap(run => {
+      const { content } = JSON.parse(run.ToJSON())
+      if (!content.some(item => item.type === 'paraDrawing')) return []
+      let at = run.GetRange().GetStartPos()
+      return content.flatMap(item => {
+        const place = at
+        at += typeof item === 'string' ? item.length : 1
+        return item.type === 'paraDrawing' ? [place] : []
+      })
+    })
+  const findDrawings = selected => {
+    if (!selected || selected.GetStartPos() >= selected.GetEndPos()) return []
+    const from = selected.GetStartPos()
+    const to = selected.GetEndPos()
+    const found = []
+    for (const paragraph of selected.GetAllParagraphs() ?? []) {
+      const id = paragraph.GetInternalId()
+      const drawings = paragraph
+        .GetAllDrawingObjects()
+        .filter(drawing => drawing.GetParentParagraph()?.GetInternalId() === id)
+      const places = drawings.length > 0 ? findDrawingPlaces(paragraph) : []
+      if (places.length !== drawings.length) return []
+      drawings.forEach((drawing, i) => {
+        const place = places[i]
+        if (place >= from && place < to) found.push({ drawing, place })
+      })
+    }
+    return found
+  }
+
+  // Read before anything changes. A selection that does not hold as many
+  // drawings as its markers name, as after an undo, may not hold the ones
+  // they name: each image is then written as its text.
+  const drawings = findDrawings(selection).map(({ drawing }) => drawing)
+  const findOriginal = number => {
+    if (writtenImages?.length === drawings.length) {
+      return drawings[writtenImages.indexOf(number)] ?? null
+    }
+    if (drawings.length !== imageCount) return null
+    return drawings[number - 1] ?? null
+  }
+  // The blocks in the order of the document once written
+  let writtenBlocks = blocks
+  // A copy keeps the wrapping of a floating drawing, and takes the
+  // alternative text, the name and the link of the original
+  const copyOf = number => {
+    const original = findOriginal(number)
+    const copy = original?.Copy() ?? null
+    copy?.SetDrawingPrFromDrawing(original)
+    return copy
+  }
   // The editor writes a table in a table over its cells: a table of the
   // answer goes under the table of the selection, out of any other one
   const hasTable = blocks.some(block => block.type === 'table')
+  // A selection across the edge of a table: a text and cells, or the cells
+  // of two tables
+  const tableIds = new Set(
+    paragraphs
+      .map(paragraph => paragraph.GetParentTableCell()?.GetParentTable())
+      .filter(Boolean)
+      .map(table => table.GetInternalId())
+  )
+  const isCrossing =
+    tableIds.size > 1 ||
+    (tableIds.size === 1 &&
+      paragraphs.some(paragraph => !paragraph.GetParentTableCell()))
+  // The markers of the images of blocks, in their order
+  function listImages(listed) {
+    return listed.flatMap(block => {
+      if (block.type === 'table') {
+        return block.rows
+          .flat()
+          .flatMap(cell => listImages(cell.blocks ?? [cell]))
+      }
+      return (block.spans ?? [])
+        .filter(span => span.image !== undefined)
+        .map(span => span.image)
+    })
+  }
+  // An image of the text read that the answer keeps, but whose drawing is no
+  // more known, as after an undo and a redo, would be lost: the answer is
+  // inserted, and the drawings stay
+  const isLosingImage = listImages(blocks).some(
+    number => number <= imageCount && findOriginal(number) === null
+  )
+  // Across it, an answer takes the place of the selection when it mirrors
+  // its shape, with a table: another one, as a summary, is inserted
+  const isReplace =
+    Asc.scope.isReplace && (hasTable || !isCrossing) && !isLosingImage
   const findOuterTable = table => {
     let outer = table
     while (outer.GetParentTableCell()) {
@@ -262,6 +913,7 @@ export function writeBlocks() {
   let textPr = null
   const numberings = {}
   let lastWritten = null
+  let skippedCells = 0
 
   // The look of most of the text of a paragraph: a word set apart, as a word
   // in italics or a link, does not give its look to a new paragraph
@@ -280,9 +932,7 @@ export function writeBlocks() {
 
   // A text written in place of a selected one has the look of its first
   // character, as a text typed over it
-  const findStartLook = () => {
-    const start = selection.GetStartPos()
-    const paragraph = paragraphs[0]
+  const findStartLook = (paragraph, start) => {
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
       const isText =
@@ -294,27 +944,58 @@ export function writeBlocks() {
     return findMainLook(paragraph)
   }
 
+  // A reference the text read did not give stays plain text
+  const isKnownRef = span =>
+    span.ref !== undefined && typeof refs[span.ref - 1]?.anchor === 'string'
+
+  // A note takes the place of its placeholder once the answer is written:
+  // the editor adds a note at the cursor only. The text of a reference,
+  // between its placeholders, then becomes a link.
+  const makeRunText = span => {
+    if (span.image !== undefined) return '[image]'
+    if (span.note !== undefined) return `\uFDD0fn:${span.note}\uFDD0`
+    if (!isKnownRef(span)) return span.text
+    return `\uFDD0ref:${span.ref}\uFDD0${span.text}\uFDD0/ref\uFDD0`
+  }
+
   const makeRun = (span, textPr) => {
     const run = Api.CreateRun()
     if (textPr) run.SetTextPr(textPr)
-    run.AddText(span.text)
+    const copy = span.image === undefined ? null : copyOf(span.image)
+    if (copy) run.AddDrawing(copy)
+    else run.AddText(makeRunText(span))
     // The emphasis is the one of the answer, over the one of the style
     run.SetBold(span.isBold ? true : undefined)
     run.SetItalic(span.isItalic ? true : undefined)
     run.SetStrikeout(span.isStrike ? true : undefined)
+    run.SetUnderline(span.isUnderline ? true : undefined)
     if (span.isCode) run.SetFontFamily('Courier New')
     return run
   }
 
+  // A link has no underline of its own: its runs have
+  const makeHyperlink = span => {
+    const hyperlink = Api.CreateHyperlink(span.href, span.text)
+    if (!span.isUnderline) return hyperlink
+    for (let i = 0; i < hyperlink.GetElementsCount(); i += 1) {
+      hyperlink.GetElement(i).SetUnderline(true)
+    }
+    return hyperlink
+  }
+
+  // A marker the text read did not give has no note: a placeholder written
+  // for it would stay in the text where the answer is not left selected
+  const isUnknownNote = span =>
+    span.note !== undefined && typeof notes[span.note - 1] !== 'string'
+
   const addSpans = (paragraph, spans, textPr) => {
     spans.forEach(span => {
+      if (isUnknownNote(span)) return
       if (span.isBreak) {
         paragraph.AddLineBreak()
         return
       }
-      const element = span.href
-        ? Api.CreateHyperlink(span.href, span.text)
-        : makeRun(span, textPr)
+      const element = span.href ? makeHyperlink(span) : makeRun(span, textPr)
       paragraph.AddElement(element)
       lastWritten = element
     })
@@ -372,12 +1053,40 @@ export function writeBlocks() {
           column,
           colSpan,
           rowSpan,
-          spans: cell.spans
+          spans: cell.spans,
+          blocks: cell.blocks
         })
         column += colSpan
       })
     })
     return cells
+  }
+
+  const makeMarkerText = ({ note, ref, ...span }) => {
+    if (note !== undefined) return { text: `[^scribe-fn-${note}]` }
+    if (ref === undefined) return span
+    return { ...span, text: `{{REF:scribe-ref-${ref}:${span.text}}}` }
+  }
+
+  // The spans of each paragraph a cell of an answer is written in: a heading
+  // or an item of a list is a plain paragraph in a cell, and the marker of a
+  // note or of a reference stays text
+  const getCellParagraphs = answerCell =>
+    (answerCell.blocks ?? [answerCell]).map(block =>
+      block.spans.map(makeMarkerText)
+    )
+
+  // The first paragraph of a cell takes the first spans, and empty copies of
+  // it, which keep its look, the next ones
+  const writeCellParagraphs = (content, paragraphSpans, textPr) => {
+    const paragraph = content.GetElement(0)
+    const paragraphs = paragraphSpans.map((spans, index) =>
+      index === 0 ? paragraph : paragraph.Copy()
+    )
+    paragraphs.forEach((written, index) => {
+      if (index > 0) content.AddElement(index, written)
+      addSpans(written, paragraphSpans[index], textPr)
+    })
   }
 
   const makeTable = rows => {
@@ -399,7 +1108,7 @@ export function writeBlocks() {
     })
     cells.forEach(cell => {
       const content = table.GetCell(cell.row, cell.column).GetContent()
-      addSpans(content.GetElement(0), cell.spans, textPr)
+      writeCellParagraphs(content, getCellParagraphs(cell), textPr)
     })
     // A merge takes the cells on its right in its rows: the rightmost ones
     // are merged first, while their cells are still where they were laid
@@ -418,6 +1127,27 @@ export function writeBlocks() {
     return table
   }
 
+  // A line of code is a paragraph of its own, light on a dark shading: of
+  // the look of the text around it, it takes the size only
+  const makeCodeParagraphs = block => {
+    const codePr = Api.CreateTextPr()
+    codePr.SetColor(212, 212, 212)
+    const size = textPr?.GetFontSize()
+    if (size) codePr.SetFontSize(size)
+    return block.lines.map(line => {
+      const paragraph = makeParagraph(
+        [{ text: line, isCode: true }],
+        null,
+        codePr
+      )
+      paragraph.SetShd('clear', 40, 44, 52)
+      paragraph.SetSpacingBefore(0)
+      paragraph.SetSpacingAfter(0)
+      return paragraph
+    })
+  }
+
+  // The elements of a block: several paragraphs for a block of code
   const makeElement = block => {
     // A heading has the look of its style only
     if (block.type === 'heading') {
@@ -428,7 +1158,20 @@ export function writeBlocks() {
     }
     if (block.type === 'listItem') return makeListItem(block)
     if (block.type === 'table') return makeTable(block.rows)
+    if (block.type === 'code') return makeCodeParagraphs(block)
     return makeParagraph(block.spans, null, textPr)
+  }
+
+  // Cells by row, each row with its cells in order
+  function groupByRow(cells) {
+    const rows = new Map()
+    cells.forEach(cell => {
+      if (!rows.has(cell.GetRowIndex())) rows.set(cell.GetRowIndex(), [])
+      rows.get(cell.GetRowIndex()).push(cell)
+    })
+    return [...rows.keys()]
+      .sort((a, b) => a - b)
+      .map(row => rows.get(row).sort((a, b) => a.GetIndex() - b.GetIndex()))
   }
 
   // The cells the selection takes, when it takes several cells of one table:
@@ -450,22 +1193,13 @@ export function writeBlocks() {
     if (tables.size !== 1) return null
     const [{ table, cells }] = tables.values()
     if (cells.size < 2) return null
-    const rows = new Map()
-    cells.forEach(cell => {
-      if (!rows.has(cell.GetRowIndex())) rows.set(cell.GetRowIndex(), [])
-      rows.get(cell.GetRowIndex()).push(cell)
-    })
-    return {
-      table,
-      rows: [...rows.keys()]
-        .sort((a, b) => a - b)
-        .map(row => rows.get(row).sort((a, b) => a.GetIndex() - b.GetIndex()))
-    }
+    return { table, rows: groupByRow(cells) }
   }
 
   // Writes the text of an answer in a cell, in the look of its text, with
-  // the emphasis of the answer added
-  const fillCell = (cell, spans) => {
+  // the emphasis of the answer added: a cell the answer has none for is
+  // emptied
+  const fillCell = (cell, answerCell = { spans: [] }) => {
     const content = cell.GetContent()
     const paragraph = content.GetElement(0)
     const first = paragraph.GetElement(0)
@@ -474,12 +1208,16 @@ export function writeBlocks() {
       content.RemoveElement(i)
     }
     paragraph.RemoveAllElements()
-    const kept = spans.map(span => ({
+    const keepLook = span => ({
       ...span,
       isBold: span.isBold || textPr?.GetBold() === true,
-      isItalic: span.isItalic || textPr?.GetItalic() === true
-    }))
-    addSpans(paragraph, kept, textPr)
+      isItalic: span.isItalic || textPr?.GetItalic() === true,
+      isUnderline: span.isUnderline || textPr?.GetUnderline() === true
+    })
+    const paragraphSpans = getCellParagraphs(answerCell).map(spans =>
+      spans.map(keepLook)
+    )
+    writeCellParagraphs(content, paragraphSpans, textPr)
   }
 
   // The cells of a table that are not merged into one above them
@@ -507,13 +1245,101 @@ export function writeBlocks() {
   // table when they are all of its cells
   const fillCells = (selectedCells, table) => {
     selectedCells.rows.forEach((cells, i) => {
-      cells.forEach((cell, j) => fillCell(cell, table.rows[i][j].spans))
+      cells.forEach((cell, j) => fillCell(cell, table.rows[i][j]))
     })
     const cellCount = countSelected(selectedCells.rows)
     if (cellCount === countCells(selectedCells.table)) {
       selectedCells.table.Select()
     }
   }
+
+  // Rows and columns are added and removed through one of their cells: a
+  // merged cell would be cut, a table in that cell would take the change,
+  // and in rows of different lengths the cells of an index are not a column.
+  // The editor marks the cells of a row it adds as starting a merge: a merge
+  // is told by the cells that continue it.
+  function canReshape(table) {
+    const isRegular = JSON.parse(table.ToJSON()).content.every(
+      ({ trPr, content }) =>
+        !trPr?.gridBefore &&
+        !trPr?.gridAfter &&
+        content.every(
+          cell =>
+            cell.tcPr?.vMerge !== 'continue' && (cell.tcPr?.gridSpan ?? 1) === 1
+        )
+    )
+    return isRegular && table.GetTables().length === 0
+  }
+
+  function hasSpans(answerTable) {
+    return answerTable.rows.some(row =>
+      row.some(cell => (cell.colSpan ?? 1) > 1 || (cell.rowSpan ?? 1) > 1)
+    )
+  }
+
+  // Added rows and columns take the look of the last ones
+  const shapeCopy = (copy, answerTable) => {
+    const rowCount = answerTable.rows.length
+    const columnCount = Math.max(...answerTable.rows.map(row => row.length))
+    const copyRows = copy.GetRowsCount()
+    const copyColumns = copy.GetRow(0).GetCellsCount()
+    for (let r = copyRows - 1; r >= rowCount; r -= 1) {
+      copy.RemoveRow(copy.GetCell(r, 0))
+    }
+    if (copyRows < rowCount) {
+      copy.AddRows(copy.GetCell(copyRows - 1, 0), rowCount - copyRows)
+    }
+    for (let c = copyColumns - 1; c >= columnCount; c -= 1) {
+      copy.RemoveColumn(copy.GetCell(0, c))
+    }
+    if (copyColumns < columnCount) {
+      const last = copy.GetCell(0, copyColumns - 1)
+      copy.AddColumns(last, columnCount - copyColumns)
+    }
+    for (let r = 0; r < rowCount; r += 1) {
+      for (let c = 0; c < columnCount; c += 1) {
+        fillCell(copy.GetCell(r, c), answerTable.rows[r][c])
+      }
+    }
+    return copy
+  }
+
+  // A copy of the table of the selected cells, which keeps its borders,
+  // widths and fonts, with the cells of an answer in place of the selected
+  // ones. Cut down to the selected rows and columns, it takes the shape of
+  // the answer; a table that cannot be cut stays whole, for an answer of the
+  // shape of the cells only.
+  const makeTableCopy = ({ table, rows }, answerTable, isReshapable) => {
+    if (!isReshapable) {
+      if (!hasSameShape({ rows }, answerTable)) return null
+      const copy = table.Copy()
+      rows.forEach((cells, i) => {
+        cells.forEach((cell, j) => {
+          const copied = copy.GetCell(cell.GetRowIndex(), cell.GetIndex())
+          fillCell(copied, answerTable.rows[i][j])
+        })
+      })
+      return copy
+    }
+    if (hasSpans(answerTable)) return null
+    const copy = table.Copy()
+    const selectedRows = rows.map(cells => cells[0].GetRowIndex())
+    const selectedColumns = rows[0].map(cell => cell.GetIndex())
+    for (let r = copy.GetRowsCount() - 1; r >= 0; r -= 1) {
+      if (!selectedRows.includes(r)) copy.RemoveRow(copy.GetCell(r, 0))
+    }
+    for (let c = copy.GetRow(0).GetCellsCount() - 1; c >= 0; c -= 1) {
+      if (!selectedColumns.includes(c)) copy.RemoveColumn(copy.GetCell(0, c))
+    }
+    return shapeCopy(copy, answerTable)
+  }
+
+  // A whole table replaced by a table of another shape: a copy of it in that
+  // shape keeps its look
+  const reshapeTable = (table, answerTable, isReshapable) =>
+    isReshapable && !hasSpans(answerTable)
+      ? shapeCopy(table.Copy(), answerTable)
+      : null
 
   // The text of the selected paragraphs before and after the selection
   const getAround = () => {
@@ -537,19 +1363,40 @@ export function writeBlocks() {
       first.GetRange().GetEndPos()
     )
     const isEndOfLine =
-      getText(part).trim() === '' && getText(first).trim() !== ''
+      getText(part).trim() === '' &&
+      getText(first).trim() !== '' &&
+      !holdsMarked(part.GetStartPos(), part.GetEndPos())
     if (!next || !isEndOfLine) return
     paragraphs.shift()
     selection.SetStartPos(next.GetRange().GetStartPos())
   }
 
-  // Moves an end of the selection over what the answer does not replace
-  const shrinkSelection = (isStart, isOut) => {
-    let start = selection.GetStartPos()
-    let end = selection.GetEndPos()
-    while (end > start && isOut(getText(selection))) {
-      if (isStart) selection.SetStartPos((start += 1))
-      else selection.SetEndPos((end -= 1))
+  // A selection to the start of a line of text, as Shift+Down makes it,
+  // holds nothing of it: the answer goes under the paragraph above
+  const skipStartOfLine = () => {
+    const last = paragraphs[paragraphs.length - 1]
+    const previous = paragraphs[paragraphs.length - 2]
+    if (!previous || getText(last).trim() === '') return
+    if (selection.GetEndPos() > last.GetRange().GetStartPos()) return
+    paragraphs.pop()
+    selection.SetEndPos(previous.GetRange().GetEndPos())
+  }
+
+  // A drawing or a note reference takes a position, and has no text
+  const MARKED = /"type":"(paraDrawing|footnoteRef)"/
+  const holdsMarked = (from, to) =>
+    MARKED.test(doc.GetRange(from, to).ToJSON(false, false))
+
+  // Moves an end of a range over what the answer does not replace: never
+  // over a drawing or a note, which the text read gave a marker
+  const shrinkRange = (range, isStart, isOut) => {
+    let start = range.GetStartPos()
+    let end = range.GetEndPos()
+    while (end > start && isOut(getText(range))) {
+      const [from, to] = isStart ? [start, start + 1] : [end - 1, end]
+      if (holdsMarked(from, to)) return
+      if (isStart) range.SetStartPos((start += 1))
+      else range.SetEndPos((end -= 1))
     }
   }
 
@@ -557,29 +1404,33 @@ export function writeBlocks() {
   // the mark that ends the last one is kept, and the spaces around a part of
   // a paragraph, which the answer of the LLM never has
   const fitSelection = isWhole => {
-    shrinkSelection(false, text => text.endsWith('\n'))
+    shrinkRange(selection, false, text => text.endsWith('\n'))
     if (!isWhole) {
-      shrinkSelection(true, text => /^\s/.test(text))
-      shrinkSelection(false, text => /\s$/.test(text))
+      shrinkRange(selection, true, text => /^\s/.test(text))
+      shrinkRange(selection, false, text => /\s$/.test(text))
     }
     selection.Select()
   }
 
-  // An answer to the cells of a table goes under the table. A whole table
-  // replaced by an answer of another shape goes away: the answer takes its
-  // place.
-  const placeAfterTable = (placeholder, { table: selectedTable, rows }) => {
+  // A whole table replaced by an answer that does not fill it goes away: the
+  // answer takes its place, unless a table of the answer would then be in a
+  // table
+  const isReplacingTable = ({ table, rows }) =>
+    isReplace &&
+    countSelected(rows) === countCells(table) &&
+    (!hasTable || !table.GetParentTableCell())
+
+  // An answer to the cells of a table goes under the table, or in place of
+  // the whole table it replaces
+  const placeAfterTable = (placeholder, selectedTable, isWhole) => {
     const table = hasTable ? findOuterTable(selectedTable) : selectedTable
     const parent = table.GetParentTableCell()?.GetContent() ?? doc
     let index = table.GetPosInParent() + 1
-    const isWhole =
-      table === selectedTable && countSelected(rows) === countCells(table)
-    if (isReplace && isWhole) {
+    if (isWhole) {
       index -= 1
       table.Delete()
     }
     parent.AddElement(index, placeholder)
-    return true
   }
 
   // What the answer goes under: the last paragraph of the selection, or the
@@ -595,6 +1446,77 @@ export function writeBlocks() {
       )
     )
     return cell && cells.size > 1 ? cell.GetParentTable() : last
+  }
+
+  // The editor gives no range at a cursor, but the parts of its sentence
+  // before and after it: the cursor is where they meet, in its run. It gives
+  // no sentence that holds an image or a field, and a tab in it as a space.
+  const findCursorRange = paragraph => {
+    const current = doc.GetCurrentRun()
+    const before = doc.GetCurrentSentence('before')
+    const after = doc.GetCurrentSentence('after')
+    const isRead = typeof before === 'string' && typeof after === 'string'
+    if (!current || !isRead || (before === '' && after === '')) return null
+    const runs = getRuns(paragraph)
+    const getRunText = run => run.GetText({ TabSymbol: ' ' })
+    const text = runs.map(getRunText).join('')
+    const start = current.GetRange().GetStartPos()
+    // A sentence met twice in the run leaves the cursor unknown
+    const found = new Map()
+    let offset = 0
+    runs.forEach(run => {
+      const { length } = getRunText(run)
+      const isCurrent = run.GetRange().GetStartPos() === start
+      for (let k = 0; isCurrent && k <= length; k += 1) {
+        const at = offset + k
+        if (text.endsWith(before, at) && text.startsWith(after, at)) {
+          found.set(at, run.GetRange(k, k))
+        }
+      }
+      offset += length
+    })
+    return found.size === 1 ? [...found.values()][0] : null
+  }
+
+  // A text written in a link or in a content control, even at its edge,
+  // would become part of it: the link would take the answer
+  const isInLinkOrControl = (paragraph, point) => {
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      const isHolder = ['hyperlink', 'inlineLvlSdt'].includes(
+        element?.GetClassType()
+      )
+      const range = isHolder ? element.GetRange() : null
+      if (range && range.GetStartPos() <= point && point <= range.GetEndPos()) {
+        return true
+      }
+    }
+    return false
+  }
+
+  // Where an answer is inserted in the line of a text: at the end of the
+  // selection, or at the cursor, with the text of its paragraph on each side.
+  // At the end of a paragraph, in an empty one, after cells, in a link or a
+  // content control, or for an answer with a table, as a caption and its
+  // table, it is written in new paragraphs.
+  const findCursor = () => {
+    if (hasTable) return null
+    const paragraph = findAnchor()
+    if (paragraph?.GetClassType() !== 'paragraph') return null
+    const range = selection
+      ? doc.GetRange(selection.GetEndPos(), selection.GetEndPos())
+      : findCursorRange(paragraph)
+    if (!range) return null
+    const point = range.GetStartPos()
+    if (isInLinkOrControl(paragraph, point)) return null
+    const whole = paragraph.GetRange()
+    const after = getText(doc.GetRange(point, whole.GetEndPos())).replace(
+      /[\n\t]+$/,
+      ''
+    )
+    if (after.trim() === '') return null
+    const before = getText(doc.GetRange(whole.GetStartPos(), point))
+    return { paragraph, range, before, after }
   }
 
   // An empty paragraph has no text, and nothing but runs: not an image, a
@@ -630,13 +1552,8 @@ export function writeBlocks() {
   // Selects where the answer goes: a new paragraph after its anchor, or the
   // anchor itself when it is an empty paragraph, as the one of an empty
   // document
-  const selectPlaceholder = selectedCells => {
+  const selectPlaceholder = () => {
     const placeholder = Api.CreateParagraph()
-    if (selectedCells) {
-      placeAfterTable(placeholder, selectedCells)
-      placeholder.Select()
-      return true
-    }
     const anchor = findAnchor()
     if (!anchor) return false
     if (anchor.GetClassType() === 'table') {
@@ -713,6 +1630,20 @@ export function writeBlocks() {
     )
   }
 
+  // A text written in a line is kept apart from the text around it by a
+  // space on each side, unless there is one already
+  const addGlueSpaces = (spans, { before, after }) => {
+    const text = spans
+      .map(span => (span.isBreak ? '\n' : (span.text ?? '')))
+      .join('')
+    const space = { text: ' ' }
+    return [
+      ...(/\S$/.test(before) && /^\S/.test(text) ? [space] : []),
+      ...spans,
+      ...(/\S$/.test(text) && /^\S/.test(after) ? [space] : [])
+    ]
+  }
+
   // Writes elements in place of the selection, a single paragraph in its line
   // (`isInline`), and selects them
   const writeAnswer = (elements, isInline) => {
@@ -720,8 +1651,8 @@ export function writeBlocks() {
     if (!doc.InsertContent(elements, isInline)) return false
 
     const last = elements[elements.length - 1]
-    // The editor copies the blocks it cannot move, as a table written in a
-    // table: their place is unknown, and they are left unselected
+    // A block the editor copies instead of moving it has no known place: it
+    // is left unselected
     const isMoved = !isInline && last.GetPosInParent() !== -1
     if (isInline || isMoved) selectAnswer(start, isInline)
     if (isMoved) removeLeftParagraph(last)
@@ -731,15 +1662,15 @@ export function writeBlocks() {
   // In a part of the paragraphs, the answer joins the text around it, as a
   // pasted one: its first paragraph continues the text before the selection,
   // its last one the text after it, in the style of their paragraph. A
-  // heading, an item or a table stays a block of its own.
-  const writeAround = ({ before, after }) => {
+  // heading, an item, a table or a block of code stays a block of its own.
+  const writeAround = ({ before, after, isSpaced = false }) => {
     const isPlain = block => block.type === 'paragraph'
     const isJoiningBefore = before !== '' && isPlain(blocks[0])
     const isJoiningAfter =
       after !== '' && blocks.length > 1 && isPlain(blocks[blocks.length - 1])
     const middle = blocks
       .slice(isJoiningBefore ? 1 : 0, isJoiningAfter ? -1 : undefined)
-      .map(makeElement)
+      .flatMap(makeElement)
     const answerStart = selection.GetStartPos()
     // The editor gives the text before the selection to the first block it
     // writes: an empty copy of its paragraph takes it, with its style and its
@@ -762,16 +1693,28 @@ export function writeBlocks() {
     const parent = head.GetParentTableCell()?.GetContent() ?? doc
     const lastBlock = middle[middle.length - 1] ?? head
     const tail = parent.GetElement(lastBlock.GetPosInParent() + 1)
-    const writeInLine = (block, at) => {
+    // An insert has the spaces the text around it needs, a replace keeps the
+    // ones around the selection
+    const writeInLine = (block, around, at) => {
+      const spans = isSpaced ? addGlueSpaces(block.spans, around) : block.spans
       at.Select()
-      doc.InsertContent([makeParagraph(block.spans, null, textPr)], true)
+      doc.InsertContent([makeParagraph(spans, null, textPr)], true)
     }
     // The text before the selection has not moved
     if (isJoiningBefore) {
-      writeInLine(blocks[0], doc.GetRange(answerStart, answerStart))
+      writeInLine(
+        blocks[0],
+        { before, after: '' },
+        doc.GetRange(answerStart, answerStart)
+      )
     }
-    if (isJoiningAfter)
-      writeInLine(blocks[blocks.length - 1], tail.GetRange(0, 0))
+    if (isJoiningAfter) {
+      writeInLine(
+        blocks[blocks.length - 1],
+        { before: '', after },
+        tail.GetRange(0, 0)
+      )
+    }
 
     // The answer is left selected, without the text around it
     const startPos = isJoiningBefore
@@ -792,15 +1735,17 @@ export function writeBlocks() {
   }
 
   // A single paragraph is written in the line of the selection, and so is a
-  // single block in a part of a paragraph: the editor gives a part of a
-  // heading or of a list item with its mark, which the answer keeps
+  // single block, as a heading or an item, in a part of a paragraph: the
+  // paragraph keeps its own style. A table or a block of code stays a block
+  // of its own.
   const replaceText = () => {
     skipEndOfLine()
+    skipStartOfLine()
     const around = getAround()
     const isWhole = around.before === '' && around.after === ''
     const isPartOfParagraph = !isWhole && paragraphs.length === 1
     fitSelection(isWhole)
-    textPr = findStartLook()
+    textPr = findStartLook(paragraphs[0], selection.GetStartPos())
     // A heading numbered by its style is no list the items can join
     const [first] = paragraphs
     if (first.GetNumbering() && first.GetOutlineLvl() === undefined) {
@@ -810,20 +1755,245 @@ export function writeBlocks() {
     const isLine =
       blocks.length === 1 &&
       (block.type === 'paragraph' ||
-        (isPartOfParagraph && block.type !== 'table'))
+        (isPartOfParagraph && !['table', 'code'].includes(block.type)))
     if (isLine) {
       return writeAnswer([makeParagraph(block.spans, null, textPr)], true)
     }
-    if (isWhole) return writeAnswer(blocks.map(makeElement), false)
+    if (isWhole) return writeAnswer(blocks.flatMap(makeElement), false)
     return writeAround(getAround())
   }
 
-  const selectedCells = getSelectedCells()
-  if (canFillCells(selectedCells)) {
-    fillCells(selectedCells, blocks[0])
+  // An answer inserted in a line is written there as in place of an empty
+  // selection, in the look of most of the text of its paragraph
+  const insertAtCursor = ({ paragraph, range, before, after }) => {
+    selection = range
+    paragraphs = [paragraph]
+    textPr = findMainLook(paragraph)
+    range.Select()
+    const [block] = blocks
+    if (blocks.length === 1 && block.type === 'paragraph') {
+      const spans = addGlueSpaces(block.spans, { before, after })
+      return writeAnswer([makeParagraph(spans, null, textPr)], true)
+    }
+    return writeAround({ before, after, isSpaced: true })
+  }
+
+  // The selected text of a paragraph, without its mark nor the spaces around
+  // it, which the answer of a LLM never has
+  const findSelectedText = paragraph => {
+    const whole = paragraph.GetRange()
+    const range = doc.GetRange(
+      Math.max(whole.GetStartPos(), selection.GetStartPos()),
+      Math.min(whole.GetEndPos(), selection.GetEndPos())
+    )
+    shrinkRange(range, false, text => /\s$/.test(text))
+    shrinkRange(range, true, text => /^\s/.test(text))
+    return range
+  }
+
+  // What the selection takes, in the order of the document: the selected
+  // text of each paragraph out of the tables that has one, and each table
+  // with its selected cells by row
+  const getMixedParts = () => {
+    const parts = []
+    paragraphs.forEach(paragraph => {
+      const cell = paragraph.GetParentTableCell()
+      if (!cell) {
+        const range = findSelectedText(paragraph)
+        if (getText(range) !== '') parts.push({ paragraph, range })
+        return
+      }
+      const table = cell.GetParentTable()
+      const last = parts[parts.length - 1]
+      if (last?.table?.GetInternalId() === table.GetInternalId()) {
+        last.cells.set(cell.GetInternalId(), cell)
+        return
+      }
+      parts.push({ table, cells: new Map([[cell.GetInternalId(), cell]]) })
+    })
+    return parts.map(({ cells, ...part }) =>
+      cells ? { ...part, rows: groupByRow(cells) } : part
+    )
+  }
+
+  // The spans of a block written in a line: a block of code gives its lines
+  function getLineSpans(block) {
+    return (
+      block.spans ??
+      block.lines.flatMap((line, index) => [
+        ...(index === 0 ? [] : [{ isBreak: true }]),
+        { text: line, isCode: true }
+      ])
+    )
+  }
+
+  function getLastCell(table) {
+    const lastRow = table.GetRow(table.GetRowsCount() - 1)
+    return lastRow.GetCell(lastRow.GetCellsCount() - 1)
+  }
+
+  function getCellRange(cell, isEnd) {
+    const content = cell.GetContent()
+    const index = isEnd ? content.GetElementsCount() - 1 : 0
+    return content.GetElement(index).GetRange()
+  }
+
+  // A text left as it is ends the answer where its selected part ends: in its
+  // run, which keeps its place as the parts before it are written
+  const findRunEnd = (paragraph, position) => {
+    const run = getRuns(paragraph).find(
+      found =>
+        found.GetRange().GetStartPos() < position &&
+        position <= found.GetRange().GetEndPos()
+    )
+    if (!run) return () => paragraph.GetRange()
+    const offset = position - run.GetRange().GetStartPos()
+    return () => run.GetRange(offset, offset)
+  }
+
+  // A block takes the place of the selected text of a paragraph, in its line.
+  // Each part written gives the ranges of its start and of its end, read once
+  // all are written: the start of a text is a position, right for the first
+  // part only, written last.
+  const writeText = ({ paragraph, range }, block) => {
+    const start = range.GetStartPos()
+    const getStart = () => doc.GetRange(start, start)
+    if (!block) {
+      return { getStart, getEnd: findRunEnd(paragraph, range.GetEndPos()) }
+    }
+    const look = findStartLook(paragraph, start)
+    range.Select()
+    doc.InsertContent([makeParagraph(getLineSpans(block), null, look)], true)
+    // A text written in a line ends where the run of the cursor starts
+    const ending = doc.GetCurrentRun()
+    return { getStart, getEnd: () => ending.GetRange(0, 0) }
+  }
+
+  // The selected cells of a table take the cells of a table of the answer,
+  // row by row, and a whole table of another shape takes its place, in its
+  // look when it can be reshaped
+  const writeCells = ({ table, rows }, answerTable) => {
+    const isWhole = countSelected(rows) === countCells(table)
+    if (isWhole && answerTable && !hasSameShape({ rows }, answerTable)) {
+      const created =
+        reshapeTable(table, answerTable, canReshape(table)) ??
+        makeTable(answerTable.rows)
+      const index = table.GetPosInParent()
+      table.Delete()
+      doc.AddElement(index, created)
+      const lastCell = getLastCell(created)
+      return {
+        getStart: () => getCellRange(created.GetCell(0, 0), false),
+        getEnd: () => getCellRange(lastCell, true)
+      }
+    }
+    rows.forEach((cells, i) => {
+      cells.forEach((cell, j) => {
+        const answerCell = answerTable?.rows[i]?.[j]
+        if (answerCell) fillCell(cell, answerCell)
+        else skippedCells += 1
+      })
+    })
+    const lastRow = rows[rows.length - 1]
+    return {
+      getStart: () => getCellRange(rows[0][0], false),
+      getEnd: () => getCellRange(lastRow[lastRow.length - 1], true)
+    }
+  }
+
+  // Across the edge of a table, the tables of the answer go in the tables of
+  // the selection, in order, and its other blocks in place of the selected
+  // texts, in order. The parts are written from the last one: the positions
+  // of the ones before do not move.
+  const replaceMixed = () => {
+    const parts = getMixedParts()
+    const tableParts = parts.filter(part => part.table)
+    const textParts = parts.filter(part => !part.table)
+    const answerTables = blocks.filter(block => block.type === 'table')
+    const answerTexts = blocks.filter(block => block.type !== 'table')
+    writtenBlocks = parts
+      .map(part =>
+        part.table
+          ? answerTables[tableParts.indexOf(part)]
+          : answerTexts[textParts.indexOf(part)]
+      )
+      .filter(Boolean)
+    const edges = [...parts]
+      .reverse()
+      .map(part =>
+        part.table
+          ? writeCells(part, answerTables[tableParts.indexOf(part)])
+          : writeText(part, answerTexts[textParts.indexOf(part)])
+      )
+    const [last] = edges
+    const first = edges[edges.length - 1]
+    first.getStart().ExpandTo(last.getEnd())?.Select()
     return true
   }
-  if (isReplacingText(selectedCells)) return replaceText()
-  if (!selectPlaceholder(selectedCells)) return false
-  return writeAnswer(blocks.map(makeElement), false)
+
+  // An answer to cells that it does not fill goes under their table, or in
+  // place of the whole table. A table of the answer is a copy of theirs,
+  // made before the place of the answer is selected: the editor moves its
+  // cursor when the rows of a table change.
+  const writeForCells = selectedCells => {
+    const { table, rows } = selectedCells
+    const isWhole = isReplacingTable(selectedCells)
+    const isReshapable = canReshape(table)
+    let wholeCopy = null
+    const elements = blocks.flatMap(block => {
+      if (block.type !== 'table') return makeElement(block)
+      const copy = isWhole
+        ? reshapeTable(table, block, isReshapable)
+        : makeTableCopy(selectedCells, block, isReshapable)
+      if (copy && !isWhole && !isReshapable) wholeCopy = copy
+      return copy ?? makeTable(block.rows)
+    })
+    const placeholder = Api.CreateParagraph()
+    placeAfterTable(placeholder, table, isWhole)
+    placeholder.Select()
+    if (!writeAnswer(elements, false)) return false
+    // The last cell may have no run written to end the selection; in a whole
+    // copy, only the selected cells hold the answer
+    const [inserted] = elements
+    if (!isAnswerOf('table') || inserted.GetPosInParent() === -1) return true
+    const lastRow = rows[rows.length - 1]
+    const [first, last] = wholeCopy
+      ? [rows[0][0], lastRow[lastRow.length - 1]].map(cell =>
+          wholeCopy.GetCell(cell.GetRowIndex(), cell.GetIndex())
+        )
+      : [inserted.GetCell(0, 0), getLastCell(inserted)]
+    getCellRange(first, false).ExpandTo(getCellRange(last, true))?.Select()
+    return true
+  }
+
+  const write = () => {
+    if (isReplace && isCrossing) return replaceMixed()
+    const selectedCells = getSelectedCells()
+    if (canFillCells(selectedCells)) {
+      fillCells(selectedCells, blocks[0])
+      return true
+    }
+    if (isReplacingText(selectedCells)) return replaceText()
+    if (!paragraphs.some(paragraph => paragraph.GetParentTableCell())) {
+      skipStartOfLine()
+    }
+    const cursor = isReplace ? null : findCursor()
+    if (cursor) return insertAtCursor(cursor)
+    if (selectedCells) return writeForCells(selectedCells)
+    if (!selectPlaceholder()) return false
+    return writeAnswer(blocks.flatMap(makeElement), false)
+  }
+
+  // The marker each drawing of the answer left selected is a copy for, in
+  // their order, null when it is unknown. The editor copies what it writes in
+  // a line, and the copies have no mark of their own: they are told by the
+  // order the blocks are written in, when the selection holds as many.
+  const findWrittenImages = () => {
+    const numbers = listImages(writtenBlocks).filter(findOriginal)
+    const found = findDrawings(doc.GetRangeBySelect())
+    return found.length === numbers.length ? numbers : found.map(() => null)
+  }
+
+  const written = write()
+  return { written, skippedCells, images: findWrittenImages() }
 }

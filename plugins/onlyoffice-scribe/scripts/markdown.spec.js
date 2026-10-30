@@ -1,11 +1,13 @@
 import { makeBlocks, makeLineSpans, makeLines } from './markdown'
 
 const paragraph = (...spans) => ({ type: 'paragraph', spans })
+const code = (...lines) => ({ type: 'code', lines })
 
 describe('makeBlocks', () => {
   it('gives no block for an empty answer', () => {
     expect(makeBlocks('')).toEqual([])
     expect(makeBlocks('\n\n')).toEqual([])
+    expect(makeBlocks('```js\n```')).toEqual([])
   })
 
   it('reads the paragraphs with the marks of their text', () => {
@@ -148,9 +150,7 @@ describe('makeBlocks', () => {
   it('leaves an indented block of code out of the lists', () => {
     const blocks = makeBlocks('Un texte.\n\n    - pas une liste')
 
-    expect(blocks[1]).toEqual(
-      paragraph({ text: '- pas une liste', isCode: true })
-    )
+    expect(blocks[1]).toEqual(code('- pas une liste'))
   })
 
   it('leaves the code of a fence in a list item as it is', () => {
@@ -158,13 +158,7 @@ describe('makeBlocks', () => {
       '10. Configure:\n    ```yaml\n    steps:\n      - run: build\n    ```'
     )
 
-    expect(blocks[1]).toEqual(
-      paragraph(
-        { text: 'steps:', isCode: true },
-        { isBreak: true },
-        { text: '  - run: build', isCode: true }
-      )
-    )
+    expect(blocks[1]).toEqual(code('steps:', '  - run: build'))
   })
 
   it('writes the boxes of a task list in its items', () => {
@@ -188,12 +182,25 @@ describe('makeBlocks', () => {
           { text: '.' }
         ]
       },
-      paragraph(
-        { text: 'const a = 1', isCode: true },
-        { isBreak: true },
-        { isBreak: true },
-        { text: 'b()', isCode: true }
-      )
+      code('const a = 1', ' ', 'b()')
+    ])
+  })
+
+  it('gives a fenced block as a code block, one line each, an empty line a space', () => {
+    expect(makeBlocks('```js\nconst a = 1\n\nconst b = 2\n```')).toEqual([
+      { type: 'code', lines: ['const a = 1', ' ', 'const b = 2'] }
+    ])
+  })
+
+  it('keeps markers as text inside a code block', () => {
+    expect(
+      makeBlocks('```js\n<u>a</u> ![image 1] [^scribe-fn-1]\n```')
+    ).toEqual([{ type: 'code', lines: ['<u>a</u> ![image 1] [^scribe-fn-1]'] }])
+    expect(makeBlocks('`[^scribe-fn-1]`')[0].spans).toEqual([
+      { text: '[^scribe-fn-1]', isCode: true }
+    ])
+    expect(makeBlocks('`{{REF:scribe-ref-1:a}}`')[0].spans).toEqual([
+      { text: '{{REF:scribe-ref-1:a}}', isCode: true }
     ])
   })
 
@@ -234,6 +241,10 @@ describe('makeBlocks', () => {
                 { text: 'Montant', isBold: true },
                 { isBreak: true },
                 { text: 'HT' }
+              ],
+              blocks: [
+                paragraph({ text: 'Montant', isBold: true }),
+                paragraph({ text: 'HT' })
               ]
             }
           ],
@@ -274,6 +285,57 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('writes a block of code in a cell of a table in HTML tags as its text', () => {
+    expect(
+      makeBlocks('<table><tr><td>\n\n```js\na\nb\n```\n\n</td></tr></table>')
+    ).toEqual([
+      {
+        type: 'table',
+        rows: [
+          [
+            {
+              spans: [
+                { text: 'a', isCode: true },
+                { isBreak: true },
+                { text: 'b', isCode: true }
+              ]
+            }
+          ]
+        ]
+      }
+    ])
+  })
+
+  it('keeps the paragraphs of an HTML cell as its blocks', () => {
+    const [table] = makeBlocks(
+      '<table><tr><td>\n\nOne\n\nTwo\n\n</td></tr></table>'
+    )
+    expect(table.rows[0][0].blocks.map(b => b.spans[0].text)).toEqual([
+      'One',
+      'Two'
+    ])
+    expect(table.rows[0][0].spans).toEqual([
+      { text: 'One' },
+      { isBreak: true },
+      { text: 'Two' }
+    ])
+  })
+
+  it('gives each block of an HTML cell its spans, the lines of a block of code in one', () => {
+    const [table] = makeBlocks(
+      '<table><tr><td>\n\n# Title\n\n```js\na\nb\n```\n\n</td></tr></table>'
+    )
+
+    expect(table.rows[0][0].blocks.map(block => block.spans)).toEqual([
+      [{ text: 'Title' }],
+      [
+        { text: 'a', isCode: true },
+        { isBreak: true },
+        { text: 'b', isCode: true }
+      ]
+    ])
+  })
+
   it('unwraps an answer given as a whole in quotes or in a fence', () => {
     expect(makeBlocks('"""\nUn **texte**.\n"""')).toEqual([
       paragraph({ text: 'Un ' }, { text: 'texte', isBold: true }, { text: '.' })
@@ -287,12 +349,10 @@ describe('makeBlocks', () => {
   })
 
   it('keeps the code of a fence in another language, and a fence among other blocks', () => {
-    expect(makeBlocks('```js\nconst a = 1\n```')).toEqual([
-      paragraph({ text: 'const a = 1', isCode: true })
-    ])
+    expect(makeBlocks('```js\nconst a = 1\n```')).toEqual([code('const a = 1')])
     expect(makeBlocks('Avant.\n\n```\nUn **texte**.\n```')).toEqual([
       paragraph({ text: 'Avant.' }),
-      paragraph({ text: 'Un **texte**.', isCode: true })
+      code('Un **texte**.')
     ])
   })
 
@@ -312,9 +372,170 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('marks the text between <u> tags as underlined, with the other marks', () => {
+    expect(makeBlocks('a <u>b **c**</u> d')[0].spans).toEqual([
+      { text: 'a ' },
+      { text: 'b ', isUnderline: true },
+      { text: 'c', isUnderline: true, isBold: true },
+      { text: ' d' }
+    ])
+  })
+
+  it('underlines the text of a link', () => {
+    expect(makeBlocks('<u>[x](https://a.b)</u>')[0].spans).toEqual([
+      { text: 'x', href: 'https://a.b', isUnderline: true }
+    ])
+  })
+
+  it('underlines a link whose whole text is underlined, as the editor gives it', () => {
+    expect(
+      makeBlocks('[<u>x</u>](https://a.b) [<u>y</u> z](https://a.b)')[0].spans
+    ).toEqual([
+      { text: 'x', href: 'https://a.b', isUnderline: true },
+      { text: ' ' },
+      { text: 'y z', href: 'https://a.b' }
+    ])
+  })
+
+  it('underlines a code span between <u> tags, and keeps the tags of a code span as its text', () => {
+    expect(makeBlocks('<u>`a`</u> `<u>b</u>`')[0].spans).toEqual([
+      { text: 'a', isCode: true, isUnderline: true },
+      { text: ' ' },
+      { text: '<u>b</u>', isCode: true }
+    ])
+  })
+
+  it('keeps the emphasis of an underlined part of a word', () => {
+    expect(makeBlocks('x<u>*a*</u>y 中文<u>**粗体**</u>中文')[0].spans).toEqual(
+      [
+        { text: 'x' },
+        { text: 'a', isUnderline: true, isItalic: true },
+        { text: 'y 中文' },
+        { text: '粗体', isUnderline: true, isBold: true },
+        { text: '中文' }
+      ]
+    )
+  })
+
+  it('keeps the underline of a text in an HTML cell without a line break', () => {
+    expect(makeBlocks('<table><tr><td>a <u>b</u> c</td></tr></table>')).toEqual(
+      [
+        {
+          type: 'table',
+          rows: [
+            [
+              {
+                spans: [
+                  { text: 'a ' },
+                  { text: 'b', isUnderline: true },
+                  { text: ' c' }
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    )
+  })
+
+  it('gives a footnote marker as a note span', () => {
+    expect(makeBlocks('a[^scribe-fn-2] b')[0].spans).toEqual([
+      { text: 'a' },
+      { note: 2 },
+      { text: ' b' }
+    ])
+  })
+
+  it('gives a footnote marker of a link text after the link', () => {
+    expect(
+      makeBlocks('[a[^scribe-fn-1] b](https://a.b) [c[^scribe-fn-2]](x:y)')[0]
+        .spans
+    ).toEqual([
+      { text: 'a b', href: 'https://a.b' },
+      { note: 1 },
+      { text: ' ' },
+      { text: 'c' },
+      { note: 2 }
+    ])
+  })
+
+  it('gives a reference marker as a ref span with its text', () => {
+    expect(makeBlocks('see {{REF:scribe-ref-1:Budget}} now')[0].spans).toEqual([
+      { text: 'see ' },
+      { ref: 1, text: 'Budget' },
+      { text: ' now' }
+    ])
+    expect(
+      makeBlocks('**{{REF:scribe-ref-2:R&amp;D}}**{{REF:scribe-ref-3:}}')[0]
+        .spans
+    ).toEqual([{ ref: 2, text: 'R&D', isBold: true }])
+    expect(makeBlocks('see {{REF:scribe-ref-1:[1]}}')[0].spans).toEqual([
+      { text: 'see ' },
+      { ref: 1, text: '[1]' }
+    ])
+  })
+
+  it('gives a reference marker of a link text as text of the link', () => {
+    expect(
+      makeBlocks(
+        '[see {{REF:scribe-ref-1:Budget}}](https://a.b) [{{REF:scribe-ref-2:c}}](x:y)'
+      )[0].spans
+    ).toEqual([
+      { text: 'see Budget', href: 'https://a.b' },
+      { text: ' ' },
+      { text: 'c' }
+    ])
+  })
+
+  it('gives an image marker as an image span', () => {
+    expect(makeBlocks('Photo ![image 1] here')[0].spans).toEqual([
+      { text: 'Photo ' },
+      { image: 1 },
+      { text: ' here' }
+    ])
+    expect(makeBlocks('**a ![image 3](image1.png)** b')[0].spans).toEqual([
+      { text: 'a ', isBold: true },
+      { image: 3 },
+      { text: ' b' }
+    ])
+  })
+
+  it('gives a paragraph of one image as an image block', () => {
+    expect(makeBlocks('![image 2]')).toEqual([{ type: 'image', image: 2 }])
+    expect(makeBlocks('Text\n\n![image 1] \n\nMore')).toEqual([
+      paragraph({ text: 'Text' }),
+      { type: 'image', image: 1 },
+      paragraph({ text: 'More' })
+    ])
+  })
+
+  it('keeps an image marker of a cell or a link as an image span', () => {
+    const [table] = makeBlocks(
+      '<table>\n  <tr><td>![image 1]</td><td>b</td></tr>\n</table>'
+    )
+
+    expect(table.rows[0][0].spans).toEqual([{ image: 1 }])
+    expect(makeBlocks('[see ![image 2] here](https://a.b)')[0].spans).toEqual([
+      { text: 'see  here', href: 'https://a.b' },
+      { image: 2 }
+    ])
+  })
+
+  it('gives a link of a single image marker as the image alone', () => {
+    expect(makeBlocks('a [![image 1]](https://a.b) b')[0].spans).toEqual([
+      { text: 'a ' },
+      { image: 1 },
+      { text: ' b' }
+    ])
+    expect(makeBlocks('a [ ![image 1] ](https://a.b)')[0].spans).toEqual([
+      { text: 'a ' },
+      { image: 1 }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
-      'Un <u>souligné</u><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
+      'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
     )
 
     expect(blocks).toEqual([
@@ -365,6 +586,27 @@ describe('makeLines', () => {
 
   it('gives no line for an empty answer', () => {
     expect(makeLines(makeBlocks(''))).toEqual([])
+  })
+
+  it('still gives the lines of a code block to a presentation', () => {
+    expect(makeLines(makeBlocks('```js\na\nb\n```'))).toEqual(['a', 'b'])
+  })
+
+  it('leaves the empty lines of a code block, and the indent of its lines, out of a presentation', () => {
+    expect(makeLines(makeBlocks('```js\na\n\n  b\n```'))).toEqual(['a', 'b'])
+  })
+
+  it('gives a footnote marker to a presentation as its text', () => {
+    expect(makeLines(makeBlocks('[^scribe-fn-1] a[^scribe-fn-2]'))).toEqual([
+      '[^scribe-fn-1] a[^scribe-fn-2]'
+    ])
+  })
+
+  it('gives an image marker to a presentation as the text of an image', () => {
+    expect(makeLines(makeBlocks('a ![image 1]\n\n![image 2]'))).toEqual([
+      'a [image]',
+      '[image]'
+    ])
   })
 })
 

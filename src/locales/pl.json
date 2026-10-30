@@ -36,6 +36,15 @@
       "insert": "Wstaw",
       "replace": "Zastąp",
       "insertSlide": "Wstaw slajd",
+      "panel": "Panel Scribe",
+      "toolbar": {
+        "tab": "Asystent",
+        "scribeHint": "Scribe, asystent pisania AI",
+        "panelHint": "Otwórz lub zamknij panel Scribe"
+      },
+      "resizeHandle": "Zmień rozmiar panelu",
+      "skippedCells": "Tabela: liczba niezmienionych zaznaczonych komórek: %{smart_count}",
+      "closeNotice": "Zamknij",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",

@@ -1,0 +1,104 @@
+// The entries of the scribe in the toolbar of the editor, for
+// AddToolbarMenuItem
+
+// The guid of config.json: the editor finds the plugin of the entries by it
+const GUID = 'asc.{E4B4F030-94E5-48BE-A962-A6E87CB6262B}'
+
+// The editor shows a text or a hint as it is given: a string, not a map of
+// translations. The app gives them in the language of its user; these are
+// for an app that gives none.
+const LABELS = {
+  en: {
+    tab: 'Assistant',
+    scribe: 'Scribe',
+    scribeHint: 'Scribe AI writing assistant',
+    panel: 'Scribe panel',
+    panelHint: 'Open or close the Scribe panel'
+  },
+  fr: {
+    tab: 'Assistant',
+    scribe: 'Scribe',
+    scribeHint: "Assistant d'écriture Scribe",
+    panel: 'Panneau Scribe',
+    panelHint: 'Ouvrir ou fermer le panneau Scribe'
+  }
+}
+
+// Only the images at 100 % exist: with more scales, the editor of a HiDPI
+// screen would ask for an icon@2x.png
+const makeIcons = (baseUrl, name) =>
+  `${baseUrl}resources/%theme-type%(light|dark)/${name}%scale%(100).%extension%(png)`
+
+const makeButton = (id, text, hint, icons) => ({
+  id,
+  type: 'button',
+  text,
+  hint,
+  icons,
+  lockInViewMode: true
+})
+
+// The labels the app gives, those that are texts
+const readLabels = given =>
+  Object.fromEntries(
+    Object.keys(LABELS.en)
+      .filter(key => typeof given?.[key] === 'string' && given[key] !== '')
+      .map(key => [key, given[key]])
+  )
+
+export function makeToolbarItems(lang, baseUrl, given = null) {
+  const labels = {
+    ...LABELS[lang.startsWith('fr') ? 'fr' : 'en'],
+    ...readLabels(given)
+  }
+  return {
+    guid: GUID,
+    tabs: [
+      {
+        id: 'plugins',
+        items: [
+          makeButton(
+            'scribe',
+            labels.scribe,
+            labels.scribeHint,
+            makeIcons(baseUrl, 'icon')
+          )
+        ]
+      },
+      {
+        id: 'scribeAssistantTab',
+        text: labels.tab,
+        items: [
+          makeButton(
+            'scribePanel',
+            labels.panel,
+            labels.panelHint,
+            makeIcons(baseUrl, 'icon-panel')
+          )
+        ]
+      }
+    ]
+  }
+}
+
+// Both entries open or close the panel
+const PANEL_ENTRIES = ['scribe', 'scribePanel']
+
+/**
+ * The message for the app when an entry is clicked, or null
+ */
+export function makeOpenMessage(id) {
+  return PANEL_ENTRIES.includes(id)
+    ? { type: 'twake-scribe:open', source: 'toolbar-panel' }
+    : null
+}
+
+// The api.js of the Document Server gives the editor the language of the app
+// in the address of its frame
+export function readEditorLang(href) {
+  try {
+    return new URL(href).searchParams.get('lang') || 'en'
+  } catch {
+    return 'en'
+  }
+}

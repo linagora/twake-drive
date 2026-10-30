@@ -6,7 +6,9 @@ import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import FallbackViewer from '@/modules/views/OnlyOffice/FallbackViewer'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePanel } from '@/modules/views/OnlyOffice/Scribe/ScribePanel'
+import { ScribeSelectionButton } from '@/modules/views/OnlyOffice/Scribe/ScribeSelectionButton'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 
 const forceIframeHeight = value => {
@@ -64,6 +66,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <OnlyOfficeAIAssistantPanel />
         <ScribePanel />
       </div>
+      <ScribeFloatingButton />
+      <ScribeSelectionButton />
     </>
   )
 }

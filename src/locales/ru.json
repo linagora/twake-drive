@@ -660,6 +660,15 @@
       "insert": "Вставить",
       "replace": "Заменить",
       "insertSlide": "Вставить слайд",
+      "panel": "Панель Scribe",
+      "toolbar": {
+        "tab": "Ассистент",
+        "scribeHint": "Scribe, ИИ-помощник для письма",
+        "panelHint": "Открыть или закрыть панель Scribe"
+      },
+      "resizeHandle": "Изменить размер панели",
+      "skippedCells": "Таблица: выделенных ячеек без изменений: %{smart_count}",
+      "closeNotice": "Закрыть",
       "suggestions": {
         "newSlide": "Новый слайд",
         "newSlideMessage": "Добавь новый слайд после этого, по тексту",

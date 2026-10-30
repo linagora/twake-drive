@@ -1,0 +1,204 @@
+{
+  "document": "img-anchor.docx",
+  "cases": [
+    {
+      "id": "anchor-kept",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "New caption ![image 1]",
+      "expected": {
+        "content": {"content":"Floating caption ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"New caption "}],"images":1,"wraps":["square"],"alts":["Team photo"]},
+            {
+              "type": "p",
+              "runs": [{"t":"Two "},{"t":" and "},{"t":" here."}],
+              "images": 2,
+              "wraps": ["top_and_bottom","inline"]
+            },
+            {"type":"p","runs":[{"t":"Shape "},{"t":" beside "},{"t":" end."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "New caption ",
+          "selMarkup": [{"at":{"block":1},"text":"«New caption »"}]
+        },
+        "undone": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "p",
+              "runs": [{"t":"Floating caption "}],
+              "images": 1,
+              "wraps": ["square"],
+              "alts": ["Team photo"]
+            },
+            {
+              "type": "p",
+              "runs": [{"t":"Two "},{"t":" and "},{"t":" here."}],
+              "images": 2,
+              "wraps": ["top_and_bottom","inline"]
+            },
+            {"type":"p","runs":[{"t":"Shape "},{"t":" beside "},{"t":" end."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Floating caption \n",
+          "selMarkup": [{"at":{"block":1},"text":"«Floating caption »"}]
+        }
+      }
+    },
+    {
+      "id": "anchor-copied",
+      "selection": "P2@start..P2@end",
+      "answerAction": "insert",
+      "answer": "Copy ![image 1]",
+      "expected": {
+        "content": {"content":"Floating caption ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "p",
+              "runs": [{"t":"Floating caption "}],
+              "images": 1,
+              "wraps": ["square"],
+              "alts": ["Team photo"]
+            },
+            {"type":"p","runs":[{"t":"Copy "}],"images":1,"wraps":["square"],"alts":["Team photo"]},
+            {
+              "type": "p",
+              "runs": [{"t":"Two "},{"t":" and "},{"t":" here."}],
+              "images": 2,
+              "wraps": ["top_and_bottom","inline"]
+            },
+            {"type":"p","runs":[{"t":"Shape "},{"t":" beside "},{"t":" end."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Copy ",
+          "selMarkup": [{"at":{"block":2},"text":"«Copy »"}]
+        }
+      }
+    },
+    {
+      "id": "images-reordered",
+      "selection": "P2@start..P3@end",
+      "answerAction": "replace",
+      "answer": "![image 3] first, then ![image 2], and ![image 1] last.",
+      "expected": {
+        "content": {
+          "content": "Floating caption ![image 1]\n\nTwo ![image 2] and ![image 3] here.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "p",
+              "runs": [{"t":" first, then "},{"t":", and "},{"t":" last."}],
+              "images": 3,
+              "wraps": ["inline","top_and_bottom","square"],
+              "alts": ["","","Team photo"]
+            },
+            {"type":"p","runs":[{"t":"Shape "},{"t":" beside "},{"t":" end."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": " first, then , and  last.",
+          "selMarkup": [{"at":{"block":1},"text":"« first, then , and  last.»"}]
+        }
+      }
+    },
+    {
+      "id": "images-reordered-next",
+      "selection": "P2@start..P3@end",
+      "answerAction": "replace",
+      "answer": "![image 3] first, then ![image 2], and ![image 1] last.",
+      "next": {"answerAction":"replace","answer":"![image 1] alone"},
+      "expected": {
+        "content": {
+          "content": "Floating caption ![image 1]\n\nTwo ![image 2] and ![image 3] here.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":" alone"}],"images":1,"wraps":["square"],"alts":["Team photo"]},
+            {"type":"p","runs":[{"t":"Shape "},{"t":" beside "},{"t":" end."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": " alone",
+          "selMarkup": [{"at":{"block":1},"text":"« alone»"}]
+        }
+      }
+    },
+    {
+      "id": "images-part",
+      "selection": "P3@2..P3@9",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {"content":"o ![image 1] and \n\n","target":"selection","canReplace":true},
+        "model": null
+      }
+    },
+    {
+      "id": "shape-read",
+      "selection": "P4@start..P4@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {"content":"Shape ![image 1]  beside ![image 2] end.\n\n","target":"selection","canReplace":true},
+        "model": null
+      }
+    },
+    {
+      "id": "shape-kept",
+      "selection": "P4@start..P4@end",
+      "answerAction": "replace",
+      "answer": "A box ![image 1] next to ![image 2].",
+      "expected": {
+        "content": {"content":"Shape ![image 1]  beside ![image 2] end.\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "p",
+              "runs": [{"t":"Floating caption "}],
+              "images": 1,
+              "wraps": ["square"],
+              "alts": ["Team photo"]
+            },
+            {
+              "type": "p",
+              "runs": [{"t":"Two "},{"t":" and "},{"t":" here."}],
+              "images": 2,
+              "wraps": ["top_and_bottom","inline"]
+            },
+            {"type":"p","runs":[{"t":"A box "},{"t":" next to "},{"t":"."}],"images":2,"shapes":1},
+            {"type":"p","runs":[{"t":"Code ","code":1}],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "A box  next to .",
+          "selMarkup": [{"at":{"block":3},"text":"«A box  next to .»"}]
+        }
+      }
+    },
+    {
+      "id": "image-in-code",
+      "selection": "P5@start..P5@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {"content":"\n```\nCode\n```\n \n\n","target":"selection","canReplace":false},
+        "model": null
+      }
+    }
+  ]
+}

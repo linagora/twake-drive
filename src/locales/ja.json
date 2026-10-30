@@ -36,6 +36,15 @@
       "insert": "挿入",
       "replace": "置換",
       "insertSlide": "スライドを挿入",
+      "panel": "Scribe パネル",
+      "toolbar": {
+        "tab": "アシスタント",
+        "scribeHint": "Scribe AI 文章作成アシスタント",
+        "panelHint": "Scribe パネルを開く/閉じる"
+      },
+      "resizeHandle": "パネルのサイズを変更",
+      "skippedCells": "表：選択したセルのうち %{smart_count} 個は変更されませんでした",
+      "closeNotice": "閉じる",
       "suggestions": {
         "newSlide": "新しいスライド",
         "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",

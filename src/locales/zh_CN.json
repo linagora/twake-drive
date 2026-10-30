@@ -36,6 +36,15 @@
       "insert": "插入",
       "replace": "替换",
       "insertSlide": "插入幻灯片",
+      "panel": "Scribe 面板",
+      "toolbar": {
+        "tab": "助手",
+        "scribeHint": "Scribe AI 写作助手",
+        "panelHint": "打开或关闭 Scribe 面板"
+      },
+      "resizeHandle": "调整面板大小",
+      "skippedCells": "表格：有 %{smart_count} 个选中的单元格未更改",
+      "closeNotice": "关闭",
       "suggestions": {
         "newSlide": "新幻灯片",
         "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",

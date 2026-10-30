@@ -10,8 +10,8 @@ document from the editor and compares it with what is expected.
 
 Most cases and documents come from the test harness of the scribe of
 Benibur/cozy-drive (`test-harness/`): the expected results were written again
-for the rules of this plugin, which inserts an answer under the selected text
-instead of in its line.
+for the rules of this plugin, and taken from that harness where its rules are
+the same.
 
 ## Files
 
@@ -22,8 +22,17 @@ instead of in its line.
   - `answerAction`: `insert` or `replace`, or `null` when only the text the
     plugin gives is checked;
   - `answer`: the Markdown of the answer, as the LLM would write it;
+  - `keys`, in some cases: the keys the user presses in the document once
+    the text is read, before the answer (as `["Shift+ArrowRight"]`);
+  - `next`, in some cases: the next answer of the conversation
+    (`{ answerAction, answer }`), written over the first one, which is left
+    selected, without the text being read again, after the keys the user
+    presses in the document (`keys`, as `["Control+z", "Control+y"]`);
   - `expected`: the text the plugin gives (`content`, `target`) and the
-    document once written (`model`).
+    document once written (`model`); in some cases, what the plugin tells
+    Drive once it has written the answer (`applied`, the message
+    `twake-scribe:applied` without its type), and the document after one
+    undo (`undone`), each compared only when present.
 
 ## Selections
 
@@ -46,12 +55,28 @@ paragraph, the cells are taken whole, as the editor does.
 
 `model` is the document as `e2e/helpers/scribeModel.ts` describes it: each
 paragraph with its runs (text, bold `b`, italic `i`, underline `u`,
-strikethrough `s`, `code`, `link`), its style when it is not Normal, its list
-level and label, its images, notes and page breaks, whether it ends a section;
-each table with its cells and their merges. The
+strikethrough `s`, `code`, `link`, and `anchor`, the bookmark a link to a
+place of the document goes to), its style when it is not Normal, its list
+level and label, its images (`images`, their count, `shapes`, the count of
+the shapes among them, `wraps`, when one of them floats, `inline` or the
+wrapping of each one in its order, and `alts`, when one of them has an
+alternative text, the one of each image in its order), notes
+(`notes`, their count, and `noteTexts`, the
+plain text of the first paragraph of each note), the names of the bookmarks
+that start in it (`bookmarks`) and its page breaks, whether it
+ends a section and whether it is shaded (`shade`); each table with the width
+it asks for
+(`width`: `100%` of the width of the text, or points as `240pt`), whether it
+has borders of its own (`borders`), and its cells and their merges: a copy of
+a table of the document keeps its width, a new table of the plugin is
+`100%` wide. The
 selection is told by the text it covers (`selText`), and each paragraph it
 touches with the selected text between `«` and `»` (`selMarkup`): the positions
-of the editor are left out, since they count the empty runs.
+of the editor are left out, since they count the empty runs. `selMarkup` marks
+the text between the two ends of the selection: in a selection of cells that
+are not the whole width of their rows, as in `table-ragged`, a cell between
+them in the document is marked though the editor does not select it, and
+`selText` leaves it out.
 
 ## Running
 

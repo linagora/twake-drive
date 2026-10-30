@@ -10,6 +10,8 @@ export interface ScribeRun {
   s?: 1
   code?: 1
   link?: string
+  // The bookmark a link to a place of the document goes to
+  anchor?: string
 }
 
 export interface ScribeParagraph {
@@ -20,11 +22,23 @@ export interface ScribeParagraph {
   // The level of the item and the label the editor numbers it with
   list?: [number, string]
   images?: number
-  // The references to footnotes
+  // The images that are shapes, as a rectangle
+  shapes?: number
+  // When an image floats, each image in its order: `inline`, or the wrapping
+  // of a floating one, as `square`
+  wraps?: string[]
+  // When an image has an alternative text, the one of each image in its order
+  alts?: string[]
+  // The references to footnotes, and the plain text of the first paragraph
+  // of each of their notes
   notes?: number
+  noteTexts?: string[]
+  // The names of the bookmarks that start in the paragraph
+  bookmarks?: string[]
   pageBreaks?: number
   // The paragraph ends a section of the document
   section?: 1
+  shade?: 1
 }
 
 export interface ScribeCell {
@@ -35,6 +49,11 @@ export interface ScribeCell {
 
 export interface ScribeTable {
   type: 'table'
+  // The width the table asks for: a percent of the width of the text, as
+  // `100%`, or points, as `240pt`
+  width?: string
+  // The table has borders of its own, not of its style
+  borders?: 1
   grid: ScribeCell[][]
 }
 
@@ -68,6 +87,7 @@ const normalizeRun = (run: ScribeRun): ScribeRun => {
   const normalized: ScribeRun = { t: normalizeText(run.t) }
   for (const flag of RUN_FLAGS) if (run[flag]) normalized[flag] = 1
   if (run.link) normalized.link = run.link
+  if (run.anchor) normalized.anchor = run.anchor
   return normalized
 }
 
@@ -77,25 +97,34 @@ const PARAGRAPH_FIELDS = [
   'lvl',
   'list',
   'images',
+  'shapes',
+  'wraps',
+  'alts',
   'notes',
+  'noteTexts',
+  'bookmarks',
   'pageBreaks',
-  'section'
+  'section',
+  'shade'
 ] as const
 
-// The level 0 of the outline is a level, a count of 0 is nothing
+// The level 0 of the outline is a level, a count of 0 or no text is nothing
 const hasField = (
   paragraph: ScribeParagraph,
   field: (typeof PARAGRAPH_FIELDS)[number]
-): boolean =>
-  field === 'lvl'
-    ? typeof paragraph.lvl === 'number'
-    : Boolean(paragraph[field])
+): boolean => {
+  if (field === 'lvl') return typeof paragraph.lvl === 'number'
+  if (['noteTexts', 'bookmarks', 'wraps', 'alts'].includes(field)) {
+    return ((paragraph[field] as string[] | undefined)?.length ?? 0) > 0
+  }
+  return Boolean(paragraph[field])
+}
 
 const normalizeParagraph = (paragraph: ScribeParagraph): ScribeParagraph => ({
   type: 'p',
   runs: paragraph.runs
     .map(normalizeRun)
-    .filter(run => run.t !== '' || run.link),
+    .filter(run => run.t !== '' || run.link || run.anchor),
   ...Object.fromEntries(
     PARAGRAPH_FIELDS.filter(field => hasField(paragraph, field)).map(field => [
       field,
@@ -114,6 +143,8 @@ function normalizeBlock(block: ScribeBlock): ScribeBlock {
   if (block.type === 'p') return normalizeParagraph(block)
   return {
     type: 'table',
+    ...(block.width && { width: block.width }),
+    ...(block.borders && { borders: block.borders }),
     grid: block.grid.map(row => row.map(normalizeCell))
   }
 }

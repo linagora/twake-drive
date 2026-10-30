@@ -3,6 +3,7 @@ import { pbkdf2Sync } from 'crypto'
 
 import type { FullConfig } from '@playwright/test'
 
+import { ensureAppInstalled, isAppInstalled } from '../helpers/apps'
 import { saveAuthState } from '../helpers/auth'
 import {
   ADMIN_PASSPHRASE,
@@ -185,13 +186,6 @@ async function getSessionCookie(
   return { name: m[1], value: m[2] }
 }
 
-function isAppInstalled(user: User, slug: string): boolean {
-  const apps = stackExec('apps', 'ls', '--domain', user.instance)
-  return apps
-    .split('\n')
-    .some(line => line.trim().split(/\s+/, 1)[0] === slug)
-}
-
 interface AppSpec {
   slug: string
   source: string
@@ -213,18 +207,11 @@ async function setupUser(
   await createInstance(user)
 
   for (const app of DEFAULT_APPS) {
-    if (isAppInstalled(user, app.slug)) {
+    if (isAppInstalled(user.instance, app.slug)) {
       console.log(`[e2e] Reusing ${app.label} app for ${user.label}.`)
     } else {
       console.log(`[e2e] Installing ${app.label} app for ${user.label}...`)
-      stackExec(
-        'apps',
-        'install',
-        app.slug,
-        app.source,
-        '--domain',
-        user.instance
-      )
+      ensureAppInstalled(user.instance, app.slug, app.source)
     }
   }
 

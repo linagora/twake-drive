@@ -1,0 +1,316 @@
+import type { Frame, FrameLocator, Locator, Page } from '@playwright/test'
+
+import { selectInEditor } from './ScribePluginPage'
+import { expect } from '../helpers/fixtures'
+
+// The button under the selection is an asset of 48 px that holds a disc of
+// 24 px, 12 px inside its left edge and 9 px inside its top edge
+const DISC = { left: 12, top: 9, size: 24 }
+const WHEEL_TURN = 100
+
+export interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/**
+ * Drive's chrome around the scribe of an OnlyOffice document: the AI button
+ * of the toolbar, the button under the selection, the floating button of the
+ * document area, the entries of the plugin in the ribbon of the editor, and
+ * the panel that holds the assistant
+ */
+export class ScribePage {
+  constructor(private readonly page: Page) {}
+
+  /** Opens a document in OnlyOffice and waits for the AI button */
+  async openDocument(appUrl: string, fileId: string): Promise<void> {
+    await this.page.goto(`${appUrl}/#/onlyoffice/${fileId}`)
+    await this.waitForScribe()
+  }
+
+  /** Reloads the document and waits for the AI button again */
+  async reload(): Promise<void> {
+    await this.page.reload()
+    await this.waitForScribe()
+  }
+
+  private async waitForScribe(): Promise<void> {
+    await expect(this.editorFrame()).toBeVisible({
+      timeout: 90_000
+    })
+    // The button shows once the plugin has told Drive it is ready
+    await expect(this.toolbarButton()).toBeVisible({ timeout: 90_000 })
+  }
+
+  /**
+   * Keeps what the plugin tells Drive, for `ScribePluginPage.takeGeometry`,
+   * and still gives it to Drive
+   */
+  async watchMessages(): Promise<void> {
+    await this.page.evaluate(() => {
+      const messages: unknown[] = []
+      Object.assign(window, { scribeMessages: messages })
+      window.addEventListener('message', event => {
+        const { type } = (event.data ?? {}) as { type?: unknown }
+        if (typeof type === 'string' && type.startsWith('twake-scribe:')) {
+          messages.push(event.data)
+        }
+      })
+    })
+  }
+
+  /**
+   * Selects in the document what a spec of the harness names. A selection is
+   * then ended with the keyboard, as by a user: the editor tells its plugins
+   * of a selection a user ends, not of one made by its API.
+   */
+  async selectInEditor(spec: string): Promise<void> {
+    const editor = this.page.frame({ name: 'frameEditor' })
+    if (!editor) throw new Error('No editor frame')
+    const result = await editor.evaluate(selectInEditor, spec)
+    if (!result.ok) throw new Error(result.error)
+    if (!spec.includes('..')) return
+
+    const area = editor.locator('#area_id')
+    await area.press('Shift+ArrowLeft')
+    await area.press('Shift+ArrowRight')
+  }
+
+  /**
+   * Turns the mouse wheel over the document, 100 px a turn as a mouse does:
+   * the editor scrolls a step for each turn, whatever its delta
+   */
+  async scrollEditor(deltaY: number): Promise<void> {
+    const viewer = await this.viewerBox()
+    if (!viewer) throw new Error('No viewer in the editor')
+    await this.page.mouse.move(
+      viewer.x + viewer.width / 2,
+      viewer.y + viewer.height / 2
+    )
+    const turn = Math.sign(deltaY) * WHEEL_TURN
+    for (let rest = Math.abs(deltaY); rest > 0; rest -= WHEEL_TURN) {
+      await this.page.mouse.wheel(0, turn)
+    }
+  }
+
+  editorFrame(): Locator {
+    return this.page.locator('iframe[name="frameEditor"]')
+  }
+
+  /** The area of the editor that shows the document, in the page */
+  async viewerBox(): Promise<Box | null> {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .locator('#id_viewer')
+      .boundingBox()
+  }
+
+  /** A tab of the ribbon of the editor, as the one the plugin adds */
+  editorTab(name: string): Locator {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .getByRole('tab', { name, exact: true })
+  }
+
+  /** A button of the ribbon of the editor, in the tab shown */
+  editorToolbarButton(name: string): Locator {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .getByRole('button', { name, exact: true })
+  }
+
+  // The button under the selection has the same name
+  toolbarButton(): Locator {
+    return this.page
+      .getByRole('button', { name: 'Help me write' })
+      .and(this.page.locator(':not([data-testid="scribe-selection-button"] *)'))
+  }
+
+  selectionButton(): Locator {
+    return this.page
+      .getByTestId('scribe-selection-button')
+      .getByRole('button', { name: 'Help me write' })
+  }
+
+  floatingButton(): Locator {
+    return this.page.getByRole('button', { name: 'Scribe Panel' })
+  }
+
+  /** The visible disc of the button under the selection */
+  async selectionDiscBox(): Promise<Box | null> {
+    const box = await this.selectionButton().boundingBox()
+    if (!box) return null
+    return {
+      x: box.x + DISC.left,
+      y: box.y + DISC.top,
+      width: DISC.size,
+      height: DISC.size
+    }
+  }
+
+  panel(): Locator {
+    return this.page.getByRole('complementary', { name: 'Help me write' })
+  }
+
+  /** The frame of the assistant in a surface of the scribe */
+  intentFrame(surface: Locator): Locator {
+    return surface.locator('iframe')
+  }
+
+  /** Every frame of an intent in the page */
+  intentFrames(): Locator {
+    return this.page.locator('iframe.coz-intent')
+  }
+
+  /**
+   * The error of cozy-interapp when two intents of the page take each
+   * other's messages
+   */
+  intentIdError(): Locator {
+    return this.page.getByText('Invalid event id')
+  }
+
+  /**
+   * The notice, in a surface of the scribe, of the selected cells its answer
+   * had no cell for
+   */
+  skippedCellsNotice(surface: Locator): Locator {
+    return surface.getByRole('alert')
+  }
+
+  async closeSkippedCellsNotice(surface: Locator): Promise<void> {
+    await this.skippedCellsNotice(surface)
+      .getByRole('button', { name: 'Close' })
+      .click()
+  }
+
+  /**
+   * Keeps, in each frame loaded from now on, the data of the intent it
+   * receives: the assistant reads them once, at its opening
+   */
+  async watchIntentData(): Promise<void> {
+    await this.page.addInitScript(() => {
+      const received: unknown[] = []
+      Object.assign(window, { scribeIntentData: received })
+      window.addEventListener('message', event => {
+        const data = event.data as {
+          answerActions?: unknown
+          type?: unknown
+          data?: unknown
+        } | null
+        if (typeof data !== 'object' || data === null) return
+        // The first data answer the `ready` of the assistant, the next ones
+        // come in a `data` message
+        if ('answerActions' in data) received.push(data)
+        else if (typeof data.type === 'string' && data.type.endsWith(':data')) {
+          received.push(data.data)
+        }
+      })
+    })
+  }
+
+  /** The id of the intent of a surface, in the address of its frame */
+  async intentId(surface: Locator): Promise<string> {
+    const src = await this.intentFrame(surface).getAttribute('src')
+    const intentId = src ? new URL(src).searchParams.get('intent') : null
+    if (!intentId) throw new Error(`No intent in the address ${src}`)
+    return intentId
+  }
+
+  private async findIntentFrame(surface: Locator): Promise<Frame> {
+    const handle = await this.intentFrame(surface).elementHandle()
+    const frame = await handle?.contentFrame()
+    if (!frame) throw new Error('No frame of the assistant')
+    return frame
+  }
+
+  /**
+   * The last data the assistant of a surface has received, once
+   * `watchIntentData` was called before it opened; null before the first
+   */
+  async receivedIntentData(
+    surface: Locator
+  ): Promise<Record<string, unknown> | null> {
+    const frame = await this.findIntentFrame(surface)
+    return frame.evaluate(() => {
+      const { scribeIntentData } = window as unknown as {
+        scribeIntentData?: Record<string, unknown>[]
+      }
+      return scribeIntentData?.at(-1) ?? null
+    })
+  }
+
+  /**
+   * Sends a result to Drive as the assistant of a surface does, from its
+   * frame: cozy-interapp only takes the messages of the origin of the
+   * assistant, once it has received its data. Needs `watchIntentData`.
+   */
+  async postIntentResult(
+    surface: Locator,
+    result: Record<string, unknown>
+  ): Promise<void> {
+    const intentId = await this.intentId(surface)
+    await expect
+      .poll(() => this.receivedIntentData(surface), { timeout: 60_000 })
+      .not.toBe(null)
+
+    const frame = await this.findIntentFrame(surface)
+    // Drive is the page of the test
+    const driveOrigin = new URL(this.page.url()).origin
+    await frame.evaluate(
+      ({ message, origin }) => window.parent.postMessage(message, origin),
+      {
+        message: { type: `intent-${intentId}:result`, result },
+        origin: driveOrigin
+      }
+    )
+  }
+
+  assistantFrame(): FrameLocator {
+    return this.panel().frameLocator('iframe')
+  }
+
+  /** The field where the user writes a request to the assistant */
+  assistantComposer(): Locator {
+    return this.assistantFrame().getByRole('textbox')
+  }
+
+  resizeHandle(): Locator {
+    return this.panel().getByRole('separator', { name: 'Resize the panel' })
+  }
+
+  async panelWidth(): Promise<number> {
+    const box = await this.panel().boundingBox()
+    if (!box) throw new Error('No panel')
+    return box.width
+  }
+
+  /** Drags the handle dx px to the right, from its middle */
+  async dragHandle(dx: number): Promise<void> {
+    const box = await this.resizeHandle().boundingBox()
+    if (!box) throw new Error('No resize handle')
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+    await this.page.mouse.move(x, y)
+    await this.page.mouse.down()
+    await this.page.mouse.move(x + dx, y, { steps: 5 })
+    await this.page.mouse.up()
+  }
+
+  /** Whether Drive has kept the panel open for the next load */
+  async isPanelOpenStored(): Promise<boolean> {
+    return this.page.evaluate(
+      () => localStorage.getItem('scribe-panel-open') === 'true'
+    )
+  }
+
+  async openPanel(): Promise<void> {
+    await this.toolbarButton().click()
+  }
+
+  async closePanel(): Promise<void> {
+    await this.toolbarButton().click()
+  }
+}

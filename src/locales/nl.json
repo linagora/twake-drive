@@ -36,6 +36,15 @@
       "insert": "Invoegen",
       "replace": "Vervangen",
       "insertSlide": "Dia invoegen",
+      "panel": "Scribe-paneel",
+      "toolbar": {
+        "tab": "Assistent",
+        "scribeHint": "Scribe, AI-schrijfassistent",
+        "panelHint": "Het Scribe-paneel openen of sluiten"
+      },
+      "resizeHandle": "Grootte van het paneel wijzigen",
+      "skippedCells": "Tabel: %{smart_count} geselecteerde cel is ongewijzigd gebleven |||| Tabel: %{smart_count} geselecteerde cellen zijn ongewijzigd gebleven",
+      "closeNotice": "Sluiten",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",

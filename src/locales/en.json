@@ -660,6 +660,15 @@
       "insert": "Insert",
       "replace": "Replace",
       "insertSlide": "Insert the slide",
+      "panel": "Scribe Panel",
+      "toolbar": {
+        "tab": "Assistant",
+        "scribeHint": "Scribe AI writing assistant",
+        "panelHint": "Open or close the Scribe panel"
+      },
+      "resizeHandle": "Resize the panel",
+      "skippedCells": "Table: %{smart_count} selected cell was left unchanged |||| Table: %{smart_count} selected cells were left unchanged",
+      "closeNotice": "Close",
       "suggestions": {
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",

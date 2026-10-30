@@ -13,6 +13,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
@@ -49,6 +51,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -86,9 +90,11 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -105,8 +111,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -126,9 +132,11 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -145,8 +153,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -162,9 +170,11 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown"},{"t":" "},{"t":"XXX"},{"t":" fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -181,8 +191,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick brown« XXX» fox"}]
         }
       }
     },
@@ -198,6 +208,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick "},{"t":"XXX"},{"t":" fox"}]}]},
@@ -234,6 +246,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
@@ -270,6 +284,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The "},{"t":"XXX"}]}]},
@@ -306,9 +322,11 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The "},{"t":"XXX"},{"t":" "},{"t":"quick brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -325,8 +343,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": "XXX ",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The «XXX »quick brown fox"}]
         }
       }
     },
@@ -342,6 +360,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"XXX"},{"t":" quick brown fox"}]}]},
@@ -382,6 +402,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
@@ -423,6 +445,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
@@ -467,6 +491,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
@@ -478,9 +504,8 @@
                     "blocks": [
                       {"type":"p","runs":[{"t":"The quick brown fox"}]},
                       {"type":"p","runs":[{"t":"Jumps over the dog"}]},
-                      {"type":"p","runs":[{"t":"Lazy river flows"}]},
-                      {"type":"p","runs":[{"t":"First"}]},
-                      {"type":"p","runs":[{"t":"Second"}]}
+                      {"type":"p","runs":[{"t":"Lazy riv"},{"t":" "},{"t":"First"}]},
+                      {"type":"p","runs":[{"t":"Second"},{"t":" "},{"t":"er flows"}]}
                     ]
                   }
                 ]
@@ -488,10 +513,10 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "First\nSecond",
+          "selText": " First\nSecond ",
           "selMarkup": [
-            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«First»"},
-            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":4},"text":"«Second»"}
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":2},"text":"Lazy riv« First»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«Second »er flows"}
           ]
         }
       }
@@ -512,6 +537,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
@@ -534,6 +561,121 @@
           "selMarkup": [
             {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"The quick «First»"},
             {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Second»er flows"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "cell-three-to-two",
+      "selection": "T1.C(1,1).P1@start..T1.C(1,1).P3@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>\n\nOne of two\n\nTwo of two\n\n</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "100%",
+              "borders": 1,
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"One of two"}]},{"type":"p","runs":[{"t":"Two of two"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "One of two\nTwo of two",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«One of two»"},
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«Two of two»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "cell-one-to-four",
+      "selection": "T1.C(1,1).P1@start..T1.C(1,1).P3@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>\n\nOne of four\n\nTwo of four\n\nThree of four\n\nFour of four\n\n</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "100%",
+              "borders": 1,
+              "grid": [
+                [
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"One of four"}]},
+                      {"type":"p","runs":[{"t":"Two of four"}]},
+                      {"type":"p","runs":[{"t":"Three of four"}]},
+                      {"type":"p","runs":[{"t":"Four of four"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "One of four\nTwo of four\nThree of four\nFour of four",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«One of four»"},
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«Two of four»"},
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":2},"text":"«Three of four»"},
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":3},"text":"«Four of four»"}
           ]
         }
       }

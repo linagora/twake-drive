@@ -660,6 +660,15 @@
       "insert": "Chèn",
       "replace": "Thay thế",
       "insertSlide": "Chèn trang chiếu",
+      "panel": "Bảng Scribe",
+      "toolbar": {
+        "tab": "Trợ lý",
+        "scribeHint": "Scribe, trợ lý viết AI",
+        "panelHint": "Mở hoặc đóng bảng Scribe"
+      },
+      "resizeHandle": "Thay đổi kích thước bảng",
+      "skippedCells": "Bảng: %{smart_count} ô đã chọn không được thay đổi",
+      "closeNotice": "Đóng",
       "suggestions": {
         "newSlide": "Trang chiếu mới",
         "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",

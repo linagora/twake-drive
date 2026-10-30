@@ -3,7 +3,8 @@ import { Lexer, getDefaults } from 'marked'
 // The editor has nine levels of list
 const MAX_LIST_DEPTH = 8
 const LINK_PROTOCOL = /^(https?:|mailto:)/i
-const HTML_TAG = /(<[^>]*>)/
+// The <u> tags of a text are read with it, as its underline
+const HTML_TAG = /(<(?!\/?u>)[^>]*>)/i
 const SPAN_ATTRIBUTE = /\b(colspan|rowspan)\s*=\s*"?(\d+)/gi
 const LINE_BREAK_TAG = /^<br\s*\/?>$/i
 // A whole answer fenced as text or quoted: the LLM wraps the text it was
@@ -38,26 +39,90 @@ function makeText(text, marks) {
   return { ...marks, text: decodeEntities(text).replace(/\n/g, ' ') }
 }
 
-function getPlainText(tokens) {
-  return makeSpans(tokens)
-    .map(span => span.text ?? ' ')
-    .join('')
-}
-
+// A link is a single text: the notes and the images of its text come after
+// it, and a reference in it, which would be a link in a link, is text of the
+// link. A link without text, as the one of a linked image, is left out.
 function makeLinkSpans(token, marks) {
-  const text = getPlainText(token.tokens)
+  const all = makeSpans(token.tokens, marks)
+  const isAfter = span => span.note !== undefined || span.image !== undefined
+  const after = all.filter(isAfter)
+  const spans = all.filter(span => !isAfter(span))
+  const text = spans.map(span => span.text ?? ' ').join('')
+  if (text.trim() === '') return after
   // Other links, as `javascript:` ones, are written as their text
-  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }]
+  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }, ...after]
 
-  return [{ text, href: token.href }]
+  // A link is written in one look: underlined when all its text is
+  const isUnderline = spans.every(span => span.isUnderline)
+  return [
+    { text, href: token.href, ...(isUnderline && { isUnderline }) },
+    ...after
+  ]
 }
 
 // The marks an inline token sets on the text it holds
-const MARKS = { strong: 'isBold', em: 'isItalic', del: 'isStrike' }
+const MARKS = {
+  strong: 'isBold',
+  em: 'isItalic',
+  del: 'isStrike',
+  underline: 'isUnderline'
+}
+
+// The text between <u> tags, and the markers of the footnotes, of the
+// references and of the images of the text, in the form `marked.use` gives
+// the extensions to the lexer. A tag left open is left out, as the other
+// tags. The LLM may give an image marker the address of an image: it is left
+// out, and never loaded.
+const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i
+const NOTE = /^\[\^scribe-fn-(\d+)\]/
+const REF = /^\{\{REF:scribe-ref-(\d+):([^}]*)\}\}/
+const IMAGE = /^!\[image (\d+)\](?:\([^)]*\))?/
+const EXTENSIONS = {
+  inline: [
+    function tokenizeUnderline(src) {
+      const match = src.match(UNDERLINE)
+      if (!match) return null
+      return {
+        type: 'underline',
+        raw: match[0],
+        tokens: this.lexer.inlineTokens(match[1])
+      }
+    },
+    function tokenizeNote(src) {
+      const match = src.match(NOTE)
+      if (!match) return null
+      return { type: 'note', raw: match[0], note: Number(match[1]) }
+    },
+    function tokenizeRef(src) {
+      const match = src.match(REF)
+      if (!match) return null
+      return {
+        type: 'ref',
+        raw: match[0],
+        ref: Number(match[1]),
+        text: match[2]
+      }
+    },
+    function tokenizeImage(src) {
+      const match = src.match(IMAGE)
+      if (!match) return null
+      return { type: 'imageMarker', raw: match[0], image: Number(match[1]) }
+    }
+  ],
+  startInline: [
+    src => src.match(/<u>/i)?.index,
+    src => src.match(/\[\^scribe-fn-\d+\]/)?.index,
+    src => src.match(/\{\{REF:scribe-ref-\d+:/)?.index,
+    src => src.match(/!\[image \d+\]/)?.index
+  ]
+}
 
 // The spans of the inline tokens that are not a mark nor a text
 const INLINE_TOKENS = {
   codespan: (token, marks) => [{ ...marks, text: token.text, isCode: true }],
+  note: token => [{ note: token.note }],
+  ref: (token, marks) => [{ ...makeText(token.text, marks), ref: token.ref }],
+  imageMarker: token => [{ image: token.image }],
   link: makeLinkSpans,
   br: () => [{ isBreak: true }],
   // The tags are left out: the text they hold comes in its own tokens
@@ -85,11 +150,17 @@ function makeSpans(tokens, marks = {}) {
     .filter(span => span.isBreak || span.text !== '')
 }
 
-function makeCodeSpans(code) {
-  return code.split('\n').flatMap((line, index) => {
-    const spans = line === '' ? [] : [{ text: line, isCode: true }]
-    return index === 0 ? spans : [{ isBreak: true }, ...spans]
-  })
+function makeCodeLines(code) {
+  if (code === '') return []
+  return code.split('\n').map(line => (line === '' ? ' ' : line))
+}
+
+// The lines of a block of code as the text of a single paragraph
+function makeCodeSpans(lines) {
+  return lines.flatMap((line, index) => [
+    ...(index === 0 ? [] : [{ isBreak: true }]),
+    { text: line, isCode: true }
+  ])
 }
 
 // The rows of a Markdown table, its header in bold
@@ -156,8 +227,11 @@ function getTagName(tag) {
 /**
  * Turns the Markdown of an answer into the blocks the document is written
  * with: paragraphs, headings, quotes, list items and tables, each with its
- * spans. A cell of a table has its spans, and the columns and rows it takes
- * (`colSpan`, `rowSpan`) when it takes more than one.
+ * spans, blocks of code with their lines, an empty one a space, and images,
+ * each with the number of its marker (`image`). A cell of a table has its
+ * spans, its blocks when it holds several (`blocks`, each with its spans),
+ * and the columns and rows it takes (`colSpan`, `rowSpan`) when it takes
+ * more than one.
  *
  * @param {string} markdown
  * @param {object} [options]
@@ -172,23 +246,44 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
   // The table being read in HTML tags, the way the editor gives its tables.
   // Its cells take the blocks that come before its end.
   let htmlTable = null
+  // A lexer keeps its tokenizer in its options: each one gets its own
+  const makeOptions = () => ({
+    ...getDefaults(),
+    breaks: hasLineBreaks,
+    extensions: EXTENSIONS
+  })
+
+  // A paragraph of a single image is a block of its own, out of a table
+  const makeImageBlock = block => {
+    const shown = block.spans.filter(span => span.text?.trim() !== '')
+    const isImage =
+      block.type === 'paragraph' &&
+      shown.length === 1 &&
+      shown[0].image !== undefined
+    return isImage ? { type: 'image', image: shown[0].image } : block
+  }
 
   const addBlock = block => {
-    if (block.type !== 'table' && block.spans.length === 0) return
+    if (block.spans?.length === 0 || block.lines?.length === 0) return
     if (!htmlTable) {
-      blocks.push(block)
+      blocks.push(block.spans ? makeImageBlock(block) : block)
       return
     }
 
     const row = htmlTable[htmlTable.length - 1]
     const cell = row?.[row.length - 1]
     if (!cell) return
-    if (cell.spans.length > 0) cell.spans.push({ isBreak: true })
-    cell.spans.push(...(block.spans ?? []))
+    // In a cell, a block of code is the text of one paragraph, and a table is
+    // left out
+    if (block.type === 'code') {
+      cell.blocks.push({ ...block, spans: makeCodeSpans(block.lines) })
+    } else if (block.spans) {
+      cell.blocks.push(block)
+    }
   }
 
   const makeCell = tag => {
-    const cell = { spans: [] }
+    const cell = { blocks: [] }
     for (const [, attribute, value] of tag.matchAll(SPAN_ATTRIBUTE)) {
       const span = Number(value)
       if (span > 1) cell[attribute === 'colspan' ? 'colSpan' : 'rowSpan'] = span
@@ -201,8 +296,20 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     htmlTable[htmlTable.length - 1].push(makeCell(tag))
   }
 
+  // A cell gives the spans of its blocks, a line each, and its blocks when
+  // it holds several
+  const makeHtmlCell = ({ blocks: cellBlocks, ...cell }) => ({
+    ...cell,
+    spans: cellBlocks.flatMap((block, index) =>
+      index === 0 ? block.spans : [{ isBreak: true }, ...block.spans]
+    ),
+    ...(cellBlocks.length > 1 && { blocks: cellBlocks })
+  })
+
   const closeHtmlTable = () => {
-    const rows = htmlTable.filter(row => row.length > 0)
+    const rows = htmlTable
+      .filter(row => row.length > 0)
+      .map(row => row.map(makeHtmlCell))
     htmlTable = null
     if (rows.length > 0) addBlock({ type: 'table', rows })
   }
@@ -223,7 +330,10 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
         return
       }
       if (part.trim() === '') return
-      addBlock({ type: 'paragraph', spans: makeSpans(Lexer.lexInline(part)) })
+      addBlock({
+        type: 'paragraph',
+        spans: makeSpans(Lexer.lexInline(part, makeOptions()))
+      })
     })
   }
 
@@ -265,8 +375,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     list: (token, depth) => addList(token, depth),
     blockquote: (token, depth) =>
       addTokens(token.tokens, { depth, isQuote: true }),
-    code: token =>
-      addBlock({ type: 'paragraph', spans: makeCodeSpans(token.text) }),
+    code: token => addBlock({ type: 'code', lines: makeCodeLines(token.text) }),
     table: token => addBlock({ type: 'table', rows: makeTableRows(token) }),
     html: token => addHtml(token.text)
   }
@@ -285,7 +394,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     })
   }
 
-  const lexer = new Lexer({ ...getDefaults(), breaks: hasLineBreaks })
+  const lexer = new Lexer(makeOptions())
   addTokens(lexer.lex(nestLists(markdown.match(WRAPPED)?.[2] ?? markdown)))
   // A table left open still gives what it holds
   if (htmlTable) readHtmlTag('</table>')
@@ -311,9 +420,17 @@ function addToLines(lines, span) {
   return [...lines.slice(0, -1), [...lines[lines.length - 1], span]]
 }
 
+// A presentation has no footnotes, and gets no copy of an image: the marker
+// of a note stays text, and an image is written as the text of an image
+function makeMarkerText(span) {
+  if (span.image !== undefined) return { text: '[image]' }
+  return span.note === undefined ? span : { text: `[^scribe-fn-${span.note}]` }
+}
+
 // The lines of spans, a line break starting a line
 function splitLines(spans) {
   return spans
+    .map(makeMarkerText)
     .reduce(addToLines, [[]])
     .map(trimLine)
     .filter(line => line.length > 0)
@@ -339,11 +456,12 @@ function makeRowLine(row) {
  * @returns {object[][]}
  */
 export function makeLineSpans(blocks) {
-  return blocks.flatMap(block =>
-    block.type === 'table'
-      ? block.rows.map(makeRowLine)
-      : splitLines(block.spans)
-  )
+  return blocks.flatMap(block => {
+    if (block.type === 'table') return block.rows.map(makeRowLine)
+    if (block.type === 'code') return splitLines(makeCodeSpans(block.lines))
+    if (block.type === 'image') return splitLines([{ image: block.image }])
+    return splitLines(block.spans)
+  })
 }
 
 /**

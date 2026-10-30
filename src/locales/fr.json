@@ -660,6 +660,15 @@
       "insert": "Insérer",
       "replace": "Remplacer",
       "insertSlide": "Insérer la diapositive",
+      "panel": "Panneau Scribe",
+      "toolbar": {
+        "tab": "Assistant",
+        "scribeHint": "Assistant d'écriture Scribe",
+        "panelHint": "Ouvrir ou fermer le panneau Scribe"
+      },
+      "resizeHandle": "Redimensionner le panneau",
+      "skippedCells": "Tableau : %{smart_count} cellule sélectionnée est restée inchangée |||| Tableau : %{smart_count} cellules sélectionnées sont restées inchangées",
+      "closeNotice": "Fermer",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",

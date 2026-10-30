@@ -11,6 +11,24 @@ export interface ScribeContent {
   canReplace?: boolean
 }
 
+export interface ScribeApplied {
+  skippedCells: number
+}
+
+interface Box {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+/** Where the selection is, in pixels of the editor frame */
+export interface Geometry {
+  selection: { rect: Box & { corners: number[][] }; hasText: boolean } | null
+  viewer: Box | null
+  page: Box | null
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
@@ -27,7 +45,10 @@ export interface ScribeContent {
  * the paragraph is taken whole, with a note or an image after its text; an
  * offset ends the selection at a character. One end alone is the cursor.
  */
-function selectInEditor(spec: string): { ok: boolean; error?: string } {
+export function selectInEditor(spec: string): {
+  ok: boolean
+  error?: string
+} {
   const Api = (window as any).g_asc_plugins.api.getJsApi()
   const doc = Api.GetDocument()
 
@@ -74,8 +95,12 @@ function selectInEditor(spec: string): { ok: boolean; error?: string } {
     let passed = 0
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
-      if (!['run', 'hyperlink'].includes(element.GetClassType())) continue
-      const length = element.GetText().replace(/[\r\n]+$/, '').length
+      const type = element.GetClassType()
+      if (!['run', 'hyperlink'].includes(type)) continue
+      // A link has no GetText
+      const text =
+        type === 'run' ? element.GetText() : element.GetDisplayedText()
+      const length = text.replace(/[\r\n]+$/, '').length
       if (offset <= passed + length) {
         return element.GetRange(offset - passed, offset - passed)
       }
@@ -83,16 +108,24 @@ function selectInEditor(spec: string): { ok: boolean; error?: string } {
     }
     return paragraph.GetRange(0, 0)
   }
-  // The cursor at an offset of the text: the editor does not move it to a
-  // collapsed range it selects
+  // The cursor at an offset of the text, those of its links included: the
+  // editor does not move it to a collapsed range it selects
   const placeCursor = (paragraph: any, offset: number): void => {
-    let passed = 0
+    const runs: any[] = []
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
-      if (element.GetClassType() !== 'run') continue
-      const length = element.GetText().replace(/[\r\n]+$/, '').length
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        const child = element.GetElement(j)
+        if (child) runs.push(child)
+      }
+    }
+    let passed = 0
+    for (const run of runs) {
+      const length = run.GetText().replace(/[\r\n]+$/, '').length
       if (offset <= passed + length) {
-        element.MoveCursorToPos(offset - passed)
+        run.MoveCursorToPos(offset - passed)
         return
       }
       passed += length
@@ -213,10 +246,13 @@ function readEditor(): ScribeModel {
       first = first ?? run
     }
     if (text === '') return null
+    // A link to a place of the document has no address: its anchor is the
+    // bookmark it goes to
+    const link = hyperlink.GetLinkedText()
     return {
       ...readFlags(first?.GetTextPr()),
       t: text,
-      link: hyperlink.GetLinkedText()
+      ...(link ? { link } : { anchor: JSON.parse(hyperlink.ToJSON()).anchor })
     }
   }
   const readRun = (element: any): any => {
@@ -241,11 +277,69 @@ function readEditor(): ScribeModel {
   }
   const count = (json: string, pattern: RegExp): number =>
     json.match(pattern)?.length ?? 0
+  interface JsonElement {
+    type?: string
+    name?: string
+    drawingType?: string
+    wrapType?: string
+    docPr?: { descr?: string }
+    content?: (string | JsonElement)[]
+    footnotes?: JsonElement[]
+  }
+  const findElements = (element?: JsonElement): JsonElement[] =>
+    (element?.content ?? []).filter(
+      (item): item is JsonElement => typeof item === 'object'
+    )
+  // The plain text of an element of the JSON of a paragraph: a tab or a
+  // line break is a space
+  const readJsonText = (element?: JsonElement): string =>
+    (element?.content ?? [])
+      .map(item => {
+        if (typeof item === 'string') return item
+        if (['tab', 'break'].includes(item.type ?? '')) return ' '
+        return ['run', 'hyperlink'].includes(item.type ?? '')
+          ? readJsonText(item)
+          : ''
+      })
+      .join('')
+  // The images of the runs, those of links included
+  const findDrawings = (element?: JsonElement): JsonElement[] =>
+    findElements(element).flatMap(item => {
+      if (item.type === 'paraDrawing') return [item]
+      return ['run', 'hyperlink'].includes(item.type ?? '')
+        ? findDrawings(item)
+        : []
+    })
+  // Each image in its order, `inline` or the wrapping of a floating one,
+  // when one of them floats
+  const readWraps = (element?: JsonElement): string[] => {
+    const drawings = findDrawings(element)
+    if (drawings.every(({ drawingType }) => drawingType !== 'anchor')) return []
+    return drawings.map(({ drawingType, wrapType }) =>
+      drawingType === 'anchor' ? (wrapType ?? 'none') : 'inline'
+    )
+  }
+  const readAlts = (element?: JsonElement): string[] => {
+    const alts = findDrawings(element).map(({ docPr }) => docPr?.descr ?? '')
+    return alts.some(alt => alt !== '') ? alts : []
+  }
+  // The JSON of a run holds the notes of its references, in their order
+  const readNoteTexts = (element?: JsonElement): string[] =>
+    findElements(element).flatMap(item => [
+      ...(item.footnotes ?? []).map(note =>
+        readJsonText(findElements(note)[0]).trim()
+      ),
+      ...readNoteTexts(item)
+    ])
   // `normalizeModel` leaves out what is missing or counts 0
   const readParagraph = (paragraph: any): any => {
     const style = paragraph.GetStyle()?.GetName()
     const level = paragraph.GetOutlineLvl()
     const json = paragraph.ToJSON(false, false)
+    const parsed = JSON.parse(json as string) as JsonElement & {
+      pPr?: { sectPr?: unknown; shd?: unknown }
+    }
+    const { pPr } = parsed
     return {
       type: 'p',
       runs: readRuns(paragraph),
@@ -253,19 +347,67 @@ function readEditor(): ScribeModel {
       lvl: typeof level === 'number' && level >= 0 ? level : null,
       list: readList(paragraph),
       images: paragraph.GetAllDrawingObjects().length,
+      shapes: paragraph.GetAllShapes().length,
+      wraps: readWraps(parsed),
+      alts: readAlts(parsed),
       notes: count(json, /"type":"footnoteRef"/g),
+      noteTexts: readNoteTexts(parsed),
+      bookmarks: findElements(parsed)
+        .filter(item => item.type === 'bookmarkStart')
+        .map(item => item.name),
       pageBreaks: count(json, /"breakType":"page"/g),
       // The section properties of a note are in its own JSON: only the ones
       // of the paragraph tell that it ends a section
-      section: JSON.parse(json).pPr?.sectPr ? 1 : null
+      section: pPr?.sectPr ? 1 : null,
+      shade: pPr?.shd ? 1 : null
     }
   }
+  // The editor gives a width in percent or in twentieths of a point, and a
+  // side without a border as `none`
+  const readWidth = (width?: { type: string; w: number }): string | null => {
+    if (width?.type === 'pct') return `${width.w}%`
+    if (width?.type === 'dxa') return `${width.w / 20}pt`
+    return null
+  }
+  const hasBorders = (
+    borders: Record<string, { value?: string }> = {}
+  ): boolean =>
+    Object.values(borders).some(
+      ({ value }) => value !== undefined && value !== 'none'
+    )
+  interface LaidRow {
+    trPr?: { gridBefore?: number }
+    content: { tcPr?: { gridSpan?: number; vMerge?: string } }[]
+  }
+  const getStartColumns = (row: LaidRow): number[] => {
+    let column = row.trPr?.gridBefore ?? 0
+    return row.content.map(laid => {
+      const start = column
+      column += laid.tcPr?.gridSpan ?? 1
+      return start
+    })
+  }
   const readTable = (table: any): any => {
-    const layout = JSON.parse(table.ToJSON()).content
+    const { tblPr, content: layout } = JSON.parse(table.ToJSON() as string) as {
+      tblPr?: {
+        tblW?: { type: string; w: number }
+        tblBorders?: Record<string, { value?: string }>
+      }
+      content: LaidRow[]
+    }
+    const columns = layout.map(getStartColumns)
+    // A cell starts a merge when the cell under it continues it: the editor
+    // marks the cells of a row it adds as starts
+    const isContinued = (r: number, c: number): boolean => {
+      const index = columns[r + 1]?.indexOf(columns[r][c]) ?? -1
+      return layout[r + 1]?.content[index]?.tcPr?.vMerge === 'continue'
+    }
     return {
       type: 'table',
-      grid: layout.map((row: any, r: number) =>
-        row.content.map((laid: any, c: number) => {
+      width: readWidth(tblPr?.tblW),
+      borders: hasBorders(tblPr?.tblBorders) ? 1 : null,
+      grid: layout.map((row, r) =>
+        row.content.map((laid, c) => {
           const content = table.GetCell(r, c).GetContent()
           const blocks = []
           for (let i = 0; i < content.GetElementsCount(); i += 1) {
@@ -276,7 +418,8 @@ function readEditor(): ScribeModel {
           }
           const cell: any = { blocks }
           const merge = laid.tcPr?.vMerge
-          if (merge) cell.vmerge = merge === 'continue' ? 'cont' : 'master'
+          if (merge === 'continue') cell.vmerge = 'cont'
+          else if (merge && isContinued(r, c)) cell.vmerge = 'master'
           if ((laid.tcPr?.gridSpan ?? 1) > 1) cell.hspan = laid.tcPr.gridSpan
           return cell
         })
@@ -360,6 +503,8 @@ function readEditor(): ScribeModel {
  * messages, and reads the document from the editor
  */
 export class ScribePluginPage {
+  private lastGeometry: Geometry | null = null
+
   constructor(private readonly page: Page) {}
 
   private findPlugin(): Frame | null {
@@ -453,6 +598,22 @@ export class ScribePluginPage {
     await this.page.waitForTimeout(300)
   }
 
+  /** Undoes the last change, as Ctrl+Z */
+  async undo(): Promise<void> {
+    await this.editor().evaluate(() => {
+      ;(window as unknown as { editor: { Undo: () => void } }).editor.Undo()
+    })
+    await this.page.waitForTimeout(300)
+  }
+
+  /** Keys the user presses in the document, as Control+z */
+  async press(keys: string[]): Promise<void> {
+    for (const key of keys) {
+      await this.editor().locator('#area_id').press(key)
+      await this.page.waitForTimeout(300)
+    }
+  }
+
   async select(spec: string): Promise<void> {
     const result = await this.editor().evaluate(selectInEditor, spec)
     if (!result.ok) throw new Error(result.error)
@@ -477,13 +638,28 @@ export class ScribePluginPage {
     )
   }
 
+  // The geometries are kept for takeGeometry: the other takes drop them
   private async takeMessages(): Promise<{ type: string }[]> {
-    return this.page.evaluate(() => {
+    const messages = await this.page.evaluate(() => {
       const holder = window as unknown as {
         scribeMessages: { type: string }[]
       }
       return holder.scribeMessages.splice(0)
     })
+    for (const { type, ...geometry } of messages) {
+      if (type === 'twake-scribe:geometry') {
+        this.lastGeometry = geometry as unknown as Geometry
+      }
+    }
+    return messages
+  }
+
+  /** The last geometry the plugin has sent since the previous takeGeometry */
+  async takeGeometry(): Promise<Geometry | null> {
+    await this.takeMessages()
+    const geometry = this.lastGeometry
+    this.lastGeometry = null
+    return geometry
   }
 
   /** What the plugin gives Drive to work on, as when its button is clicked */
@@ -510,30 +686,43 @@ export class ScribePluginPage {
     return found as unknown as ScribeContent
   }
 
-  /** Writes an answer, and waits for the document to be written */
+  /**
+   * Writes an answer, and waits for the plugin to tell it is written: its
+   * `twake-scribe:applied` message, null from a plugin that does not send it
+   */
   async applyAnswer(
     answerAction: string,
     text: string,
     read: () => Promise<unknown> = () => this.read()
-  ): Promise<void> {
+  ): Promise<ScribeApplied | null> {
     const before = JSON.stringify(await read())
+    await this.takeMessages()
     await this.send({
       type: 'twake-scribe:applyAnswer',
       answerAction,
       text,
       format: 'markdown'
     })
-    // The plugin gives no answer: the document is read until it changes,
-    // then until two reads agree
+    // Without the message, the document is read until it changes, then until
+    // two reads agree
+    let applied: ScribeApplied | null = null
     let last = before
     let isStable = false
     const deadline = Date.now() + 10_000
-    while (!isStable && Date.now() < deadline) {
+    while (!applied && !isStable && Date.now() < deadline) {
       await this.page.waitForTimeout(400)
+      const message = (await this.takeMessages()).find(
+        ({ type }) => type === 'twake-scribe:applied'
+      )
+      if (message) {
+        const { type: _type, ...rest } = message
+        applied = rest as unknown as ScribeApplied
+      }
       const current = JSON.stringify(await read())
       isStable = current === last && current !== before
       last = current
     }
+    return applied
   }
 
   async read(): Promise<ScribeModel> {

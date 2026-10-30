@@ -1,65 +1,71 @@
-import React from 'react'
+import cx from 'classnames'
+import React, { useEffect, useState } from 'react'
 
-import IntentIframe from 'cozy-ui-plus/dist/Intent/IntentIframe'
 import { useCozyTheme } from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { useI18n } from 'twake-i18n'
 
 import styles from './styles.styl'
 
+import { ScribeIntent } from '@/modules/views/OnlyOffice/Scribe/ScribeIntent'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { ScribeResizeHandle } from '@/modules/views/OnlyOffice/Scribe/ScribeResizeHandle'
+import { ScribeSkippedCellsNotice } from '@/modules/views/OnlyOffice/Scribe/ScribeSkippedCellsNotice'
 import {
-  makeCapabilities,
-  makeSuggestions
-} from '@/modules/views/OnlyOffice/Scribe/capabilities'
+  PANEL_DEFAULT_WIDTH,
+  clampPanelWidth
+} from '@/modules/views/OnlyOffice/Scribe/panelState'
 
 export const ScribePanel = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const {
-    isOpen,
-    content,
-    target,
-    canReplace,
-    documentType,
-    close,
-    applyResult
-  } = useScribe()
+  const { isOpen, source, close, applyResult } = useScribe()
+  const [panelWidth, setPanelWidth] = useState(() =>
+    clampPanelWidth(PANEL_DEFAULT_WIDTH, window.innerWidth)
+  )
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPanelWidth(width => clampPanelWidth(width, window.innerWidth))
+    }
+
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
+  }, [])
 
   if (!isOpen) return null
 
-  // A selection that holds what an answer cannot give back, as an image or a
-  // note, is not offered to be replaced. An older plugin does not tell.
-  const answerActions =
-    target === 'selection' && canReplace !== false
-      ? ['insert', 'replace']
-      : ['insert']
-  const capabilities = makeCapabilities({ documentType, t })
-  const suggestions = makeSuggestions({ documentType, t })
-  const data = {
-    content,
-    answerActions: answerActions.map(name => ({
-      name,
-      label: t(`OnlyOffice.scribe.${name}`)
-    })),
-    // Left out when empty: the assistant then shows its own chips
-    ...(capabilities.length > 0 && { capabilities }),
-    ...(suggestions.length > 0 && { suggestions }),
-    theme: { type: themeType }
+  // The panel ends at the right edge of the window
+  const handleResize = edge => {
+    setPanelWidth(clampPanelWidth(window.innerWidth - edge, window.innerWidth))
   }
 
   return (
     <aside
-      className={styles['scribe-panel']}
+      className={cx(
+        'u-flex u-flex-shrink-0',
+        styles['scribe-panel'],
+        themeType === 'dark' && styles['scribe-panel--dark']
+      )}
+      // Dragged by the handle: the only value that cannot be static
+      style={{ width: panelWidth }}
       aria-label={t('OnlyOffice.scribe.open')}
     >
-      <IntentIframe
-        action="OPEN"
-        type="io.cozy.ai.chat.conversations"
-        data={data}
-        onResult={applyResult}
-        onCancel={close}
-        onTerminate={close}
-      />
+      <ScribeResizeHandle width={panelWidth} onResize={handleResize} />
+      <div
+        className={cx(
+          'u-flex u-flex-column u-flex-grow-1 u-ov-hidden',
+          styles['scribe-panel-card']
+        )}
+      >
+        <ScribeSkippedCellsNotice className="u-flex-shrink-0 u-m-half" />
+        <div className={styles['scribe-panel-intent']}>
+          <ScribeIntent
+            source={source}
+            onResult={applyResult}
+            onCancel={close}
+          />
+        </div>
+      </div>
     </aside>
   )
 }

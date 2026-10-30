@@ -17,6 +17,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
@@ -41,20 +43,36 @@
             },
             {
               "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
+                  {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H01"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H02"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Vmaster"}]}],"vmerge":"master"},
+                  {"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C1"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[]}],"vmerge":"cont"},
+                  {"blocks":[{"type":"p","runs":[{"t":"B2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C2"}]}]}
+                ],
+                [
                   {"blocks":[{"type":"p","runs":[{"t":"Hi"}]}]},
-                  {"blocks":[{"type":"p","runs":[{"t":"Hj"}]},{"type":"p","runs":[]}],"hspan":2}
+                  {"blocks":[{"type":"p","runs":[{"t":"Hj"}]}],"hspan":2}
                 ]
               ]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "HiHj\n\n",
+          "selText": "HiHj\n",
           "selMarkup": [
-            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Hi»"},
-            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Hj»"},
-            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":1},"text":""}
+            {"at":{"block":2,"cell":{"r":3,"c":0},"cellBlock":0},"text":"«Hi»"},
+            {"at":{"block":2,"cell":{"r":3,"c":1},"cellBlock":0},"text":"«Hj»"}
           ]
         }
       }
@@ -75,6 +93,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
@@ -108,13 +128,13 @@
       }
     },
     {
-      "id": "T2c",
-      "selection": "T1.C(1,0)@start..T1.C(2,2)@end",
+      "id": "merged-other-shape",
+      "selection": "T1.C(3,0)@start..T1.C(3,1)@end",
       "answerAction": "insert",
-      "answer": "<table>\n  <tr><td rowspan=\"2\">Va</td><td>Vb</td><td>Vc</td></tr>\n  <tr><td>Vd</td><td>Ve</td></tr>\n</table>",
+      "answer": "<table>\n  <tr><td>Hi</td><td>Hj</td></tr>\n  <tr><td>Hk</td><td>Hl</td></tr>\n</table>",
       "expected": {
         "content": {
-          "content": "<table>\n  <tr>\n   <td rowspan=\"2\">\n\nVmaster\n\n</td>\n   <td>\n\nB1\n\n</td>\n   <td>\n\nC1\n\n</td>\n  </tr>\n  <tr>\n   \n   <td>\n\nB2\n\n</td>\n   <td>\n\nC2\n\n</td>\n  </tr>\n</table>\n\n",
+          "content": "<table>\n  <tr>\n   <td>\n\nM30\n\n</td>\n   <td colspan=\"2\">\n\nHspan\n\n</td>\n  </tr>\n</table>\n\n",
           "target": "selection",
           "canReplace": true
         },
@@ -123,6 +143,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
@@ -147,9 +169,77 @@
             },
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Hi"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Hj"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Hk"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Hl"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "HiHj\nHkHl\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Hi»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Hj»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«Hk»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«Hl»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T2c",
+      "selection": "T1.C(1,0)@start..T1.C(2,2)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td rowspan=\"2\">Va</td><td>Vb</td><td>Vc</td></tr>\n  <tr><td>Vd</td><td>Ve</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td rowspan=\"2\">\n\nVmaster\n\n</td>\n   <td>\n\nB1\n\n</td>\n   <td>\n\nC1\n\n</td>\n  </tr>\n  <tr>\n   \n   <td>\n\nB2\n\n</td>\n   <td>\n\nC2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"Va"}]},{"type":"p","runs":[]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H01"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H02"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Vmaster"}]}],"vmerge":"master"},
+                  {"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C1"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[]}],"vmerge":"cont"},
+                  {"blocks":[{"type":"p","runs":[{"t":"B2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C2"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"M30"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Hspan"}]}],"hspan":2}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "360pt",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H01"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"H02"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Va"}]}],"vmerge":"master"},
                   {"blocks":[{"type":"p","runs":[{"t":"Vb"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Vc"}]}]}
                 ],
@@ -157,20 +247,23 @@
                   {"blocks":[{"type":"p","runs":[]}],"vmerge":"cont"},
                   {"blocks":[{"type":"p","runs":[{"t":"Vd"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Ve"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"M30"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Hspan"}]}],"hspan":2}
                 ]
               ]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "Va\nVbVc\nVdVe\n",
+          "selText": "VaVbVc\nVdVe\n",
           "selMarkup": [
-            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Va»"},
-            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":1},"text":""},
-            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Vb»"},
-            {"at":{"block":2,"cell":{"r":0,"c":2},"cellBlock":0},"text":"«Vc»"},
-            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":""},
-            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«Vd»"},
-            {"at":{"block":2,"cell":{"r":1,"c":2},"cellBlock":0},"text":"«Ve»"}
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«Va»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«Vb»"},
+            {"at":{"block":2,"cell":{"r":1,"c":2},"cellBlock":0},"text":"«Vc»"},
+            {"at":{"block":2,"cell":{"r":2,"c":0},"cellBlock":0},"text":""},
+            {"at":{"block":2,"cell":{"r":2,"c":1},"cellBlock":0},"text":"«Vd»"},
+            {"at":{"block":2,"cell":{"r":2,"c":2},"cellBlock":0},"text":"«Ve»"}
           ]
         }
       }
@@ -191,6 +284,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "360pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"H00"}]}]},

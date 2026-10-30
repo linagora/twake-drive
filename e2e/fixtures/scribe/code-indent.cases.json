@@ -1,0 +1,47 @@
+{
+  "document": "code-indent.docx",
+  "cases": [
+    {
+      "id": "code-indent-content",
+      "selection": "P2@start..P4@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "```\n    x = 1\n    if x:\n        return x\n```\n\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "code-indent-replace",
+      "selection": "P2@start..P4@end",
+      "answerAction": "replace",
+      "answer": "```python\n    x = 2\n    if x:\n        return x * 2\n```",
+      "expected": {
+        "content": {
+          "content": "```\n    x = 1\n    if x:\n        return x\n```\n\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"    x = 2","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"    if x:","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"        return x * 2","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"After the code"}]}
+          ],
+          "selText": "    x = 2\n    if x:\n        return x * 2",
+          "selMarkup": [
+            {"at":{"block":1},"text":"«    x = 2»"},
+            {"at":{"block":2},"text":"«    if x:»"},
+            {"at":{"block":3},"text":"«        return x * 2»"}
+          ]
+        }
+      }
+    }
+  ]
+}
