@@ -355,6 +355,28 @@ export function readContent() {
       return text.slice(clip(bounds.from), clip(bounds.to))
     }
 
+    // The selected texts of a run, apart: a line break, a tab or a drawing
+    // between them takes a position, and the Markdown writes it its own way
+    const getSelectedParts = run => {
+      const { content = [] } = JSON.parse(readJson(run))
+      const parts = ['']
+      let position = bounds ? run.GetRange().GetStartPos() : 0
+      content.forEach(item => {
+        if (typeof item !== 'string') {
+          parts.push('')
+          position += 1
+          return
+        }
+        const clip = point =>
+          Math.min(Math.max(point - position, 0), item.length)
+        parts[parts.length - 1] += bounds
+          ? item.slice(clip(bounds.from), clip(bounds.to))
+          : item
+        position += item.length
+      })
+      return parts
+    }
+
     // The editor gives the HTML characters of a text as entities: a < opens
     // a tag
     const ENTITIES = {
@@ -445,22 +467,38 @@ export function readContent() {
       replace(start, end, `<u>${markdown.slice(start, end)}</u>`)
     }
 
-    const readRun = run => {
-      const [, lead, core, trail] = getSelectedText(run)
-        .replace(/[&<>"']/g, char => ENTITIES[char])
+    // The Markdown writes a wide space as a space, and the HTML characters of
+    // a run that holds a drawing as they are
+    const WIDE_SPACE = /[\u2002\u3000]/g
+    const findText = text => {
+      const escaped = text.replace(/[&<>"']/g, char => ENTITIES[char])
+      const index = find(escaped)
+      if (index !== -1 || escaped === text)
+        return { index, length: escaped.length }
+      return { index: find(text), length: text.length }
+    }
+
+    const readText = (text, run) => {
+      const [, lead, core, trail] = text
+        .replace(WIDE_SPACE, ' ')
         .match(/^(\s*)([\s\S]*?)(\s*)$/)
-      const index = core === '' ? -1 : find(core)
+      if (core === '') return
+      const { index, length } = findText(core)
       if (index === -1) return
       hasParagraphText = true
       const textPr = run.GetTextPr()
       const place = textPr.GetUnderline()
-        ? placeTags(index, index + core.length, textPr)
+        ? placeTags(index, index + length, textPr)
         : null
       if (!place) {
-        at = index + core.length
+        at = index + length
         return
       }
       underline(place, { lead, trail })
+    }
+
+    const readRun = run => {
+      getSelectedParts(run).forEach(part => readText(part, run))
     }
 
     // The plain text of the first paragraph of a note, from the JSON of the
