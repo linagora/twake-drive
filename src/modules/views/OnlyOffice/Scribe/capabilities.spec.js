@@ -227,8 +227,14 @@ describe('normalizeChart', () => {
     })
   })
 
+  it('takes the type before chart or graph', () => {
+    expect(normalizeChart({ type: 'Pie chart' }).chartType).toBe('pie')
+    expect(normalizeChart({ type: 'line graph' }).chartType).toBe('lineNormal')
+  })
+
   it('gives null for a type the editor does not make', () => {
     expect(normalizeChart({ type: 'treemap', range: 'A1:B3' })).toBe(null)
+    expect(normalizeChart({ type: 'constructor' })).toBe(null)
     expect(normalizeChart({ range: 'A1:B3' })).toBe(null)
     expect(normalizeChart(null)).toBe(null)
   })

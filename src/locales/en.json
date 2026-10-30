@@ -672,6 +672,7 @@
       "closeNotice": "Close",
       "insertChart": "Insert the chart",
       "notApplied": "This answer has no cells to write in the sheet",
+      "notWritten": "The editor could not apply all of this answer",
       "suggestions": {
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",

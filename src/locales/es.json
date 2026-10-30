@@ -671,6 +671,8 @@
       "skippedCells": "Tabla: %{smart_count} celda seleccionada no se ha modificado |||| Tabla: %{smart_count} celdas seleccionadas no se han modificado",
       "closeNotice": "Cerrar",
       "insertChart": "Insertar el gráfico",
+      "notApplied": "Esta respuesta no tiene celdas que escribir en la hoja",
+      "notWritten": "El editor no pudo aplicar toda esta respuesta",
       "suggestions": {
         "newSlide": "Nueva diapositiva",
         "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",

@@ -230,6 +230,13 @@ describe('ScribeProvider', () => {
       message: 'This answer has no cells to write in the sheet',
       severity: 'secondary'
     })
+
+    receive({ type: 'twake-scribe:notApplied', reason: 'notWritten' })
+
+    expect(mockShowAlert).toHaveBeenLastCalledWith({
+      message: 'The editor could not apply all of this answer',
+      severity: 'secondary'
+    })
   })
 
   it('asks the plugin for the text, and opens when it comes', () => {
@@ -862,5 +869,10 @@ describe('ScribeProvider', () => {
     fireEvent.click(screen.getAllByText('result 0')[1])
     expect(other.getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(2)
+    // The assistant shows the call as done: the user is told
+    expect(mockShowAlert).toHaveBeenCalledWith({
+      message: 'The editor could not apply all of this answer',
+      severity: 'secondary'
+    })
   })
 })
