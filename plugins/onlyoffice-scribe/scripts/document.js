@@ -585,7 +585,8 @@ export function readContent() {
       })
     }
 
-    const LINK_END = /[*_~`]*\]\([^)]*\)/y
+    // An address may hold parentheses, in pairs, as `Mercury_(planet)`
+    const LINK_END = /[*_~`]*\]\((?:[^()]|\([^()]*\))*\)/y
     selectedParagraphs.forEach(paragraph => {
       hasParagraphText = false
       const addMarkers = run => {
