@@ -226,9 +226,9 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.openDocument(USERS.alice.appUrl, fileId)
 
     await scribe.editorTab('Assistant').click()
-    await scribe.editorToolbarButton('Scribe panel').click()
+    await scribe.editorToolbarButton('Scribe Panel').click()
     await expect(scribe.panel()).toBeVisible()
-    await scribe.editorToolbarButton('Scribe panel').click()
+    await scribe.editorToolbarButton('Scribe Panel').click()
     await expect(scribe.panel()).toBeHidden()
     await expect(scribe.editorToolbarButton('Inline Scribe')).toHaveCount(0)
   })

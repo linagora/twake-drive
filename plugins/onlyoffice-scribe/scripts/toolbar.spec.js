@@ -62,6 +62,37 @@ describe('makeToolbarItems', () => {
       ])
     }
   })
+
+  it('takes the labels the app gives, in the language of its user', () => {
+    const labels = {
+      tab: 'Assistent',
+      scribeHint: 'Scribe, KI-Schreibassistent',
+      panel: 'Scribe-Bereich',
+      panelHint: 'Scribe-Bereich öffnen oder schließen'
+    }
+
+    expect(readLabels(makeToolbarItems('de', BASE_URL, labels))).toEqual([
+      'Scribe',
+      'Scribe, KI-Schreibassistent',
+      'Assistent',
+      'Scribe-Bereich',
+      'Scribe-Bereich öffnen oder schließen'
+    ])
+  })
+
+  it('keeps its own labels for those the app does not give as texts', () => {
+    expect(
+      readLabels(
+        makeToolbarItems('fr', BASE_URL, { tab: 'Assistent', panel: 42 })
+      )
+    ).toEqual([
+      'Scribe',
+      "Assistant d'écriture Scribe",
+      'Assistent',
+      'Panneau Scribe',
+      'Ouvrir ou fermer le panneau Scribe'
+    ])
+  })
 })
 
 describe('readEditorLang', () => {

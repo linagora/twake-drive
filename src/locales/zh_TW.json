@@ -37,6 +37,11 @@
       "replace": "取代",
       "insertSlide": "插入投影片",
       "panel": "Scribe 面板",
+      "toolbar": {
+        "tab": "助理",
+        "scribeHint": "Scribe AI 寫作助理",
+        "panelHint": "開啟或關閉 Scribe 面板"
+      },
       "resizeHandle": "調整面板大小",
       "skippedCells": "表格：有 %{smart_count} 個選取的儲存格未變更",
       "closeNotice": "關閉",

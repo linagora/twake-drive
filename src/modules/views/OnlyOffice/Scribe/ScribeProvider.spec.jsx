@@ -3,6 +3,8 @@ import React from 'react'
 
 import flag from 'cozy-flags'
 
+import { TestI18n } from 'test/components/AppLike'
+
 import logger from '@/lib/logger'
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
@@ -103,12 +105,14 @@ const setup = ({
   }
 
   render(
-    <OnlyOfficeContext.Provider value={{ isPublic, isReadOnly }}>
-      <ScribeProvider serverUrl={SERVER_URL} documentType={documentType}>
-        <ScribeState results={results} />
-        {extra}
-      </ScribeProvider>
-    </OnlyOfficeContext.Provider>
+    <TestI18n>
+      <OnlyOfficeContext.Provider value={{ isPublic, isReadOnly }}>
+        <ScribeProvider serverUrl={SERVER_URL} documentType={documentType}>
+          <ScribeState results={results} />
+          {extra}
+        </ScribeProvider>
+      </OnlyOfficeContext.Provider>
+    </TestI18n>
   )
 
   const getState = () => JSON.parse(screen.getByTestId('state').textContent)
@@ -255,7 +259,18 @@ describe('ScribeProvider', () => {
     receive({ type: 'twake-scribe:ready' })
 
     expect(plugin.postMessage.mock.calls).toEqual([
-      [{ type: 'twake-scribe:showToolbar' }, SERVER_ORIGIN]
+      [
+        {
+          type: 'twake-scribe:showToolbar',
+          labels: {
+            tab: 'Assistant',
+            scribeHint: 'Scribe AI writing assistant',
+            panel: 'Scribe Panel',
+            panelHint: 'Open or close the Scribe panel'
+          }
+        },
+        SERVER_ORIGIN
+      ]
     ])
   })
 

@@ -37,6 +37,11 @@
       "replace": "استبدال",
       "insertSlide": "إدراج الشريحة",
       "panel": "لوحة Scribe",
+      "toolbar": {
+        "tab": "المساعد",
+        "scribeHint": "Scribe، مساعد الكتابة بالذكاء الاصطناعي",
+        "panelHint": "فتح لوحة Scribe أو إغلاقها"
+      },
       "resizeHandle": "تغيير حجم اللوحة",
       "skippedCells": "الجدول: عدد الخلايا المحددة التي لم تتغير: %{smart_count}",
       "closeNotice": "إغلاق",

@@ -123,6 +123,11 @@
       "replace": "바꾸기",
       "insertSlide": "슬라이드 삽입",
       "panel": "Scribe 패널",
+      "toolbar": {
+        "tab": "어시스턴트",
+        "scribeHint": "Scribe AI 글쓰기 도우미",
+        "panelHint": "Scribe 패널 열기 또는 닫기"
+      },
       "resizeHandle": "패널 크기 조정",
       "skippedCells": "표: 선택한 셀 중 %{smart_count}개가 변경되지 않았습니다",
       "closeNotice": "닫기",

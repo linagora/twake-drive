@@ -661,6 +661,11 @@
       "replace": "Ersetzen",
       "insertSlide": "Folie einfügen",
       "panel": "Scribe-Bereich",
+      "toolbar": {
+        "tab": "Assistent",
+        "scribeHint": "Scribe, KI-Schreibassistent",
+        "panelHint": "Scribe-Bereich öffnen oder schließen"
+      },
       "resizeHandle": "Größe des Bereichs ändern",
       "skippedCells": "Tabelle: %{smart_count} ausgewählte Zelle blieb unverändert |||| Tabelle: %{smart_count} ausgewählte Zellen blieben unverändert",
       "closeNotice": "Schließen",
