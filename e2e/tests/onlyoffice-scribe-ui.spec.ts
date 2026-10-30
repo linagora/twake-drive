@@ -295,7 +295,7 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
       })
     expect(await scribe.intentId(scribe.panel())).toBe(intentId)
     await expect(scribe.intentFrames()).toHaveCount(1)
-    await expect(alicePage.getByText('Invalid event id')).toHaveCount(0)
+    await expect(scribe.intentIdError()).toHaveCount(0)
   })
 
   test('the panel tells how many selected cells an answer left', async ({
