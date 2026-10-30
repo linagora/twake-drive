@@ -69,7 +69,7 @@ The plugin only loads in the editors of text documents and presentations, in edi
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
-- An OnlyOffice Document Server 9.0 or later, with the scribe plugin. It was tested with 9.4.
+- An OnlyOffice Document Server 9.2 or later, with the scribe plugin: the plugin finds the paragraphs by their internal id, which the builder of the editor gives since 9.2. It was tested with 9.4.
 
 ## The scribe plugin
 
