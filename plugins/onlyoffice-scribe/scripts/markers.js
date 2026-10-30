@@ -21,11 +21,11 @@ export function writeMarkers() {
   const doc = Api.GetDocument()
   const answer = doc.GetRangeBySelect()
   const paragraphs = answer?.GetAllParagraphs() ?? []
-  // NUL characters, which no text of a document holds
+  // Between U+FDD0, a noncharacter, which no text of a document holds. Not
+  // NUL: the editor reads no NUL back from its runs since its version 10.
   const PLACEHOLDER =
-    // eslint-disable-next-line no-control-regex
-    /\u0000fn:(?<note>\d+)\u0000|\u0000ref:(?<ref>\d+)\u0000(?<text>[^\u0000]*)\u0000\/ref\u0000/
-  const REF_END = '\u0000/ref\u0000'
+    /\uFDD0fn:(?<note>\d+)\uFDD0|\uFDD0ref:(?<ref>\d+)\uFDD0(?<text>[^\uFDD0]*)\uFDD0\/ref\uFDD0/
+  const REF_END = '\uFDD0/ref\uFDD0'
 
   // The runs of a paragraph, those of its links included
   const getRuns = paragraph => {
