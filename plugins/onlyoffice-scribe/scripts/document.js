@@ -334,13 +334,25 @@ export function readContent() {
       at = end
     }
 
+    // The ends of the selection in the first and the last paragraph, null in
+    // the paragraphs between them, which are whole: the positions of the
+    // editor are read there only, each read walks the document
+    let bounds = null
+    // The JSON of a run, read once
+    const jsons = new Map()
+    const readJson = run => {
+      if (!jsons.has(run)) jsons.set(run, run.ToJSON())
+      return jsons.get(run)
+    }
+
     // The positions of a run count its characters
     const getSelectedText = run => {
       const text = run.GetText()
+      if (!bounds) return text
       const start = run.GetRange().GetStartPos()
       const clip = position =>
         Math.min(Math.max(position - start, 0), text.length)
-      return text.slice(clip(from), clip(to))
+      return text.slice(clip(bounds.from), clip(bounds.to))
     }
 
     // The editor gives the HTML characters of a text as entities: a < opens
@@ -481,10 +493,10 @@ export function readContent() {
       return PARAGRAPH_START.lastIndex
     }
     const addNoteMarkers = (run, paragraph) => {
-      const range = run.GetRange()
-      if (range.GetStartPos() >= to || range.GetEndPos() <= from) return
-      const json = run.ToJSON()
+      const json = readJson(run)
       if (!NOTE_REFERENCE.test(json)) return
+      const range = bounds ? run.GetRange() : null
+      if (range?.GetStartPos() >= to || range?.GetEndPos() <= from) return
       const point = findNotePoint()
       if (
         paragraph.GetParentTableCell() ||
@@ -589,8 +601,10 @@ export function readContent() {
 
     // An address may hold parentheses, in pairs, as `Mercury_(planet)`
     const LINK_END = /[*_~`]*\]\((?:[^()]|\([^()]*\))*\)/y
-    selectedParagraphs.forEach(paragraph => {
+    selectedParagraphs.forEach((paragraph, index) => {
       hasParagraphText = false
+      const isEdge = index === 0 || index === selectedParagraphs.length - 1
+      bounds = isEdge ? { from, to } : null
       const addMarkers = run => {
         if (hasNotes) addNoteMarkers(run, paragraph)
         addDrawingMarkers(run)
