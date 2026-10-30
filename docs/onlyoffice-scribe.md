@@ -321,7 +321,7 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 
 - A note written back keeps the first paragraph of its note as plain text, a tab or a line break as a space: its other paragraphs, its look, and what it holds besides text are lost, and a note with a mark of its own, as `*`, comes back with an automatic number.
 - A paragraph that holds only a footnote reference gives its marker to the next paragraph.
-- In an answer that has notes or links to a place of the document, a footnote reference or an image at the very start or end is left out of the answer left selected: the next answer that replaces it gets no marker for the note, and writes the markers of the image as `[image]`, the image staying beside it.
+- In an answer that has notes or links to a place of the document, an image at the very start or end is left out of the answer left selected: the next answer that replaces it writes the markers of the image as `[image]`, the image staying beside it. The notes at its start or end stay selected with it, and the next answer gives them back.
 - A link whose bookmark the document lost is written as its text, unless its anchor is the `_`-prefixed name of a heading, which is then found by its text, see [Markers](#markers). A link to a heading whose bookmark is gone finds the heading only when its anchor holds the whole text of the heading: the editor names the bookmark of a heading after its first ten characters. A link to a hidden bookmark that is not on a heading, as the `_Ref…` that Word puts on a caption, is given back as its text without the link.
 - A bold or italic link reaches the assistant without its emphasis: the editor writes no emphasis marks inside a link.
 

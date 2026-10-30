@@ -139,6 +139,56 @@
           "selMarkup": [{"at":{"block":0},"text":"The budget is approved. «Works begin in June.»"}]
         }
       }
+    },
+    {
+      "id": "footnote-next",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The budget is voted.[^scribe-fn-1]",
+      "next": {"answerAction":"replace","answer":"The budget was voted.[^scribe-fn-1]"},
+      "expected": {
+        "content": {
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget was voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "The budget was voted.",
+          "selMarkup": [{"at":{"block":0},"text":"«The budget was voted.»"}]
+        }
+      }
+    },
+    {
+      "id": "footnote-insert-next",
+      "selection": "P1@start..P1@end",
+      "answerAction": "insert",
+      "answer": "The budget is voted.[^scribe-fn-1]",
+      "next": {"answerAction":"replace","answer":"The budget was voted.[^scribe-fn-1]"},
+      "expected": {
+        "content": {
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"The budget is approved."},{"t":" The works start in June."}],
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
+            },
+            {"type":"p","runs":[{"t":"The budget was voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "The budget was voted.",
+          "selMarkup": [{"at":{"block":1},"text":"«The budget was voted.»"}]
+        }
+      }
     }
   ]
 }

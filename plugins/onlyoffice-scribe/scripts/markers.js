@@ -159,16 +159,36 @@ export function writeMarkers() {
   const findCursor = (paragraph, offset, isStart) => {
     const runs = getRuns(paragraph)
     let passed = 0
-    for (const run of runs) {
+    for (const [index, run] of runs.entries()) {
       const { length } = run.GetText()
       const isIn = isStart
         ? offset < passed + length
         : offset <= passed + length
-      if (isIn) return { run, at: offset - passed }
+      if (isIn) return { runs, index, at: offset - passed }
       passed += length
     }
-    const last = runs[runs.length - 1]
-    return isStart && last ? { run: last, at: last.GetText().length } : null
+    const index = runs.length - 1
+    return isStart && index >= 0
+      ? { runs, index, at: runs[index].GetText().length }
+      : null
+  }
+
+  // The notes an answer starts or ends with are in runs of their own, out of
+  // the text: they are left selected with it, as many as it has there, and
+  // the next answer of the conversation, which gives them back, replaces
+  // them. A note of the text around the answer stays out.
+  const NOTE_REFERENCE = /"type":"footnoteRef"/
+  const takeNotes = ({ runs, index }, count, step) => {
+    let taken = index
+    let left = count
+    for (let i = index + step; left > 0 && runs[i]; i += step) {
+      if (runs[i].GetText() !== '') break
+      if (NOTE_REFERENCE.test(runs[i].ToJSON())) {
+        taken = i
+        left -= 1
+      }
+    }
+    return taken
   }
 
   const count = paragraphs
@@ -186,6 +206,20 @@ export function writeMarkers() {
   const last = paragraphs[paragraphs.length - 1]
   const head = countText(first, answer.GetStartPos())
   const tail = countText(last) - countText(last, answer.GetEndPos())
+  // Only the notes of the text read are written
+  const isKnownNote = note => typeof notes[Number(note) - 1] === 'string'
+  const answerText = answer.GetText().trim()
+  const knownNotes = new RegExp(PLACEHOLDER, 'g')
+  const countKnown = text =>
+    [...text.matchAll(knownNotes)].filter(({ groups }) =>
+      isKnownNote(groups.note)
+    ).length
+  const leadingNotes = countKnown(
+    answerText.match(new RegExp(`^(?:${PLACEHOLDER.source})+`))?.[0] ?? ''
+  )
+  const trailingNotes = countKnown(
+    answerText.match(new RegExp(`(?:${PLACEHOLDER.source})+$`))?.[0] ?? ''
+  )
 
   // A placeholder the editor would not remove is not written twice
   for (let i = 0; i < count; i += 1) {
@@ -198,9 +232,16 @@ export function writeMarkers() {
   const start = findCursor(first, head, true)
   const end = findCursor(last, countText(last) - tail)
   if (start && end) {
-    selectInRun(start.run, start.at, start.at)
-      .ExpandTo(end.run.GetRange(end.at, end.at))
-      ?.Select()
+    const startIndex = takeNotes(start, leadingNotes, -1)
+    const endIndex = takeNotes(end, trailingNotes, 1)
+    const startRun = start.runs[startIndex]
+    const endRun = end.runs[endIndex]
+    const startAt = startIndex === start.index ? start.at : 0
+    const endRange =
+      endIndex === end.index
+        ? endRun.GetRange(end.at, end.at)
+        : endRun.GetRange()
+    selectInRun(startRun, startAt, startAt).ExpandTo(endRange)?.Select()
   }
   return true
 }
