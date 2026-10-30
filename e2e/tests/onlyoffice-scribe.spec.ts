@@ -144,9 +144,7 @@ test.describe('the scribe plugin in a workbook', () => {
     '| 6 | Total | =SUM(B2:B5) | =SUM(C2:C5) |'
   ].join('\n')
 
-  const openWorkbook = async (
-    scribe: ScribePluginPage
-  ): Promise<void> => {
+  const openWorkbook = async (scribe: ScribePluginPage): Promise<void> => {
     const fileId = await createFile({
       instance: USERS.alice.instance,
       name: `Scribe ${stamp()} ${XLSX}`,
@@ -272,13 +270,17 @@ test.describe('the scribe plugin in a workbook', () => {
       expect(charts[1].series).toEqual(['Ventes!$C$2:$C$5'])
       expect(charts[1].from.row).toBeGreaterThan(bars.to.row)
 
+      // Areas wider than tall together are still columns of values
+      await scribe.insertChart({ chartType: 'pie', range: 'A1:A3,E1:E3' })
+      expect((await scribe.readCharts()).at(-1)?.series).toEqual([
+        'Ventes!$E$2:$E$3'
+      ])
+      await scribe.undo()
+
       // Without a range, the chart is of the cells given
       await scribe.insertChart({ chartType: 'lineNormal' })
       const [, pie, line] = await scribe.readCharts()
-      expect(line.series).toEqual([
-        'Ventes!$B$2:$B$5',
-        'Ventes!$C$2:$C$5'
-      ])
+      expect(line.series).toEqual(['Ventes!$B$2:$B$5', 'Ventes!$C$2:$C$5'])
       expect(line.from.row).toBeGreaterThan(pie.to.row)
 
       // The cells are left as they are, and one undo takes a chart back
@@ -293,6 +295,92 @@ test.describe('the scribe plugin in a workbook', () => {
   )
 
   test(
+    'writes the next answers in the cells it was given, once each',
+    { tag: '@e2e-scribe' },
+    async ({ alicePage }) => {
+      const scribe = new ScribePluginPage(alicePage)
+      await openWorkbook(scribe)
+      await scribe.selectCells('Ventes!A1:C5')
+      await scribe.getContent()
+      await scribe.applyAnswer('apply', TOTAL_ROW, () => scribe.readSheet())
+
+      // The assistant still knows A1:C5: its row 6 goes over the total row,
+      // which moves down. Two clicks write it once.
+      const average = [
+        '|   | A | B | C |',
+        '|---|---|---|---|',
+        '| 6 | Moyenne | =AVERAGE(B2:B5) | =AVERAGE(C2:C5) |'
+      ].join('\n')
+      await scribe.sendAnswer('apply', average)
+      await scribe.sendAnswer('apply', average)
+      await expect
+        .poll(async () => (await scribe.readSheet()).cells[5][0])
+        .toBe('Moyenne')
+      await alicePage.waitForTimeout(2_000)
+      const { cells } = await scribe.readSheet()
+      expect(cells.slice(5, 8).map(row => row.slice(0, 3))).toEqual([
+        ['Moyenne', '1110', '1195'],
+        ['Total', '4440', '4780'],
+        ['', '', '']
+      ])
+    }
+  )
+
+  test(
+    'tells Drive when it writes nothing of an answer',
+    { tag: '@e2e-scribe' },
+    async ({ alicePage }) => {
+      const scribe = new ScribePluginPage(alicePage)
+      await openWorkbook(scribe)
+      const initial = await scribe.readSheets()
+      await scribe.selectCells('Budget!A1:D5')
+      await scribe.getContent()
+
+      // An explanation that names formulas, and a table without addresses
+      await scribe.sendAnswer(
+        'apply',
+        '- D2: =B2+C2 — adds the two quarters\n- D5: =SUM(D2:D4) sums the totals'
+      )
+      expect(await scribe.waitForNotApplied()).toBe('noCells')
+      await scribe.sendAnswer(
+        'apply',
+        '| Poste | Total |\n|---|---|\n| Loyer | 2400 |'
+      )
+      expect(await scribe.waitForNotApplied()).toBe('noCells')
+      // A formula the editor cannot read: a French decimal
+      await scribe.sendAnswer(
+        'apply',
+        '|   | E |\n|---|---|\n| 2 | =D2*0,055 |'
+      )
+      expect(await scribe.waitForNotApplied()).toBe('notWritten')
+      // An older Drive offers to insert an answer, as in a text
+      await scribe.sendAnswer('insert', TOTAL_ROW)
+      expect(await scribe.waitForNotApplied(3_000)).toBe(null)
+
+      expect(await scribe.readSheets()).toEqual(initial)
+    }
+  )
+
+  test(
+    'makes room for a cell of a merge rather than write its first cell',
+    { tag: '@e2e-scribe' },
+    async ({ alicePage }) => {
+      const scribe = new ScribePluginPage(alicePage)
+      await openWorkbook(scribe)
+      await scribe.mergeCells('A6:C6', 'Source : export CRM')
+      await scribe.selectCells('Ventes!C2:C5')
+      await scribe.getContent()
+
+      await scribe.applyAnswer('apply', '=AVERAGE(C2:C5)', () =>
+        scribe.readSheet()
+      )
+      const { cells } = await scribe.readSheet()
+      expect(cells[5].slice(0, 3)).toEqual(['', '', '1195'])
+      expect(cells[6][0]).toBe('Source : export CRM')
+    }
+  )
+
+  test(
     'writes English formulas in an editor whose formulas are French',
     { tag: '@e2e-scribe' },
     async ({ alicePage }) => {
@@ -302,9 +390,7 @@ test.describe('the scribe plugin in a workbook', () => {
       await scribe.selectCells('Budget!A1:D5')
 
       // The assistant reads the formulas in English, as it writes them
-      expect((await scribe.getContent()).content).toContain(
-        'B5: =SUM(B2:B4)'
-      )
+      expect((await scribe.getContent()).content).toContain('B5: =SUM(B2:B4)')
 
       await scribe.applyAnswer(
         'apply',
@@ -320,4 +406,3 @@ test.describe('the scribe plugin in a workbook', () => {
     }
   )
 })
-

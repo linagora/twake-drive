@@ -659,8 +659,8 @@ export class ScribePluginPage {
         return {
           type: chart.GetChartType() as string,
           title: String(chart.GetTitle() ?? '').trim(),
-          series: (chart.Chart?.getAllSeries?.() ?? []).map(
-            (serie: any) => String(serie.val?.numRef?.f ?? '')
+          series: (chart.Chart?.getAllSeries?.() ?? []).map((serie: any) =>
+            String(serie.val?.numRef?.f ?? '')
           ),
           from: { row: base?.from.row ?? -1, col: base?.from.col ?? -1 },
           to: { row: bounds?.to.row ?? -1, col: bounds?.to.col ?? -1 }
@@ -689,7 +689,9 @@ export class ScribePluginPage {
   async undo(): Promise<void> {
     await this.editor().evaluate(() => {
       ;(
-        window as unknown as { g_asc_plugins: { api: { asc_Undo: () => void } } }
+        window as unknown as {
+          g_asc_plugins: { api: { asc_Undo: () => void } }
+        }
       ).g_asc_plugins.api.asc_Undo()
     })
     await this.page.waitForTimeout(300)
@@ -712,6 +714,45 @@ export class ScribePluginPage {
       await this.page.waitForTimeout(250)
     }
     return null
+  }
+
+  /** Asks the plugin to write an answer, without waiting for it */
+  async sendAnswer(answerAction: string, text: string): Promise<void> {
+    await this.send({
+      type: 'twake-scribe:applyAnswer',
+      answerAction,
+      text,
+      format: 'markdown'
+    })
+  }
+
+  /**
+   * Why the plugin tells Drive it wrote nothing or not all of an answer, or
+   * null when it tells nothing in that time
+   */
+  async waitForNotApplied(timeout = 10_000): Promise<string | null> {
+    const deadline = Date.now() + timeout
+    while (Date.now() < deadline) {
+      const message = (await this.takeMessages()).find(
+        ({ type }) => type === 'twake-scribe:notApplied'
+      ) as { reason?: string } | undefined
+      if (message) return message.reason ?? ''
+      await this.page.waitForTimeout(250)
+    }
+    return null
+  }
+
+  /** Merges cells of the active sheet over a text, as a note under data */
+  async mergeCells(address: string, text: string): Promise<void> {
+    await this.editor().evaluate(
+      ({ address, text }) => {
+        const Api = (window as any).g_asc_plugins.api.getJsApi()
+        const range = Api.GetActiveSheet().GetRange(address)
+        range.Merge(false)
+        range.SetValue(text)
+      },
+      { address, text }
+    )
   }
 
   /** Writes an answer, and waits for the document to be written */
