@@ -849,9 +849,9 @@ export function writeBlocks() {
   // between its placeholders, then becomes a link.
   const makeRunText = span => {
     if (span.image !== undefined) return '[image]'
-    if (span.note !== undefined) return `\u0000fn:${span.note}\u0000`
+    if (span.note !== undefined) return `\uFDD0fn:${span.note}\uFDD0`
     if (!isKnownRef(span)) return span.text
-    return `\u0000ref:${span.ref}\u0000${span.text}\u0000/ref\u0000`
+    return `\uFDD0ref:${span.ref}\uFDD0${span.text}\uFDD0/ref\uFDD0`
   }
 
   const makeRun = (span, textPr) => {
