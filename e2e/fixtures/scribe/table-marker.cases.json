@@ -1,0 +1,104 @@
+{
+  "document": "table-marker.docx",
+  "cases": [
+    {
+      "id": "shape-cell-content",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\n![image 1]Beta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "shape-cell-replace",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>Alpha FR</td><td>![image 1]Beta FR</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\n![image 1]Beta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Alpha FR"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta FR"}],"images":1,"shapes":1}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":" Comes first."}],"notes":1,"noteTexts":["A note."]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Alpha FRBeta FR\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Alpha FR»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Beta FR»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "note-after-table-content",
+      "selection": "T1.C(0,0)@start..P2@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\n![image 1]Beta\n\n</td>\n  </tr>\n</table>\n\n [^scribe-fn-1]Comes first.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "note-after-table-replace",
+      "selection": "T1.C(0,0)@start..P2@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>Alpha FR</td><td>![image 1]Beta FR</td></tr>\n</table>\n\n[^scribe-fn-1] Vient en premier.",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\n![image 1]Beta\n\n</td>\n  </tr>\n</table>\n\n [^scribe-fn-1]Comes first.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Alpha FR"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta FR"}],"images":1,"shapes":1}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":" Vient en premier."}],"notes":1,"noteTexts":["A note."]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Alpha FRBeta FR\n Vient en premier.",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Alpha FR»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Beta FR»"},
+            {"at":{"block":2},"text":"« Vient en premier.»"}
+          ]
+        }
+      }
+    }
+  ]
+}

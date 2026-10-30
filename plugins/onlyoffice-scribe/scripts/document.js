@@ -526,7 +526,7 @@ export function readContent() {
     const PARAGRAPH_START = /[*_~]*\s*(?:#{1,6} |> ?|(?:[*+-]|\d+[.)]) )?/y
     const findNotePoint = () => {
       if (hasParagraphText) return at
-      PARAGRAPH_START.lastIndex = at
+      PARAGRAPH_START.lastIndex = Math.max(at, paragraphStart)
       PARAGRAPH_START.test(markdown)
       return PARAGRAPH_START.lastIndex
     }
@@ -639,8 +639,29 @@ export function readContent() {
 
     // An address may hold parentheses, in pairs, as `Mercury_(planet)`
     const LINK_END = /[*_~`]*\]\((?:[^()]|\([^()]*\))*\)/y
+    // A paragraph of another cell is after the tag of its cell, and one out
+    // of a table after the end of the table: a marker that comes before its
+    // text goes there, not at the end of the text before
+    let lastCell = null
+    let paragraphStart = 0
+    const CELL_START = /<td\b[^>]*>/g
+    const TABLE_END = '</table>'
+    const findParagraphStart = paragraph => {
+      const id = paragraph.GetParentTableCell()?.GetInternalId() ?? null
+      const isOtherCell = id !== null && id !== lastCell
+      const isAfterTable = id === null && lastCell !== null
+      lastCell = id
+      if (isOtherCell) {
+        CELL_START.lastIndex = at
+        return CELL_START.exec(markdown) ? CELL_START.lastIndex : at
+      }
+      const index = isAfterTable ? markdown.indexOf(TABLE_END, at) : -1
+      return index === -1 ? at : index + TABLE_END.length
+    }
+
     selectedParagraphs.forEach((paragraph, index) => {
       hasParagraphText = false
+      paragraphStart = findParagraphStart(paragraph)
       const isEdge = index === 0 || index === selectedParagraphs.length - 1
       bounds = isEdge ? { from, to } : null
       const addMarkers = run => {
