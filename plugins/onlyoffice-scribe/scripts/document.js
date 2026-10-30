@@ -1361,7 +1361,9 @@ export function writeBlocks() {
       first.GetRange().GetEndPos()
     )
     const isEndOfLine =
-      getText(part).trim() === '' && getText(first).trim() !== ''
+      getText(part).trim() === '' &&
+      getText(first).trim() !== '' &&
+      !holdsMarked(part.GetStartPos(), part.GetEndPos())
     if (!next || !isEndOfLine) return
     paragraphs.shift()
     selection.SetStartPos(next.GetRange().GetStartPos())
@@ -1378,11 +1380,19 @@ export function writeBlocks() {
     selection.SetEndPos(previous.GetRange().GetEndPos())
   }
 
-  // Moves an end of a range over what the answer does not replace
+  // A drawing or a note reference takes a position, and has no text
+  const MARKED = /"type":"(paraDrawing|footnoteRef)"/
+  const holdsMarked = (from, to) =>
+    MARKED.test(doc.GetRange(from, to).ToJSON(false, false))
+
+  // Moves an end of a range over what the answer does not replace: never
+  // over a drawing or a note, which the text read gave a marker
   const shrinkRange = (range, isStart, isOut) => {
     let start = range.GetStartPos()
     let end = range.GetEndPos()
     while (end > start && isOut(getText(range))) {
+      const [from, to] = isStart ? [start, start + 1] : [end - 1, end]
+      if (holdsMarked(from, to)) return
       if (isStart) range.SetStartPos((start += 1))
       else range.SetEndPos((end -= 1))
     }
