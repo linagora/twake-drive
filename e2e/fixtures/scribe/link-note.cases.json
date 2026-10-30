@@ -55,6 +55,90 @@
           "selMarkup": [{"at":{"block":0},"text":"«See  for more.»"}]
         }
       }
+    },
+    {
+      "id": "break-note-content",
+      "selection": "P2@start..P2@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Fill in the form \\\nand return it.[^scribe-fn-1]\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "break-note-replace",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Fill in the form \\\nand send it back.[^scribe-fn-1]",
+      "expected": {
+        "content": {
+          "content": "Fill in the form \\\nand return it.[^scribe-fn-1]\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Mercury","u":1,"link":"https://en.wikipedia.org/wiki/Mercury_(planet)"},
+                {"t":" for details."}
+              ],
+              "notes": 1,
+              "noteTexts": ["Named after the god."]
+            },
+            {
+              "type": "p",
+              "runs": [{"t":"Fill in the form "},{"t":"and send it back."}],
+              "notes": 1,
+              "noteTexts": ["By post."]
+            },
+            {"type":"p","runs":[{"t":"Fill in the formand return the "},{"t":"form","u":1},{"t":" by Friday."}]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"Read the "},
+                {"t":"terms and conditions","u":1,"link":"https://example.org/terms"},
+                {"t":" now."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The form　and the "},{"t":"form","u":1},{"t":" after."}]},
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "Fill in the form \nand send it back.",
+          "selMarkup": [{"at":{"block":1},"text":"«Fill in the form and send it back.»"}]
+        }
+      }
+    },
+    {
+      "id": "break-underline-content",
+      "selection": "P3@start..P3@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Fill in the form \\\nand return the <u>form</u> by Friday.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "wide-space-content",
+      "selection": "P5@start..P5@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {"content":"The form and the <u>form</u> after.\n\n","target":"selection","canReplace":true},
+        "model": null
+      }
     }
   ]
 }
