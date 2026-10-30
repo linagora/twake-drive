@@ -47,6 +47,8 @@
       "skippedCells": "Tabela: liczba niezmienionych zaznaczonych komórek: %{smart_count}",
       "closeNotice": "Zamknij",
       "insertChart": "Wstaw wykres",
+      "notApplied": "Ta odpowiedź nie zawiera komórek do zapisania w arkuszu",
+      "notWritten": "Edytor nie mógł w pełni zastosować tej odpowiedzi",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",

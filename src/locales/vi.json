@@ -671,6 +671,8 @@
       "skippedCells": "Bảng: %{smart_count} ô đã chọn không được thay đổi",
       "closeNotice": "Đóng",
       "insertChart": "Chèn biểu đồ",
+      "notApplied": "Câu trả lời này không có ô nào để ghi vào trang tính",
+      "notWritten": "Trình soạn thảo không thể áp dụng toàn bộ câu trả lời này",
       "suggestions": {
         "newSlide": "Trang chiếu mới",
         "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",

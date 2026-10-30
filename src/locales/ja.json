@@ -47,6 +47,8 @@
       "skippedCells": "表：選択したセルのうち %{smart_count} 個は変更されませんでした",
       "closeNotice": "閉じる",
       "insertChart": "グラフを挿入",
+      "notApplied": "この回答にはシートに書き込むセルがありません",
+      "notWritten": "エディターはこの回答をすべて適用できませんでした",
       "suggestions": {
         "newSlide": "新しいスライド",
         "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",

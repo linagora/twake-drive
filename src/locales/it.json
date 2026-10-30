@@ -671,6 +671,8 @@
       "skippedCells": "Tabella: %{smart_count} cella selezionata è rimasta invariata |||| Tabella: %{smart_count} celle selezionate sono rimaste invariate",
       "closeNotice": "Chiudi",
       "insertChart": "Inserisci il grafico",
+      "notApplied": "Questa risposta non contiene celle da scrivere nel foglio",
+      "notWritten": "L’editor non è riuscito ad applicare tutta questa risposta",
       "suggestions": {
         "newSlide": "Nuova diapositiva",
         "newSlideMessage": "Aggiungi una nuova diapositiva dopo questa, sul testo",
