@@ -1,0 +1,125 @@
+{
+  "document": "img-edge.docx",
+  "cases": [
+    {
+      "id": "image-edge-content",
+      "selection": "P1@start..P1@15",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {"content":"See the chart ![image 1] \n\n","target":"selection","canReplace":true},
+        "model": null
+      }
+    },
+    {
+      "id": "image-edge-replace",
+      "selection": "P1@start..P1@15",
+      "answerAction": "replace",
+      "answer": "Voir le graphique ![image 1]",
+      "expected": {
+        "content": {"content":"See the chart ![image 1] \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Voir le graphique "},{"t":" for details."}],"images":1},
+            {
+              "type": "p",
+              "runs": [{"t":"Approved."},{"t":" The works start."}],
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
+            },
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {
+              "type": "table",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Cell one"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Cell two"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Voir le graphique ",
+          "selMarkup": [{"at":{"block":0},"text":"«Voir le graphique » for details."}]
+        }
+      }
+    },
+    {
+      "id": "note-edge-replace",
+      "selection": "P2@9..P2@19",
+      "answerAction": "replace",
+      "answer": "[^scribe-fn-1] Les travaux",
+      "expected": {
+        "content": {"content":" [^scribe-fn-1]The works\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"See the chart "},{"t":" for details."}],"images":1},
+            {
+              "type": "p",
+              "runs": [{"t":"Approved."},{"t":" Les travaux"},{"t":" start."}],
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
+            },
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {
+              "type": "table",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Cell one"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Cell two"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": " Les travaux",
+          "selMarkup": [{"at":{"block":1},"text":"Approved.« Les travaux» start."}]
+        }
+      }
+    },
+    {
+      "id": "image-table-replace",
+      "selection": "P3@start..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "Photo prise ![image 1]\n\n<table>\n  <tr><td>Cellule un</td><td>Cellule deux</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "Photo ![image 1]\n\n<table>\n  <tr>\n   <td>\n\nCell one\n\n</td>\n   <td>\n\nCell two\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"See the chart "},{"t":" for details."}],"images":1},
+            {
+              "type": "p",
+              "runs": [{"t":"Approved."},{"t":" The works start."}],
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
+            },
+            {"type":"p","runs":[{"t":"Photo prise "}],"images":1},
+            {
+              "type": "table",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Cellule un"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Cellule deux"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Photo prise \nCellule unCellule deux\n",
+          "selMarkup": [
+            {"at":{"block":2},"text":"«Photo prise »"},
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Cellule un»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Cellule deux»"}
+          ]
+        }
+      }
+    }
+  ]
+}
