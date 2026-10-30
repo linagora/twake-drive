@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate, Outlet, useLocation } from 'react-router-dom'
+import { useNavigate, Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import { useQuery, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -24,6 +24,7 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { TrashBreadcrumb } from '@/modules/trash/components/TrashBreadcrumb'
 import { TrashToolbar } from '@/modules/trash/components/TrashToolbar'
 import { destroy } from '@/modules/trash/components/actions/destroy'
+import { isInTrashDir } from '@/modules/trash/helpers'
 import { buildTrashQuery } from '@/queries'
 
 export const TrashFolderView = () => {
@@ -39,6 +40,7 @@ export const TrashFolderView = () => {
   useHead()
 
   const { displayedFolder, isNotFound } = useDisplayedFolder()
+  const isTrashFolder = isInTrashDir(displayedFolder?.path)
 
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -67,7 +69,9 @@ export const TrashFolderView = () => {
   const foldersResult = useQuery(folderQuery.definition, folderQuery.options)
   const filesResult = useQuery(fileQuery.definition, fileQuery.options)
 
-  const actions = makeActions([selectAllItems, restore, destroy], {
+  // A loading folder may be live, and live files must never be destroyed
+  const trashActions = isTrashFolder ? [selectAllItems, restore, destroy] : []
+  const actions = makeActions(trashActions, {
     client,
     t,
     refresh,
@@ -79,6 +83,11 @@ export const TrashFolderView = () => {
       ),
     isSelectAll
   })
+
+  // Trash actions would permanently delete the content of a live folder
+  if (displayedFolder?.path && !isTrashFolder) {
+    return <Navigate to={`/folder/${displayedFolder.id}`} replace />
+  }
 
   return (
     <FolderView isNotFound={isNotFound}>
