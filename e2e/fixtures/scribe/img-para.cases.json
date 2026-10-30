@@ -206,6 +206,27 @@
         },
         "model": null
       }
+    },
+    {
+      "id": "image-stretched",
+      "selection": "P2@start..P2@6",
+      "keys": ["Shift+ArrowRight"],
+      "answerAction": "replace",
+      "answer": "Picture",
+      "expected": {
+        "content": {"content":"Photo \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {"type":"p","runs":[{"t":"Picture"}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Picture",
+          "selMarkup": [{"at":{"block":2},"text":"«Picture»"}]
+        }
+      }
     }
   ]
 }
