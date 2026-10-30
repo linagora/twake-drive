@@ -89,7 +89,10 @@ const setup = ({
   flag.mockImplementation(
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
   )
-  const plugin = { postMessage: jest.fn() }
+  // The plugin is a frame of the frame of the editor
+  const editorFrame =
+    document.getElementsByName('frameEditor')[0] ?? addEditorFrame(FRAME)
+  const plugin = { postMessage: jest.fn(), parent: editorFrame.contentWindow }
   const receive = (data, { origin = SERVER_ORIGIN, source = plugin } = {}) => {
     act(() => {
       const event = new MessageEvent('message', { data, origin })
@@ -192,6 +195,17 @@ describe('ScribeProvider', () => {
 
     receive({ type: 'twake-scribe:ready' }, { origin: 'https://example.org' })
     receive('a text', { origin: SERVER_ORIGIN })
+
+    expect(getState().isAvailable).toBe(false)
+  })
+
+  it('takes no frame for the plugin but one of the frame of the editor', () => {
+    const { receive, getState } = setup()
+
+    receive(
+      { type: 'twake-scribe:ready' },
+      { source: { postMessage: jest.fn(), parent: window } }
+    )
 
     expect(getState().isAvailable).toBe(false)
   })
@@ -388,6 +402,7 @@ describe('ScribeProvider', () => {
   it('has no geometry without the editor frame', () => {
     const { receive, getGeometry } = setup()
     receive({ type: 'twake-scribe:ready' })
+    document.getElementsByName('frameEditor')[0].remove()
 
     receive({
       type: 'twake-scribe:geometry',

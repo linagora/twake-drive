@@ -42,6 +42,14 @@ const focusEditorFrame = () => {
   document.getElementsByName(FRAME_EDITOR_NAME)[0]?.focus()
 }
 
+// The plugin is a frame of the frame of the editor: another frame of the
+// Document Server's origin, as a plugin of another editor, cannot take its
+// place
+const isEditorPlugin = source =>
+  Boolean(source) &&
+  source.parent ===
+    document.getElementsByName(FRAME_EDITOR_NAME)[0]?.contentWindow
+
 const findFrameBox = () =>
   document.getElementsByName(FRAME_EDITOR_NAME)[0]?.getBoundingClientRect() ??
   null
@@ -108,7 +116,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
 
       const { type, content, target, canReplace } = event.data ?? {}
       const text = { content, target, canReplace }
-      if (type === 'twake-scribe:ready') {
+      if (type === 'twake-scribe:ready' && isEditorPlugin(event.source)) {
         pluginWindow.current = event.source
         setPlugin(event.source)
       }
