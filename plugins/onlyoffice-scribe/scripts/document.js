@@ -570,11 +570,15 @@ export function readContent() {
 
     // The editor gives a link to a place of the document, which has no
     // address, as `[text]()` with its text as it is (`[1]` gives `[[1]]()`),
-    // and the part of it a selection cuts as plain text. A `}` would end the
-    // marker; in a cell or a code the link stays, and an answer gives back
-    // its text. The marks of an emphasis of the whole text go around the
-    // marker.
-    const REF_LINK_END = ']()'
+    // `[text](#anchor)` since its version 10, and the part of it a selection
+    // cuts as plain text. A `}` would end the marker; in a cell or a code the
+    // link stays, and an answer gives back its text. The marks of an emphasis
+    // of the whole text go around the marker.
+    const findRefLinkEnd = (start, anchor) =>
+      [']()', `](#${anchor})`]
+        .map(ending => ({ ending, index: markdown.indexOf(ending, start) }))
+        .filter(({ index }) => index !== -1)
+        .sort((a, b) => a.index - b.index)[0] ?? { ending: '', index: -1 }
     const LINK_MARKS = /[*_~`\\]/g
     const EDGE_MARKS = /^([*_~]*)[\s\S]*?([*_~]*)$/
     const isSameText = (a, b) =>
@@ -597,7 +601,10 @@ export function readContent() {
         .join('')
         .replace(/[&<>"']/g, char => ENTITIES[char])
       const start = markdown.indexOf('[', at)
-      const end = start === -1 ? -1 : markdown.indexOf(REF_LINK_END, start)
+      const { ending, index: end } =
+        start === -1 || !anchor
+          ? { ending: '', index: -1 }
+          : findRefLinkEnd(start, anchor)
       const linkText = markdown.slice(start + 1, end)
       const isMarked =
         Boolean(anchor) &&
@@ -611,11 +618,7 @@ export function readContent() {
       refs.push({ anchor, kind: getRefKind(anchor) })
       hasParagraphText = true
       const marker = `{{REF:scribe-ref-${refs.length}:${text}}}`
-      replace(
-        start,
-        end + REF_LINK_END.length,
-        wrapInMarks(marker, linkText, text)
-      )
+      replace(start, end + ending.length, wrapInMarks(marker, linkText, text))
       return true
     }
 
