@@ -62,6 +62,7 @@
   },
   "toolbar": {
     "menu_upload": "Bestanden uploaden",
+    "menu_upload_folder": "Map uploaden",
     "item_more": "Meer",
     "menu_new_folder": "Map",
     "menu_select": "Items selecteren",

@@ -74,6 +74,13 @@ const PublicToolbarByLink = ({
                   displayedFolder={displayedFolder}
                   onUploaded={refreshFolderContent}
                 />
+                <UploadButton
+                  isDirectory
+                  className="u-mr-half"
+                  label={t('toolbar.menu_upload_folder')}
+                  displayedFolder={displayedFolder}
+                  onUploaded={refreshFolderContent}
+                />
               </>
             )}
             <ViewSwitcher className="u-ml-half" />

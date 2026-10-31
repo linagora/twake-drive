@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
-import { Icon, Upload } from '@linagora/twake-icons'
+import { Folder, Icon, Upload } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
@@ -13,6 +13,7 @@ import { useI18n } from 'twake-i18n'
 
 import { useDisplayedFolder } from '@/hooks'
 import { uploadFiles } from '@/modules/navigation/duck'
+import { isDirectoryPickerAvailable } from '@/modules/upload'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const UploadItem = ({
@@ -20,7 +21,8 @@ const UploadItem = ({
   isReadOnly,
   displayedFolder,
   sharingState,
-  onUploaded
+  onUploaded,
+  isDirectory
 }) => {
   const client = useClient()
   const { showAlert } = useAlert()
@@ -69,32 +71,42 @@ const UploadItem = ({
   }
 
   const handleChange = files => {
-    if (isReadOnly || !files || files.length === 0) return
+    if (isReadOnly || !files) return
 
-    onUpload(
-      client,
-      files,
-      initialDirId,
-      showAlert,
-      displayedFolder?.driveId,
-      addItems
-    )
+    // A picked folder holding no file at all comes back as an empty list.
+    if (files.length > 0) {
+      onUpload(
+        client,
+        files,
+        initialDirId,
+        showAlert,
+        displayedFolder?.driveId,
+        addItems
+      )
+    }
     onClick()
   }
 
+  if (isDirectory && (isReadOnly || !isDirectoryPickerAvailable())) return null
+
+  const label = t(
+    isDirectory ? 'toolbar.menu_upload_folder' : 'toolbar.menu_upload'
+  )
+
   return (
     <FileInput
-      label={t('toolbar.menu_upload')}
+      label={label}
       multiple
       onChange={handleChange}
-      data-testid="upload-btn"
+      data-testid={isDirectory ? 'upload-folder-btn' : 'upload-btn'}
       value={[]}
+      {...(isDirectory && { webkitdirectory: '' })}
     >
       <ActionsMenuItem onClick={handleMenuItemClick}>
         <ListItemIcon>
-          <Icon icon={Upload} />
+          <Icon icon={isDirectory ? Folder : Upload} />
         </ListItemIcon>
-        <ListItemText primary={t('toolbar.menu_upload')} />
+        <ListItemText primary={label} />
       </ActionsMenuItem>
     </FileInput>
   )
