@@ -1118,6 +1118,14 @@ const createBrokenDirEntry = name => ({
   })
 })
 
+const makePickedFile = (name, webkitRelativePath) => {
+  const file = new File(['a'], name)
+  Object.defineProperty(file, 'webkitRelativePath', {
+    value: webkitRelativePath
+  })
+  return file
+}
+
 describe('extractFilesEntries', () => {
   it('should extract plain File objects', () => {
     const files = [new File(['a'], 'a.txt'), new File(['b'], 'b.txt')]
@@ -1180,6 +1188,22 @@ describe('extractFilesEntries', () => {
       entry: null,
       root: true
     })
+  })
+
+  it('drops system files found inside a folder', () => {
+    const results = extractFilesEntries([
+      makePickedFile('.DS_Store', 'R/.DS_Store'),
+      makePickedFile('Thumbs.db', 'R/sub/Thumbs.db'),
+      makePickedFile('a.txt', 'R/a.txt')
+    ])
+
+    expect(results.map(e => e.file.name)).toEqual(['a.txt'])
+  })
+
+  it('keeps a system file picked on its own', () => {
+    const file = new File(['a'], '.DS_Store')
+
+    expect(extractFilesEntries([file]).map(e => e.file)).toEqual([file])
   })
 
   it('should handle empty items', () => {
@@ -1319,14 +1343,6 @@ describe('overwriteFile function', () => {
   })
 })
 
-const makePickedFile = (name, webkitRelativePath) => {
-  const file = new File(['a'], name)
-  Object.defineProperty(file, 'webkitRelativePath', {
-    value: webkitRelativePath
-  })
-  return file
-}
-
 describe('isDirectoryPickerAvailable', () => {
   const setPlatform = (platform, maxTouchPoints) => {
     jest.spyOn(window.navigator, 'platform', 'get').mockReturnValue(platform)
@@ -1388,6 +1404,23 @@ describe('flattenEntries', () => {
     createDirectorySpy.mockImplementation(async ({ name }) => ({
       data: { id: `dir-${name}`, name, type: 'directory' }
     }))
+  })
+
+  it('skips system files when walking a dropped directory', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('.DS_Store'),
+      createMockFileEntry('Thumbs.db'),
+      createMockFileEntry('img.jpg')
+    ])
+
+    const result = await flattenEntries(
+      [{ file: null, isDirectory: true, entry: directoryEntry }],
+      'root',
+      fakeClient,
+      null
+    )
+
+    expect(result.map(r => r.relativePath)).toEqual(['photos/img.jpg'])
   })
 
   it('recreates the tree of files coming from a directory picker', async () => {

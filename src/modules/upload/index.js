@@ -70,6 +70,10 @@ export const status = {
   ERR_MAX_FILE_SIZE
 }
 
+// Operating system metadata, dropped from folder contents only: a file the
+// user picks on its own is still uploaded.
+const IGNORED_FOLDER_FILES = ['.DS_Store', 'Thumbs.db']
+
 const CONFLICT_ERROR = 409
 const PAYLOAD_TOO_LARGE = 413
 const noop = () => {}
@@ -497,7 +501,7 @@ const readAllEntries = async dirReader => {
   const entries = []
   let batch
   while ((batch = await readNextBatch(dirReader)).length > 0) {
-    entries.push(...batch)
+    entries.push(...batch.filter(e => !IGNORED_FOLDER_FILES.includes(e.name)))
   }
   return entries
 }
@@ -1227,7 +1231,10 @@ export const extractFilesEntries = items => {
         entry,
         root: true
       })
-    } else {
+    } else if (
+      !IGNORED_FOLDER_FILES.includes(item.name) ||
+      !getRelativeUploadPath(item).includes('/')
+    ) {
       results.push({ file: item, isDirectory: false, entry: null, root: true })
     }
   }
