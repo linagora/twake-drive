@@ -101,6 +101,7 @@
     "more": "さらに"
   },
   "toolbar": {
+    "menu_upload_folder": "フォルダをアップロード",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "さらに",
     "menu_select": "アイテムを選択",

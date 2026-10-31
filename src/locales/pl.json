@@ -95,6 +95,7 @@
     "more": "Więcej"
   },
   "toolbar": {
+    "menu_upload_folder": "Prześlij folder",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "Więcej",
     "menu_select": "Wybierz elementy",

@@ -50,6 +50,7 @@
     "more": "더보기"
   },
   "toolbar": {
+    "menu_upload_folder": "폴더 업로드",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "더보기",
     "menu_new_folder": "폴더",

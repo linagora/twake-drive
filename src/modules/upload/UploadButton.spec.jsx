@@ -9,9 +9,11 @@ import { useI18n } from 'twake-i18n'
 import { UploadButtonBase } from './UploadButton'
 
 import { uploadFiles } from '@/modules/navigation/duck'
+import { isDirectoryPickerAvailable } from '@/modules/upload'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 jest.mock('@linagora/twake-icons', () => ({
+  Folder: 'folder',
   Icon: () => null,
   Upload: 'upload'
 }))
@@ -27,10 +29,14 @@ jest.mock('cozy-ui/transpiled/react/Buttons', () => ({ label }) => (
 jest.mock(
   'cozy-ui/transpiled/react/FileInput',
   () =>
-    function FileInput({ children, onChange }) {
-      const handleClick = () => onChange(['file'])
+    function FileInput({ children, onChange, webkitdirectory, ...props }) {
+      const handleClick = () => onChange(mockPickedFiles)
       return (
-        <button data-testid="upload-btn" onClick={handleClick}>
+        <button
+          data-testid={props['data-testid']}
+          data-webkitdirectory={webkitdirectory}
+          onClick={handleClick}
+        >
           {children}
         </button>
       )
@@ -44,9 +50,14 @@ jest.mock('@/modules/navigation/duck', () => ({ uploadFiles: jest.fn() }))
 jest.mock('@/modules/public/PublicProvider', () => ({
   usePublicContext: () => ({ isPublic: false })
 }))
+jest.mock('@/modules/upload', () => ({
+  isDirectoryPickerAvailable: jest.fn()
+}))
 jest.mock('@/modules/upload/NewItemHighlightProvider', () => ({
   useNewItemHighlightContext: jest.fn()
 }))
+
+let mockPickedFiles = ['file']
 
 describe('UploadButton', () => {
   const client = { id: 'client' }
@@ -77,6 +88,8 @@ describe('UploadButton', () => {
     useI18n.mockReturnValue({ t })
     useNewItemHighlightContext.mockReturnValue({ addItems })
     uploadFiles.mockReturnValue({ type: 'UPLOAD_FILES' })
+    isDirectoryPickerAvailable.mockReturnValue(true)
+    mockPickedFiles = ['file']
   })
 
   it('uses route identifiers for a proxied shared-drive folder', () => {
@@ -112,5 +125,47 @@ describe('UploadButton', () => {
       'document-drive',
       addItems
     )
+  })
+
+  it('opens a directory picker and uploads through the same action', () => {
+    const { getByTestId } = setup({ isDirectory: true })
+    const input = getByTestId('upload-folder-btn')
+
+    expect(input.getAttribute('data-webkitdirectory')).toBe('')
+    fireEvent.click(input)
+
+    expect(uploadFiles).toHaveBeenCalledWith(
+      ['file'],
+      'document-folder',
+      sharingState,
+      onUploaded,
+      { client, showAlert, t },
+      'document-drive',
+      addItems
+    )
+  })
+
+  it('does not render the folder entry without write access', () => {
+    const { queryByText } = setup({ isDirectory: true, disabled: true })
+
+    expect(queryByText('Upload')).toBe(null)
+  })
+
+  it('does not render the folder entry where the picker is unavailable', () => {
+    isDirectoryPickerAvailable.mockReturnValue(false)
+    const { queryByText } = setup({ isDirectory: true })
+
+    expect(queryByText('Upload')).toBe(null)
+  })
+
+  it('starts nothing when the picked folder holds no file', () => {
+    mockPickedFiles = []
+    const onUploadStart = jest.fn()
+    const { getByTestId } = setup({ isDirectory: true, onUploadStart })
+
+    fireEvent.click(getByTestId('upload-folder-btn'))
+
+    expect(onUploadStart).not.toHaveBeenCalled()
+    expect(uploadFiles).not.toHaveBeenCalled()
   })
 })

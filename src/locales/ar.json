@@ -92,6 +92,7 @@
     "more": "المزيد"
   },
   "toolbar": {
+    "menu_upload_folder": "رفع مجلد",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "المزيد",
     "menu_select": "تحديد العناصر",
