@@ -78,6 +78,17 @@ describe('upload preflight conflicts', () => {
       ])
     })
 
+    it('uses the root folder of dropped files carrying a path', () => {
+      const file = new File(['a'], 'hello.docx')
+      file.path = './Photos/2026/hello.docx'
+
+      const result = getUploadFirstLevelEntries([
+        { root: true, file, isDirectory: false, entry: null }
+      ])
+
+      expect(result).toEqual([{ name: 'Photos', type: 'directory' }])
+    })
+
     it('uses the root folder of files coming from a directory picker', () => {
       const file = new File(['a'], 'hello.docx')
       Object.defineProperty(file, 'webkitRelativePath', {
