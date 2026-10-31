@@ -40,6 +40,24 @@ jest.mock('@/modules/drive/Toolbar', () => ({ showShareButton, canUpload }) => (
     {canUpload ? <button>Upload</button> : null}
   </>
 ))
+jest.mock('@/modules/views/Space/useReportSpaceFiles', () => ({
+  useReportSpaceFiles: jest.fn()
+}))
+jest.mock('@/modules/drive/AddMenu/AddMenuProvider', () => ({ children }) => (
+  <>{children}</>
+))
+jest.mock('@/modules/drive/Toolbar/components/AddButton', () => () => null)
+jest.mock('@/modules/upload/UploadButton', () => ({
+  UploadButton: ({ isDirectory, folderId, driveId, disabled }) =>
+    isDirectory ? (
+      <div
+        data-testid="upload-folder"
+        data-folder-id={folderId}
+        data-drive-id={driveId}
+        data-disabled={String(Boolean(disabled))}
+      />
+    ) : null
+}))
 jest.mock(
   '@/modules/upload/Dropzone',
   () =>
@@ -137,6 +155,48 @@ describe('SharedDriveFolderView', () => {
     render(<SharedDriveFolderView />, { wrapper: WriterWrapper })
 
     expect(screen.getAllByRole('button', { name: 'Upload' })).toHaveLength(1)
+  })
+
+  describe('folder upload entry in Twake Space', () => {
+    const renderInSpace = hasWriteAccess => {
+      window.location.hash = '#/embed/sharings/drive-1/folder-1'
+      render(
+        <AppLike
+          client={createMockClient({})}
+          sharingContextValue={{
+            hasWriteAccess: () => hasWriteAccess,
+            getRecipients: () => [],
+            isOwner: () => false,
+            refresh: jest.fn(),
+            allLoaded: true
+          }}
+        >
+          <SharedDriveFolderView />
+        </AppLike>
+      )
+    }
+
+    afterEach(() => {
+      window.location.hash = ''
+    })
+
+    it('targets the folder of the drive', () => {
+      renderInSpace(true)
+      const entry = screen.getByTestId('upload-folder')
+
+      expect(entry).toHaveAttribute('data-folder-id', 'folder-1')
+      expect(entry).toHaveAttribute('data-drive-id', 'drive-1')
+      expect(entry).toHaveAttribute('data-disabled', 'false')
+    })
+
+    it('is disabled without write access', () => {
+      renderInSpace(false)
+
+      expect(screen.getByTestId('upload-folder')).toHaveAttribute(
+        'data-disabled',
+        'true'
+      )
+    })
   })
 
   it('does not show the root share button in a subfolder', () => {

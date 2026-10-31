@@ -25,6 +25,12 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: jest.fn()
 }))
+jest.mock('@/modules/upload/UploadButton', () => ({
+  UploadButton: ({ isDirectory, displayedFolder }) =>
+    isDirectory ? (
+      <span data-testid="upload-folder">{displayedFolder.id}</span>
+    ) : null
+}))
 
 const files = [
   { id: 'a', _id: 'a', type: 'file', name: 'a.txt' },
@@ -103,4 +109,36 @@ describe('PublicToolbarByLink', () => {
       expect(client.stackClient.fetchJSON).not.toHaveBeenCalled()
     }
   )
+})
+
+describe('PublicToolbarByLink folder upload entry', () => {
+  const renderToolbar = (hasWriteAccess, isMobile = false) => {
+    useDisplayedFolder.mockReturnValue({
+      displayedFolder: { id: 'folder-1', type: 'directory' }
+    })
+    useBreakpoints.mockReturnValue({ isMobile, isDesktop: !isMobile })
+    render(
+      <AppLike client={createMockClient({})}>
+        <PublicToolbarByLink files={[]} hasWriteAccess={hasWriteAccess} />
+      </AppLike>
+    )
+  }
+
+  it('targets the shared folder with write access', () => {
+    renderToolbar(true)
+
+    expect(screen.getByTestId('upload-folder')).toHaveTextContent('folder-1')
+  })
+
+  it('is absent without write access', () => {
+    renderToolbar(false)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it('is absent on a mobile viewport', () => {
+    renderToolbar(true, true)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
 })
