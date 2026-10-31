@@ -158,7 +158,7 @@ describe('UploadButton', () => {
     expect(queryByText('Upload')).toBe(null)
   })
 
-  it('starts nothing when the picked folder holds no file', () => {
+  it('does not start the upload flow when the picked folder holds no file', () => {
     mockPickedFiles = []
     const onUploadStart = jest.fn()
     const { getByTestId } = setup({ isDirectory: true, onUploadStart })
@@ -166,6 +166,14 @@ describe('UploadButton', () => {
     fireEvent.click(getByTestId('upload-folder-btn'))
 
     expect(onUploadStart).not.toHaveBeenCalled()
-    expect(uploadFiles).not.toHaveBeenCalled()
+    expect(uploadFiles).toHaveBeenCalledWith(
+      [],
+      'document-folder',
+      sharingState,
+      onUploaded,
+      { client, showAlert, t },
+      'document-drive',
+      addItems
+    )
   })
 })

@@ -184,6 +184,20 @@ describe('uploadFiles', () => {
 
   const getAddToUploadQueueOptions = () => addToUploadQueue.mock.calls[0][5]
 
+  it('tells the user when there is nothing to upload', async () => {
+    extractFilesEntries.mockReturnValue([])
+
+    const dispatch = jest.fn()
+    await uploadFiles([], 'dir-id', {}, () => null, deps)(dispatch)
+
+    expect(deps.showAlert).toHaveBeenCalledWith({
+      message: 'upload.alert.no_files',
+      severity: 'info'
+    })
+    expect(hasPreflightUploadConflicts).not.toHaveBeenCalled()
+    expect(addToUploadQueue).not.toHaveBeenCalled()
+  })
+
   it('passes the flag-driven limit and a modal-opening onLimitExceeded callback', async () => {
     flag.mockReturnValue(100)
 

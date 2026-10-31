@@ -404,6 +404,7 @@
       "element": "phần tử"
     },
     "alert": {
+      "no_files": "Thư mục này không có tệp nào nên không có gì được tải lên.",
       "success": "Đã tải lên %{smart_count} %{type} thành công. |||| Đã tải lên %{smart_count} %{type} thành công.",
       "success_conflicts": "Đã tải lên %{smart_count} %{type} với %{conflictNumber} xung đột. |||| Đã tải lên %{smart_count} %{type} với %{conflictNumber} xung đột.",
       "success_updated": "Đã tải lên %{smart_count} %{type}, trong đó có %{updatedCount} được cập nhật. |||| Đã tải lên %{smart_count} %{type}, trong đó có %{updatedCount} được cập nhật.",

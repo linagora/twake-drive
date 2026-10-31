@@ -404,6 +404,7 @@
       "element": "Element"
     },
     "alert": {
+      "no_files": "Dieser Ordner enthält keine Dateien, daher wurde nichts hochgeladen.",
       "success": "%{smart_count} %{type} erfolgreich hochgeladen. |||| %{smart_count} %{type} erfolgreich hochgeladen.",
       "success_conflicts": "%{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen. |||| %{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen.",
       "success_updated": "%{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert. |||| %{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert.",
