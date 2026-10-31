@@ -230,6 +230,11 @@
       "retry": "重试"
     }
   },
+  "upload": {
+    "alert": {
+      "no_files": "此文件夹不包含任何文件，因此未上传任何内容。"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {

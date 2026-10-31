@@ -404,6 +404,7 @@
       "element": "élément"
     },
     "alert": {
+      "no_files": "Ce dossier ne contient aucun fichier : rien n'a été importé.",
       "success": "%{smart_count} %{type} importé. |||| %{smart_count} %{type} importés.",
       "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type} importés avec %{conflictNumber} conflit(s).",
       "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type} importés et %{updatedCount} mis à jour.",

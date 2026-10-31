@@ -316,6 +316,11 @@
       "retry": "再試一次"
     }
   },
+  "upload": {
+    "alert": {
+      "no_files": "此資料夾不含任何檔案，因此未上傳任何內容。"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {

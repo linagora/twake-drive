@@ -73,17 +73,14 @@ const UploadItem = ({
   const handleChange = files => {
     if (isReadOnly || !files) return
 
-    // A picked folder holding no file at all comes back as an empty list.
-    if (files.length > 0) {
-      onUpload(
-        client,
-        files,
-        initialDirId,
-        showAlert,
-        displayedFolder?.driveId,
-        addItems
-      )
-    }
+    onUpload(
+      client,
+      files,
+      initialDirId,
+      showAlert,
+      displayedFolder?.driveId,
+      addItems
+    )
     onClick()
   }
 

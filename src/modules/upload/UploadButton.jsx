@@ -41,9 +41,8 @@ const UploadButtonBase = ({
     driveId !== undefined ? driveId : displayedFolder?.driveId
 
   const onUpload = files => {
-    // A picked folder holding no file at all comes back as an empty list.
-    if (files.length === 0) return
-    onUploadStart?.()
+    // Staying on the current view: uploadFiles only reports the empty folder.
+    if (files.length > 0) onUploadStart?.()
     dispatch(
       uploadFiles(
         files,

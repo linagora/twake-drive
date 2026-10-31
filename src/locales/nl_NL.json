@@ -323,6 +323,7 @@
   "upload": {
     "label": "Uploaden",
     "alert": {
+      "no_files": "Deze map bevat geen bestanden, dus er is niets geüpload.",
       "network": "Je bent momenteel offline. Maak verbinding en probeer het opnieuw."
     }
   },

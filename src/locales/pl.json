@@ -227,6 +227,11 @@
       "retry": "Spróbuj ponownie"
     }
   },
+  "upload": {
+    "alert": {
+      "no_files": "Ten folder nie zawiera plików, więc nic nie zostało przesłane."
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {

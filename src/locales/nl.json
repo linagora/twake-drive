@@ -247,6 +247,11 @@
       "retry": "Opnieuw proberen"
     }
   },
+  "upload": {
+    "alert": {
+      "no_files": "Deze map bevat geen bestanden, dus er is niets geüpload."
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
