@@ -1,4 +1,5 @@
 import { getFullpath } from 'cozy-client/dist/models/file'
+import { isFlagshipApp, isMobile } from 'cozy-device-helper'
 
 import {
   processNextFile,
@@ -13,7 +14,8 @@ import {
   addToUploadQueue,
   onQueueEmpty,
   retryUploadConflicts,
-  uploadConflictStrategies
+  uploadConflictStrategies,
+  isDirectoryPickerAvailable
 } from './index'
 
 import logger from '@/lib/logger'
@@ -21,6 +23,11 @@ import logger from '@/lib/logger'
 jest.mock('cozy-client/dist/models/file', () => ({
   ...jest.requireActual('cozy-client/dist/models/file'),
   getFullpath: jest.fn()
+}))
+jest.mock('cozy-device-helper', () => ({
+  ...jest.requireActual('cozy-device-helper'),
+  isFlagshipApp: jest.fn(),
+  isMobile: jest.fn()
 }))
 
 const createFileSpy = jest.fn().mockName('createFile')
@@ -1312,6 +1319,65 @@ describe('overwriteFile function', () => {
   })
 })
 
+const makePickedFile = (name, webkitRelativePath) => {
+  const file = new File(['a'], name)
+  Object.defineProperty(file, 'webkitRelativePath', {
+    value: webkitRelativePath
+  })
+  return file
+}
+
+describe('isDirectoryPickerAvailable', () => {
+  const setPlatform = (platform, maxTouchPoints) => {
+    jest.spyOn(window.navigator, 'platform', 'get').mockReturnValue(platform)
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      value: maxTouchPoints,
+      configurable: true
+    })
+  }
+
+  beforeEach(() => {
+    HTMLInputElement.prototype.webkitdirectory = false
+    isFlagshipApp.mockReturnValue(false)
+    isMobile.mockReturnValue(false)
+    setPlatform('Linux x86_64', 0)
+  })
+
+  afterEach(() => {
+    delete HTMLInputElement.prototype.webkitdirectory
+    jest.restoreAllMocks()
+  })
+
+  it('is available on a desktop browser', () => {
+    expect(isDirectoryPickerAvailable()).toBe(true)
+  })
+
+  it('is not available in the mobile app webview', () => {
+    isFlagshipApp.mockReturnValue(true)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is not available on a mobile browser', () => {
+    isMobile.mockReturnValue(true)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is not available on an iPad reporting a desktop user agent', () => {
+    setPlatform('MacIntel', 5)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is available on a Mac', () => {
+    setPlatform('MacIntel', 0)
+    expect(isDirectoryPickerAvailable()).toBe(true)
+  })
+
+  it('is not available when the browser lacks the attribute', () => {
+    delete HTMLInputElement.prototype.webkitdirectory
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+})
+
 describe('flattenEntries', () => {
   beforeEach(() => {
     createDirectorySpy.mockReset()
@@ -1322,6 +1388,35 @@ describe('flattenEntries', () => {
     createDirectorySpy.mockImplementation(async ({ name }) => ({
       data: { id: `dir-${name}`, name, type: 'directory' }
     }))
+  })
+
+  it('recreates the tree of files coming from a directory picker', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Été/a.txt'),
+      makePickedFile('b.txt', 'Été/sous dossier/b.txt')
+    ])
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).toHaveBeenCalledTimes(2)
+    expect(createDirectorySpy).toHaveBeenCalledWith({
+      name: 'Été',
+      dirId: 'root'
+    })
+    expect(createDirectorySpy).toHaveBeenCalledWith({
+      name: 'sous dossier',
+      dirId: 'dir-Été'
+    })
+    expect(result).toEqual([
+      expect.objectContaining({
+        relativePath: 'Été/a.txt',
+        folderId: 'dir-Été'
+      }),
+      expect.objectContaining({
+        relativePath: 'Été/sous dossier/b.txt',
+        folderId: 'dir-sous dossier'
+      })
+    ])
   })
 
   it('should flatten a dropped directory entry into per-file items with relative paths', async () => {
