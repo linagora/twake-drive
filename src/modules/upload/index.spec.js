@@ -1766,6 +1766,67 @@ describe('addToUploadQueue placeholder flow', () => {
     })
   })
 
+  it('defers directory picker files so their tree is recreated', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Photos/a.txt'),
+      makePickedFile('b.txt', 'Photos/2026/b.txt')
+    ])
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const resolves = actions.filter(a => a.type === 'RESOLVE_FOLDER_ITEMS')
+    expect(resolves).toHaveLength(1)
+    expect(resolves[0].files).toEqual([
+      expect.objectContaining({
+        relativePath: 'Photos/a.txt',
+        folderId: 'dir-Photos'
+      }),
+      expect.objectContaining({
+        relativePath: 'Photos/2026/b.txt',
+        folderId: 'dir-2026'
+      })
+    ])
+  })
+
+  it('shows one resolving row per picked root folder', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Photos/a.txt'),
+      makePickedFile('b.txt', 'Photos/2026/b.txt')
+    ])
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const adds = actions.filter(a => a.type === 'ADD_TO_UPLOAD_QUEUE')
+    expect(adds[0].files).toEqual([
+      expect.objectContaining({
+        file: expect.objectContaining({ name: 'Photos' }),
+        status: 'resolving'
+      })
+    ])
+  })
+
   it('does not create a dot placeholder when a folder file path starts with ./', async () => {
     const file = new File(['a'], 'img1.jpg')
     file.path = './photos/img1.jpg'
