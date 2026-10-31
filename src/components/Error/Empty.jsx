@@ -90,7 +90,7 @@ const EmptyCanvas = ({
               />
               <UploadButton
                 isDirectory
-                disabled={!canWriteToCurrentFolder}
+                disabled={!folderId || !canWriteToCurrentFolder}
                 className="u-ml-half"
                 componentsProps={{
                   button: { variant: 'secondary' }

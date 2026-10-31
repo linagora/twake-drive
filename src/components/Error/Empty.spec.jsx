@@ -36,8 +36,9 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   default: () => ({ isDesktop: true })
 }))
 jest.mock('twake-i18n', () => ({ useI18n: () => ({ t: key => key }) }))
+let mockFolderId = 'folder-id'
 jest.mock('@/hooks', () => ({
-  useCurrentFolderId: () => 'folder-id',
+  useCurrentFolderId: () => mockFolderId,
   useDisplayedFolder: () => ({ displayedFolder: null })
 }))
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
@@ -68,12 +69,30 @@ const getContainer = () => getIllustration().parentElement
 describe('Empty', () => {
   beforeEach(() => {
     useCurrentFolderWriteAccess.mockReturnValue(true)
+    mockFolderId = 'folder-id'
   })
 
   it('offers the folder upload with write access', () => {
     renderAt('/folder/folder-id', <EmptyDrive />)
 
     expect(screen.queryByTestId('upload-folder')).toBeInTheDocument()
+  })
+
+  it('does not offer the folder upload in a view without a current folder', () => {
+    mockFolderId = null
+    renderAt('/nextcloud/account', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it('keeps the file upload on the root document in a view without a current folder', () => {
+    mockFolderId = null
+    renderAt('/nextcloud/account', <EmptyDrive />)
+
+    expect(screen.getByTestId('upload-file')).toHaveAttribute(
+      'data-folder-id',
+      'undefined'
+    )
   })
 
   it('does not offer the folder upload in a read-only folder', () => {
