@@ -106,4 +106,17 @@ describe('downloadFiles', () => {
     await downloadFiles(mockClient, files)
     expect(mockDownloadArchive).toHaveBeenCalledWith(['file-id-1', 'file-id-2'])
   })
+
+  it.each([
+    [404, 'error.download_file.missing'],
+    [451, 'antivirus.popover.title'],
+    [500, 'error.download_file.offline']
+  ])('shows the matching alert on a %i error', async (status, message) => {
+    const file = { id: 'file-id-1', name: 'virus.txt', type: 'file' }
+    mockDownload.mockRejectedValueOnce({ status })
+    await downloadFiles(mockClient, [file], { showAlert, t })
+    expect(showAlert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ message, severity: 'error' })
+    )
+  })
 })

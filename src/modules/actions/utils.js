@@ -3,12 +3,15 @@ import { receiveQueryResult } from 'cozy-client/dist/store'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 
-const isMissingFileError = error => error.status === 404
-
 const downloadFileError = error => {
-  return isMissingFileError(error)
-    ? 'error.download_file.missing'
-    : 'error.download_file.offline'
+  switch (error.status) {
+    case 404:
+      return 'error.download_file.missing'
+    case 451:
+      return 'antivirus.popover.title'
+    default:
+      return 'error.download_file.offline'
+  }
 }
 
 /**
