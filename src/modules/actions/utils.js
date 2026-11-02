@@ -14,6 +14,14 @@ const downloadFileError = error => {
   }
 }
 
+export const showDownloadError = (error, { showAlert, t }) => {
+  showAlert({
+    message: t(downloadFileError(error)),
+    severity: 'error',
+    duration: 4000
+  })
+}
+
 /**
  * An instance of cozy-client
  * @typedef {object} CozyClient
@@ -26,24 +34,16 @@ const downloadFileError = error => {
  * @param {array} files  One or more files to download
  */
 export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
-  if (files.length === 1 && !isDirectory(files[0])) {
-    const file = files[0]
-    const driveId = file.driveId
-    try {
-      return await client
-        .collection(DOCTYPE_FILES, { driveId })
-        .download(file, null, file.name)
-    } catch (error) {
-      showAlert({
-        message: t(downloadFileError(error)),
-        severity: 'error',
-        duration: 4000
-      })
+  const driveId = files[0].driveId
+  const collection = client.collection(DOCTYPE_FILES, { driveId })
+  try {
+    if (files.length === 1 && !isDirectory(files[0])) {
+      const file = files[0]
+      return await collection.download(file, null, file.name)
     }
-  } else {
-    const ids = files.map(f => f.id)
-    const driveId = files[0].driveId
-    return client.collection(DOCTYPE_FILES, { driveId }).downloadArchive(ids)
+    return await collection.downloadArchive(files.map(f => f.id))
+  } catch (error) {
+    showDownloadError(error, { showAlert, t })
   }
 }
 

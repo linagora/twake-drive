@@ -119,4 +119,13 @@ describe('downloadFiles', () => {
       expect.objectContaining({ message, severity: 'error' })
     )
   })
+
+  it('shows the alert when an archive download fails', async () => {
+    const folder = { id: 'folder-id-1', name: 'Classified', type: 'directory' }
+    mockDownloadArchive.mockRejectedValueOnce({ status: 451 })
+    await downloadFiles(mockClient, [folder], { showAlert, t })
+    expect(showAlert).toHaveBeenLastCalledWith(
+      expect.objectContaining({ message: 'antivirus.popover.title' })
+    )
+  })
 })
