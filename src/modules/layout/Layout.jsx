@@ -58,12 +58,42 @@ const handleContextMenu = ev => {
   ev.preventDefault()
 }
 
+const SidebarUploadButtons = ({ disabled, ...uploadProps }) => {
+  const { t } = useI18n()
+
+  return (
+    <>
+      <UploadButton
+        {...uploadProps}
+        disabled={disabled}
+        componentsProps={{
+          button: {
+            className: 'u-w-100 u-bdrs-6 u-fz-small',
+            disabled
+          }
+        }}
+        label={t('upload.label')}
+      />
+      <UploadButton
+        {...uploadProps}
+        isDirectory
+        disabled={disabled}
+        componentsProps={{
+          button: {
+            className: 'u-w-100 u-bdrs-6 u-fz-small u-mt-half'
+          }
+        }}
+        label={t('toolbar.menu_upload_folder')}
+      />
+    </>
+  )
+}
+
 const LayoutContent = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isMobile, isDesktop } = useBreakpoints()
   const { displayedFolder } = useDisplayedFolder()
-  const { t } = useI18n()
   const rawFolderId = useCurrentFolderId()
   const { driveId } = useParams()
 
@@ -114,15 +144,9 @@ const LayoutContent = () => {
                 >
                   <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half u-fz-small" />
                 </AddMenuProvider>
-                <UploadButton
+                <SidebarUploadButtons
                   folderId={null}
                   onUploadStart={() => goToRoot()}
-                  componentsProps={{
-                    button: {
-                      className: 'u-w-100 u-bdrs-6 u-fz-small'
-                    }
-                  }}
-                  label={t('upload.label')}
                   displayedFolder={displayedFolder}
                 />
               </div>
@@ -138,17 +162,10 @@ const LayoutContent = () => {
                 >
                   <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half u-fz-small" />
                 </AddMenuProvider>
-                <UploadButton
+                <SidebarUploadButtons
                   disabled={isReadOnly}
                   folderId={rawFolderId}
                   driveId={driveId}
-                  componentsProps={{
-                    button: {
-                      className: 'u-w-100 u-bdrs-6 u-fz-small',
-                      disabled: isReadOnly
-                    }
-                  }}
-                  label={t('upload.label')}
                   displayedFolder={displayedFolder}
                 />
               </div>
