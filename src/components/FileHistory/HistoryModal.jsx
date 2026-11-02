@@ -10,11 +10,14 @@ import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import List from 'cozy-ui/transpiled/react/List'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import { DeleteVersionConfirm } from './DeleteVersionConfirm'
 import { HistoryRow } from './HistoryRow'
 import styles from './styles.styl'
+
+import { showDownloadError } from '@/modules/actions/utils'
 
 const formatDate = (date, f) => {
   return f(date, 'dd LLLL - HH:mm')
@@ -32,12 +35,17 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
   const client = useClient()
   const { t, f } = useI18n()
   const navigate = useNavigate()
+  const { showAlert } = useAlert()
   const { hasWriteAccess } = useSharingContext()
   const [versionToDelete, setVersionToDelete] = useState(null)
 
   const fileCollection = client.collection('io.cozy.files', {
     driveId: file.driveId
   })
+  const download = (...args) =>
+    fileCollection
+      .download(...args)
+      .catch(error => showDownloadError(error, { showAlert, t }))
   const capabilities = useCapabilities(client)
   const isFileVersioningEnabled = get(
     capabilities,
@@ -67,7 +75,7 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
                 tag={t('History.current_version')}
                 primaryText={formatDate(file.updated_at, f)}
                 secondaryText={fileCollection.getBeautifulSize(file)}
-                onDownload={() => fileCollection.download(file)}
+                onDownload={() => download(file)}
               />
               {revisionsFetchStatus === 'loaded' &&
                 revisions.map(revision => (
@@ -76,7 +84,7 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
                     primaryText={formatDate(revision.updated_at, f)}
                     secondaryText={fileCollection.getBeautifulSize(revision)}
                     onDownload={() =>
-                      fileCollection.download(
+                      download(
                         file,
                         revision.id,
                         generateFileNameForRevision(file, revision, f)
