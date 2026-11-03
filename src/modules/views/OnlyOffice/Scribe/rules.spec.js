@@ -12,10 +12,10 @@ const IMAGE =
 describe('makeRules', () => {
   it('gives no rule for a plain text', () => {
     expect(makeRules('Un **texte** et une [image](https://a.org/b.png)')).toBe(
-      undefined
+      null
     )
-    expect(makeRules('')).toBe(undefined)
-    expect(makeRules(undefined)).toBe(undefined)
+    expect(makeRules('')).toBe(null)
+    expect(makeRules(undefined)).toBe(null)
   })
 
   it('gives the rule of each marker the text holds', () => {

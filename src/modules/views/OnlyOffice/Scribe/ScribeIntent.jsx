@@ -59,7 +59,7 @@ export const ScribeIntent = ({ source, onResult, onCancel }) => {
     ...(suggestions.length > 0 && { suggestions }),
     theme: { type: themeType },
     source,
-    ...(rules !== undefined && { rules })
+    ...(rules !== null && { rules })
   }
 
   return (
