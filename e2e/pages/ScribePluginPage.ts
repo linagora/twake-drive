@@ -466,6 +466,18 @@ export class ScribePluginPage {
   /** Opens a document in OnlyOffice and waits for the plugin */
   async open(appUrl: string, fileId: string): Promise<void> {
     await this.page.goto(`${appUrl}/#/onlyoffice/${fileId}`)
+    // The presentation editor of the Document Server 9.4 sometimes never
+    // shows, its ColorPaletteExt.js run before the palette it extends: the
+    // page is loaded again once
+    try {
+      await this.waitForEditor(30_000)
+    } catch {
+      await this.page.reload()
+      await this.waitForEditor(90_000)
+    }
+  }
+
+  private async waitForEditor(timeout: number): Promise<void> {
     // What the plugin tells Drive is kept here, and not given to Drive: its
     // panel would open
     await this.page.evaluate(() => {
@@ -485,7 +497,7 @@ export class ScribePluginPage {
       )
     })
     await expect(this.page.locator('iframe[name="frameEditor"]')).toBeVisible({
-      timeout: 90_000
+      timeout
     })
     // The editor gives the plugin its API when it starts it, some time after
     // its frame is there: the plugin then tells Drive it is ready
