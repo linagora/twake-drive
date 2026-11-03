@@ -9,6 +9,7 @@ import { useI18n } from 'twake-i18n'
 
 import styles from './styles.styl'
 
+import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
   useScribe,
@@ -17,10 +18,17 @@ import {
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 // lottie-web and the animation weigh about 85 kB gzip: they stay out of the
-// entry chunks, for a button only an open text document shows
+// entry chunks, for a button only an open text document shows. A chunk that
+// does not load, as one a deploy has replaced, would unmount the whole app:
+// the button stays, without its mark.
 const ScribeButtonMark = lazy(async () => {
-  const { ScribeButtonMark } = await import('./ScribeButtonMark')
-  return { default: ScribeButtonMark }
+  try {
+    const { ScribeButtonMark } = await import('./ScribeButtonMark')
+    return { default: ScribeButtonMark }
+  } catch (error) {
+    logger.warn('Scribe: the mark of the floating button did not load', error)
+    return { default: () => null }
+  }
 })
 
 const BUTTON_WIDTH = 48
