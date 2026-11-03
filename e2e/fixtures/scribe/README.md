@@ -13,6 +13,11 @@ Benibur/cozy-drive (`test-harness/`): the expected results were written again
 for the rules of this plugin, which inserts an answer under the selected text
 instead of in its line.
 
+`e2e/tests/onlyoffice-scribe-slides.spec.ts` plays the cases of a
+presentation, `slides.pptx`, in its own steps: a bullet, a part of it,
+several bullets, the title, the whole slide, text boxes, the title slide,
+and the look of the text written.
+
 ## Files
 
 - `<document>.docx`: a document, as small as the cases need.
