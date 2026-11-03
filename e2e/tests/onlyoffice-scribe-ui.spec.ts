@@ -215,6 +215,24 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.floatingButton()).toBeVisible()
   })
 
+  test('a dialog of Drive covers the floating button', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await expect(scribe.floatingButton()).toBeVisible()
+    expect(await scribe.isOnTop(scribe.floatingButtonArea())).toBe(true)
+
+    await scribe.shareButton().click()
+    await expect
+      .poll(() => scribe.isOnTop(scribe.floatingButtonArea()))
+      .toBe(false)
+  })
+
   test('the Assistant tab of the editor opens and closes the panel', async ({
     alicePage
   }) => {
