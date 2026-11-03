@@ -10,6 +10,15 @@ function readViewer(editorWindow) {
   return { left, top, width, height }
 }
 
+// The editor gives the corners in pixels of its canvas: pixels of the screen
+// at a zoom of the browser it does not scale itself for, as 90 % or 110 %.
+// They are brought back to the pixels of the frame.
+function readScale(editorWindow, viewer) {
+  const canvas = editorWindow.document?.getElementById('id_viewer')
+  const retina = editorWindow.AscCommon?.AscBrowser?.retinaPixelRatio ?? 1
+  return canvas?.width > 0 ? (viewer.width * retina) / canvas.width : 1
+}
+
 const isPoint = point =>
   Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)
 
@@ -62,8 +71,9 @@ export function readGeometry(editorWindow, hasText) {
   }
 
   // The editor gives the corners from the top left of its viewer
+  const scale = readScale(editorWindow, viewer)
   const rect = makeRect(
-    corners.map(([x, y]) => [x + viewer.left, y + viewer.top])
+    corners.map(([x, y]) => [x * scale + viewer.left, y * scale + viewer.top])
   )
   return { selection: { rect, hasText }, viewer, page: null }
 }
