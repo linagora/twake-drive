@@ -187,8 +187,8 @@ The Document Server has the scribe plugin of the worktree
 documents, see `e2e/fixtures/scribe/README.md`.
 `e2e/tests/onlyoffice-scribe-ui.spec.ts` checks Drive's chrome around the
 scribe: its button, its panel and the assistant in it. Both specs install the
-assistant from the registry `dev` channel on the instance of Alice and turn on
-`cozy.assistant.enabled` for their tests, then restore the default flags; the
+assistant from the registry `stable` channel on the instance of Alice and turn
+on `cozy.assistant.enabled` for their tests, then restore the default flags; the
 rest of the suite runs without the app and the flag. The stack has no LLM, so
 no test waits for an answer of the assistant. The tests of both specs are
 tagged `@e2e-scribe`:
