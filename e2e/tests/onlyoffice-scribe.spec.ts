@@ -83,7 +83,7 @@ test.beforeAll(() => {
   ensureAppInstalled(
     USERS.alice.instance,
     'assistant',
-    'registry://assistant/dev'
+    'registry://assistant/stable'
   )
   setFlags(USERS.alice.instance, {
     ...DEFAULT_FLAGS,
