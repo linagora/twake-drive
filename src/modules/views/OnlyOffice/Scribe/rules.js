@@ -22,12 +22,12 @@ const MARKER_RULES = [
  * back the markers an answer keeps as they are
  *
  * @param {string | undefined} content - the Markdown of the plugin
- * @returns {string | undefined} undefined without a marker: no rule
+ * @returns {string | null} null without a marker: no rule
  */
 export const makeRules = content => {
-  if (typeof content !== 'string') return undefined
+  if (typeof content !== 'string') return null
   const rules = MARKER_RULES.filter(({ marker }) =>
     content.includes(marker)
   ).map(({ rule }) => rule)
-  return rules.length > 0 ? rules.join(' ') : undefined
+  return rules.length > 0 ? rules.join(' ') : null
 }
