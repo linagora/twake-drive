@@ -379,3 +379,31 @@ export async function countFileVersions({
     doc => doc.type === 'io.cozy.files.versions'
   ).length
 }
+
+/** The contact group named `name` on `instance`, or null. */
+export async function findGroupByName(
+  instance: string,
+  name: string
+): Promise<Record<string, unknown> | null> {
+  const token = stackExec(
+    'instances',
+    'token-cli',
+    instance,
+    'io.cozy.contacts.groups'
+  )
+  const res = await fetch(
+    `http://${instance}/data/io.cozy.contacts.groups/_all_docs?include_docs=true`,
+    { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+  )
+  // No group was ever written on this instance
+  if (res.status === 404) return null
+  if (!res.ok) {
+    throw new Error(
+      `List contact groups on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as {
+    rows: Array<{ doc?: Record<string, unknown> }>
+  }
+  return body.rows.find(row => row.doc?.name === name)?.doc ?? null
+}

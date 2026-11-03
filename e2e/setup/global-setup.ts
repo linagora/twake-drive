@@ -8,6 +8,7 @@ import {
   ADMIN_PASSPHRASE,
   ADMIN_USER,
   applyConfigUpdate,
+  buildOrgInstance,
   buildUsers,
   composeArgs,
   getAdminUrl,
@@ -21,6 +22,7 @@ import {
   stackExec
 } from '../helpers/config'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { declareActivityQueue } from '../helpers/rabbitmq'
 import {
   resolveE2EPorts,
   withPortAllocationLock,
@@ -37,7 +39,11 @@ function compose(...args: string[]): void {
   })
 }
 
-async function instanceExists(user: User): Promise<boolean> {
+type InstanceSpec = Pick<User, 'instance' | 'email' | 'passphrase'> & {
+  label: string
+}
+
+async function instanceExists(user: InstanceSpec): Promise<boolean> {
   const res = await fetch(`${getAdminUrl()}/instances/${user.instance}`, {
     headers: { Authorization: ADMIN_AUTH, Accept: 'application/json' }
   })
@@ -48,7 +54,7 @@ async function instanceExists(user: User): Promise<boolean> {
   )
 }
 
-async function createInstance(user: User): Promise<void> {
+async function createInstance(user: InstanceSpec): Promise<void> {
   if (await instanceExists(user)) {
     console.log(`[e2e] Reusing instance for ${user.label} (${user.instance}).`)
     return
@@ -238,13 +244,11 @@ async function setupUser(
 
 // Pre-populate each instance's address book with a contact for every other
 // org member. A deterministic document ID makes this provisioning idempotent.
-async function createContact(hostUser: User, peer: User): Promise<void> {
-  const token = stackExec(
-    'instances',
-    'token-cli',
-    hostUser.instance,
-    'io.cozy.contacts'
-  )
+async function createContact(
+  hostUser: User,
+  peer: User,
+  token: string
+): Promise<void> {
   const contactId = `e2e-contact-${hostUser.label}-${peer.label}`
   const res = await fetch(
     `http://${hostUser.instance}/data/io.cozy.contacts/${contactId}`,
@@ -272,11 +276,17 @@ async function createContact(hostUser: User, peer: User): Promise<void> {
   }
 }
 
-async function syncContacts(trio: User[]): Promise<void> {
-  for (const host of trio) {
-    for (const peer of trio) {
+async function syncContacts(team: User[]): Promise<void> {
+  for (const host of team) {
+    const token = stackExec(
+      'instances',
+      'token-cli',
+      host.instance,
+      'io.cozy.contacts'
+    )
+    for (const peer of team) {
       if (peer.instance !== host.instance) {
-        await createContact(host, peer)
+        await createContact(host, peer, token)
       }
     }
   }
@@ -332,7 +342,7 @@ export async function setupStack(
     '330'
   )
 
-  const trios = Array.from({ length: workers }, (_, parallelIndex) =>
+  const teams = Array.from({ length: workers }, (_, parallelIndex) =>
     Object.values(
       buildUsers(portsConfig.rootDomain, portsConfig.stackPort, parallelIndex)
     )
@@ -340,20 +350,29 @@ export async function setupStack(
 
   console.log('[e2e] Waiting for cozy-stack...')
   await waitForStack(getStackUrl())
-  await verifyOfficeNetwork(portsConfig, trios.flat())
+  await verifyOfficeNetwork(portsConfig, teams.flat())
+
+  console.log('[e2e] Ensuring the organization instance and its exchanges...')
+  await createInstance({
+    label: 'organization',
+    instance: buildOrgInstance(portsConfig.rootDomain, portsConfig.stackPort),
+    email: `${ORG_ID}@${portsConfig.rootDomain}`,
+    passphrase: `${ORG_ID}1234`
+  })
+  declareActivityQueue()
 
   const results: Array<
     [string, { domain: string; cookieName: string; cookieValue: string }]
   > = []
-  for (const user of trios.flat()) {
+  for (const user of teams.flat()) {
     const cookie = await setupUser(user)
     results.push([user.instance, { domain: user.instance, ...cookie }])
   }
   saveAuthState(Object.fromEntries(results))
 
   console.log('[e2e] Cross-populating org contacts...')
-  for (const trio of trios) {
-    await syncContacts(trio)
+  for (const team of teams) {
+    await syncContacts(team)
   }
 
   console.log('[e2e] Setup complete.')
