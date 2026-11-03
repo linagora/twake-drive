@@ -337,6 +337,50 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.skippedCellsNotice(scribe.panel())).toBeHidden()
   })
 
+  // At these zooms of the browser, the editor gives the selection in pixels
+  // of the screen: the button would be off by a tenth of its place
+  for (const deviceScaleFactor of [0.9, 1.1]) {
+    test.describe(`at a zoom of ${deviceScaleFactor * 100} %`, () => {
+      test.use({ deviceScaleFactor })
+
+      test('the geometry of the selection is where the editor draws it', async ({
+        alicePage
+      }) => {
+        const fileId = await uploadScribeDocument(
+          USERS.alice.instance,
+          'a-family.docx'
+        )
+        const scribe = new ScribePage(alicePage)
+        const plugin = new ScribePluginPage(alicePage)
+        await scribe.openDocument(USERS.alice.appUrl, fileId)
+        await scribe.watchMessages()
+
+        await scribe.selectInEditor('P1@6..P1@12')
+        let geometry: Geometry | null = null
+        await expect
+          .poll(async () => {
+            geometry = (await plugin.takeGeometry()) ?? geometry
+            return geometry?.selection?.rect.corners[0] ?? null
+          })
+          .not.toBe(null)
+        const [startX, startY] = (geometry as Geometry | null)!.selection!.rect
+          .corners[0]
+        const frame = ensureBox(
+          await scribe.editorFrame().boundingBox(),
+          'the editor'
+        )
+
+        // A click just inside the start of the selection puts the cursor
+        // before its first character
+        const offset = await scribe.offsetAtPoint(
+          frame.x + startX + 2,
+          frame.y + startY + 7
+        )
+        expect(Math.abs((offset ?? -10) - 6)).toBeLessThanOrEqual(1)
+      })
+    })
+  }
+
   // The panel is remembered in the localStorage of the browser context, which
   // each test gets afresh: the whole scenario stays in this test
   test('the panel resizes and stays open', async ({ alicePage }) => {

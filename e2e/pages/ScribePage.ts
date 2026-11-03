@@ -99,6 +99,33 @@ export class ScribePage {
     return this.page.locator('iframe[name="frameEditor"]')
   }
 
+  /**
+   * The offset in its line of the character the editor puts its cursor
+   * before, on a click at a point of the page: the length of the text from
+   * the start of the line to the cursor
+   */
+  async offsetAtPoint(x: number, y: number): Promise<number | null> {
+    await this.page.mouse.click(x, y)
+    await this.page.keyboard.press('Shift+Home')
+    await this.page.waitForTimeout(300)
+    return this.page.frame({ name: 'frameEditor' })!.evaluate(() => {
+      const Api = (
+        window as unknown as {
+          g_asc_plugins: {
+            api: {
+              getJsApi: () => {
+                GetDocument: () => {
+                  GetRangeBySelect: () => { GetText: () => string } | null
+                }
+              }
+            }
+          }
+        }
+      ).g_asc_plugins.api.getJsApi()
+      return Api.GetDocument().GetRangeBySelect()?.GetText().length ?? null
+    })
+  }
+
   /** The area of the editor that shows the document, in the page */
   async viewerBox(): Promise<Box | null> {
     return this.page

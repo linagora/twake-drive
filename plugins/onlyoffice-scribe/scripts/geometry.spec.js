@@ -2,19 +2,70 @@ import { isSameGeometry, readGeometry } from './geometry'
 
 const VIEWER = { left: 0, top: 0, width: 800, height: 600 }
 
-const makeEditorWindow = ({ corners, viewer = VIEWER, hasEditor = true }) => ({
+const makeEditorWindow = ({
+  corners,
+  viewer = VIEWER,
+  hasEditor = true,
+  canvasWidth = viewer?.width,
+  retina = 1
+}) => ({
   editor: hasEditor
     ? { asc_GetSelectionBounds: corners ? () => corners : undefined }
     : undefined,
+  AscCommon: { AscBrowser: { retinaPixelRatio: retina } },
   document: {
     getElementById: id =>
       id === 'id_viewer' && viewer
-        ? { getBoundingClientRect: () => ({ ...viewer, x: 0, y: 0 }) }
+        ? {
+            width: canvasWidth,
+            getBoundingClientRect: () => ({ ...viewer, x: 0, y: 0 })
+          }
         : null
   }
 })
 
 describe('readGeometry', () => {
+  it('brings the corners of a canvas in pixels of the screen to the frame', () => {
+    // At a zoom of 110 %, the canvas has 1.1 pixels of the screen for each
+    // pixel of the frame
+    const viewer = { left: 52, top: 158, width: 1100, height: 563 }
+    const corners = [
+      [396, 99],
+      [396, 110],
+      [429, 99],
+      [429, 110]
+    ]
+
+    expect(
+      readGeometry(
+        makeEditorWindow({ corners, viewer, canvasWidth: 1210 }),
+        true
+      ).selection.rect.corners
+    ).toEqual([
+      [412, 248],
+      [412, 258],
+      [442, 248],
+      [442, 258]
+    ])
+  })
+
+  it('keeps the corners of an editor that scales its canvas itself', () => {
+    const viewer = { left: 0, top: 0, width: 1167, height: 545 }
+    const corners = [
+      [299, 95],
+      [299, 110],
+      [417, 95],
+      [417, 110]
+    ]
+
+    expect(
+      readGeometry(
+        makeEditorWindow({ corners, viewer, canvasWidth: 2334, retina: 2 }),
+        true
+      ).selection.rect.corners
+    ).toEqual(corners)
+  })
+
   it('gives the bounding box and the corners of the selection', () => {
     const corners = [
       [10, 20],
