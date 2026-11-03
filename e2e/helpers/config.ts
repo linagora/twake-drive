@@ -48,10 +48,12 @@ export const ROOT_DOMAIN =
   process.env.COZY_E2E_ROOT_DOMAIN ||
   savedPorts?.rootDomain ||
   'cozy.localhost'
-export const ORG_ID = 'twake-drive-e2e'
+// Also the subdomain of the organization instance, where flat subdomains
+// forbid dashes.
+export const ORG_ID = 'e2eorg'
 export const ORG_DOMAIN = ROOT_DOMAIN
 
-export type UserLabel = 'alice' | 'bob' | 'charlie'
+export type UserLabel = 'alice' | 'bob' | 'charlie' | 'dave' | 'emma'
 
 export interface User {
   label: UserLabel
@@ -65,9 +67,8 @@ function computeInstancePortSuffix(port: number): string {
   return port === 80 ? '' : `:${port}`
 }
 
-/** Upper bound of Playwright workers: each one needs its own Alice, Bob and
- * Charlie instances, and the OnlyOffice network aliases in
- * docker-compose.e2e.yml are declared for that many trios. */
+/** Upper bound of Playwright workers: each one needs its own team of
+ * instances. */
 export const MAX_WORKERS = 4
 
 /** Playwright sets TEST_PARALLEL_INDEX in each worker process; the main
@@ -96,7 +97,8 @@ const buildUser = (
 
 /** Users of one Playwright worker: worker 0 keeps the historical alice, bob
  * and charlie instances, worker N gets aliceN, bobN and charlieN, so specs
- * that change instance state (feature flags) never collide across workers. */
+ * that change instance state (feature flags) never collide across workers.
+ * Dave and Emma have no browser page: specs check them through the stack. */
 export function buildUsers(
   rootDomain = ROOT_DOMAIN,
   stackPort = STACK_PORT,
@@ -105,15 +107,27 @@ export function buildUsers(
   return {
     alice: buildUser('alice', rootDomain, stackPort, parallelIndex),
     bob: buildUser('bob', rootDomain, stackPort, parallelIndex),
-    charlie: buildUser('charlie', rootDomain, stackPort, parallelIndex)
+    charlie: buildUser('charlie', rootDomain, stackPort, parallelIndex),
+    dave: buildUser('dave', rootDomain, stackPort, parallelIndex),
+    emma: buildUser('emma', rootDomain, stackPort, parallelIndex)
   }
+}
+
+/** The instance of the organization, shared by every worker: the stack
+ * treats an instance as the one of its organization when its subdomain is
+ * the OrgID. Directory groups and organization drives live there. */
+export function buildOrgInstance(
+  rootDomain = ROOT_DOMAIN,
+  stackPort = STACK_PORT
+): string {
+  return `${ORG_ID}.${rootDomain}${computeInstancePortSuffix(stackPort)}`
 }
 
 export const USERS: Record<UserLabel, User> = buildUsers()
 
 export function applyConfigUpdate(config: E2EPortsConfig): void {
   const newUsers = buildUsers(config.rootDomain, config.stackPort)
-  for (const key of ['alice', 'bob', 'charlie'] as UserLabel[]) {
+  for (const key of Object.keys(newUsers) as UserLabel[]) {
     Object.assign(USERS[key], newUsers[key])
   }
 }

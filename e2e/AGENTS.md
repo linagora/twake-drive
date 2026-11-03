@@ -31,6 +31,9 @@ docs: `../docs/e2e.md`.
   `countFileVersions()`, `waitForVersionWindow()`, `findLinkPermission()`,
   `setLinkExpiry()`.
 - `helpers/flags.ts` — `setFlags(instance, {...})`.
+- `helpers/rabbitmq.ts` — `publish(exchange, routingKey, message)`, to play
+  the organization directory or another app. `buildOrgInstance()` in
+  `helpers/config.ts` names the organization instance.
 
 Page objects live in `pages/` (DrivePage, FileRow, SidebarPage, ShareModal,
 FileViewer, FilePicker, …). Read the file for its methods.
@@ -41,5 +44,6 @@ FileViewer, FilePicker, …). Read the file for its methods.
 - Only `*.mobile.spec.ts` runs in the `mobile` project; everything else is
   desktop chromium.
 - Prefer `expect(...).toBeVisible()` / `toPass()` over `waitForTimeout()`.
-- Specs run on several workers, each with its own Alice/Bob/Charlie instances:
+- Specs run on several workers, each with its own Alice/Bob/Charlie/Dave/Emma
+  instances (Dave and Emma have no page, check them through the stack):
   never hardcode an instance name, email or URL, always go through `USERS`.

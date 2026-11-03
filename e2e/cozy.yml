@@ -49,3 +49,64 @@ contexts:
       auto_accept_trusted_contacts: true
       trusted_domains:
         - "{{if .Env.COZY_E2E_ROOT_DOMAIN}}{{.Env.COZY_E2E_ROOT_DOMAIN}}{{else}}cozy.localhost{{end}}"
+    # Directory groups live on the organization instance only, and their
+    # changes reach the drives of the members after this delay (30s otherwise).
+    centralized_org_directory: true
+    org_groups_propagation_delay: 2s
+
+# In production, the directory and other apps declare these exchanges; here the
+# stack does. The activity exchange, where the stack replies, is declared by
+# the global setup with a queue that keeps the replies for the specs.
+rabbitmq:
+  enabled: true
+  nodes:
+    default:
+      enabled: true
+      url: amqp://cozy:cozy@rabbitmq:5672/
+  exchanges:
+    - name: b2b
+      kind: topic
+      durable: true
+      declare_exchange: true
+      dlx_name: stack.b2b.dlx
+      queues:
+        - name: stack.b2b.group.lifecycle
+          declare: true
+          declare_dlx: true
+          declare_dlq: true
+          dlq_name: stack.dead.letter.b2b.group.lifecycle
+          dl_routing_key: b2b.group.dead
+          prefetch: 8
+          delivery_limit: 5
+          bindings:
+            - b2b.group.created
+            - b2b.group.updated
+            - b2b.group.deleted
+            - b2b.group.member.added
+            - b2b.group.member.removed
+        - name: stack.user.lifecycle.queue
+          declare: true
+          declare_dlx: true
+          declare_dlq: true
+          dlq_name: stack.dead.letter.user.lifecycle
+          dl_routing_key: domain.user.deleted.dead
+          prefetch: 8
+          delivery_limit: 5
+          bindings:
+            - domain.user.deleted
+    - name: drive
+      kind: topic
+      durable: true
+      declare_exchange: true
+      dlx_name: stack.drive.dlx
+      queues:
+        - name: stack.drive.commands
+          declare: true
+          declare_dlx: true
+          declare_dlq: true
+          dlq_name: stack.dead.letter.drive.commands
+          dl_routing_key: drive.commands.dead
+          prefetch: 8
+          delivery_limit: 5
+          bindings:
+            - drive.org_drive.ensure
