@@ -34,7 +34,9 @@ const PublicToolbarByLink = ({
 
   const actions = makeActions(
     [
-      download,
+      displayedFolder?.id &&
+        (options =>
+          download({ ...options, isSelectAll: true, displayedFolder })),
       files.length > 1 && select,
       addItems,
       isMobile && (files.length > 1 || hasWriteAccess) && hr,
