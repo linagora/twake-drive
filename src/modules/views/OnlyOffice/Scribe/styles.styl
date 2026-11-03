@@ -52,9 +52,10 @@
 .scribe-resize-handle--dragging::after
     opacity .8
 
-// Over the full screen dialog that holds the editor
+// Over the full screen dialog that holds the editor, which is before it in
+// the page, and under a dialog of Drive opened after it
 .scribe-selection-button
-    z-index 100000
+    z-index var(--zIndex-modal)
     opacity .75
     transition opacity 200ms
 
@@ -62,9 +63,10 @@
     &:focus-within
         opacity 1
 
-// Over the full screen dialog that holds the editor
+// Over the full screen dialog that holds the editor, which is before it in
+// the page, and under a dialog of Drive opened after it
 .scribe-floating-button
-    z-index 100000
+    z-index var(--zIndex-modal)
     opacity .4
     transition opacity 200ms
 

@@ -165,6 +165,28 @@ export class ScribePage {
     return this.page.getByRole('button', { name: 'Scribe Panel' })
   }
 
+  /**
+   * The area of the floating button, found even when a dialog of Drive hides
+   * the rest of the page from the accessibility tree
+   */
+  floatingButtonArea(): Locator {
+    return this.page.getByTestId('scribe-floating-button')
+  }
+
+  /** The button of the toolbar of Drive that opens its sharing dialog */
+  shareButton(): Locator {
+    return this.page.getByRole('button', { name: 'Share', exact: true })
+  }
+
+  /** Whether a click at the center of an element would reach it */
+  async isOnTop(locator: Locator): Promise<boolean> {
+    return locator.evaluate(element => {
+      const { x, y, width, height } = element.getBoundingClientRect()
+      const top = document.elementFromPoint(x + width / 2, y + height / 2)
+      return element.contains(top)
+    })
+  }
+
   /** The visible disc of the button under the selection */
   async selectionDiscBox(): Promise<Box | null> {
     const box = await this.selectionButton().boundingBox()
