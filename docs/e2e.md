@@ -18,6 +18,7 @@ including when starting the development runtime with `yarn stack up`.
   `COZY_E2E_ONLYOFFICE_PORT`.
 - A production build of Drive
 - Playwright Chromium installed
+- `unzip` available on the host to inspect downloaded ZIP archives
 
 The default `cozy.localhost` names resolve to host loopback in the browser.
 The stack, the Document Server, the OnlyOffice relay and a CoreDNS sidecar

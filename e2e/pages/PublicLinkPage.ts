@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { DrivePage } from './DrivePage'
 import type { FileRow } from './FileRow'
@@ -44,6 +44,13 @@ export class PublicLinkPage {
 
   async openFolder(name: string): Promise<void> {
     await this.drive.openFolder(name)
+  }
+
+  async downloadFolder(): Promise<Download> {
+    const download = this.page.waitForEvent('download')
+    await this.page.getByTestId('more-menu').getByRole('button').click()
+    await this.page.getByRole('menuitem', { name: 'Download' }).click()
+    return await download
   }
 
   async expectFileContent(content: string): Promise<void> {

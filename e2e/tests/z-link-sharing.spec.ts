@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process'
 import { copyFile } from 'fs/promises'
 import path from 'path'
 
@@ -5,6 +6,8 @@ import type { Browser, Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
 import {
+  createFile,
+  createFolder,
   findLinkPermission,
   setLinkExpiry,
   trashById
@@ -76,6 +79,75 @@ async function withAnonymousPage(
 }
 
 test.describe('Share by link', () => {
+  test('downloads the public folder as a ZIP with its nested files', async ({
+    alicePage,
+    aliceDrive,
+    publicPage
+  }) => {
+    await alicePage
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write'])
+
+    const folderName = `Public ZIP ${stamp()}`
+    const folderId = await createFolder({
+      instance: USERS.alice.instance,
+      name: folderName
+    })
+    try {
+      const nestedId = await createFolder({
+        instance: USERS.alice.instance,
+        name: 'nested',
+        parentId: folderId
+      })
+      await createFile({
+        instance: USERS.alice.instance,
+        name: 'root.txt',
+        content: 'root content',
+        parentId: folderId
+      })
+      await createFile({
+        instance: USERS.alice.instance,
+        name: 'nested.txt',
+        content: 'nested content',
+        parentId: nestedId
+      })
+
+      await alicePage.goto(`${ALICE_ROOT}/${folderId}`)
+      await aliceDrive.row('root.txt').waitVisible()
+      const modal = await aliceDrive.openShareModal()
+      const url = await new ShareByLinkPage(alicePage).createLink()
+      await modal.close()
+
+      await publicPage.goto(url)
+      const publicLink = new PublicLinkPage(publicPage)
+      await expect(publicLink.row('root.txt').cell).toBeVisible()
+      await expect(publicLink.row('nested').cell).toBeVisible()
+      const download = await publicLink.downloadFolder()
+      const archive = await download.path()
+      expect(archive).not.toBe(null)
+      if (!archive) throw new Error('The folder ZIP was not downloaded')
+
+      const rootPath = `files/${folderName}/root.txt`
+      const nestedPath = `files/${folderName}/nested/nested.txt`
+      const entries = execFileSync('unzip', ['-Z1', archive], {
+        encoding: 'utf8'
+      })
+        .trim()
+        .split('\n')
+        .filter(entry => !entry.endsWith('/'))
+        .sort()
+      expect(entries).toEqual([nestedPath, rootPath])
+      expect(
+        execFileSync('unzip', ['-p', archive, rootPath], { encoding: 'utf8' })
+      ).toBe('root content')
+      expect(
+        execFileSync('unzip', ['-p', archive, nestedPath], { encoding: 'utf8' })
+      ).toBe('nested content')
+    } finally {
+      await trashById(USERS.alice.instance, folderId)
+    }
+  })
+
   test('moves a file into a folder through an editable public link', async ({
     alicePage,
     aliceDrive,
@@ -166,7 +238,10 @@ test.describe('Share by link', () => {
       .context()
       .grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    const { folderId, link } = await openShareForNewFolder(alicePage, aliceDrive)
+    const { folderId, link } = await openShareForNewFolder(
+      alicePage,
+      aliceDrive
+    )
     const url = await link.createLink()
 
     await reopenShareModal(alicePage)
@@ -190,7 +265,9 @@ test.describe('Share by link', () => {
       // Assert the rejection positively (the "link no longer available" page)
       // rather than only the absence of content, which the SPA would satisfy
       // momentarily before mounting regardless of expiry.
-      await expect(publicPage.unavailableMessage).toBeVisible({ timeout: 15_000 })
+      await expect(publicPage.unavailableMessage).toBeVisible({
+        timeout: 15_000
+      })
       await expect(publicPage.fileList).toHaveCount(0)
     })
   })
