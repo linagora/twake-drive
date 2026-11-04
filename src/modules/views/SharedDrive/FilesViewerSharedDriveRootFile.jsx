@@ -1,7 +1,13 @@
 import React, { useMemo } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
-import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import {
+  generateWebLink,
+  hasQueryBeenLoaded,
+  useClient,
+  useQuery
+} from 'cozy-client'
+import { isNote } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -73,7 +79,8 @@ const FilesViewerSharedDriveRootFile = ({ file, fileResult, driveId }) => {
 }
 
 const FilesViewerSharedDriveRootFileWrapper = () => {
-  const { pathname } = useLocation()
+  const client = useClient()
+  const { pathname, state } = useLocation()
   const { driveId, fileId } = useParams()
   const { allLoaded } = useSharingContext()
   const { isDesktop } = useBreakpoints()
@@ -91,6 +98,28 @@ const FilesViewerSharedDriveRootFileWrapper = () => {
 
   if (!allLoaded || !hasQueryBeenLoaded(fileResult) || !file) {
     return <FilesViewerLoading />
+  }
+
+  if (isNote(file)) {
+    // The root file's dir_id is a folder of the owner, out of the recipient's
+    // reach: going back from Notes returns to where the note was opened.
+    const returnUrl = generateWebLink({
+      slug: 'drive',
+      searchParams: [],
+      cozyUrl: client.getStackClient().uri,
+      subDomainType: client.getInstanceOptions().subdomain,
+      pathname: '',
+      hash: state?.fromPathname || sharingsRootRoute
+    })
+
+    return (
+      <Navigate
+        to={`/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
+          returnUrl
+        )}`}
+        replace
+      />
+    )
   }
 
   if (isOfficeEnabled(isDesktop) && shouldOpenWithOnlyOffice(file, true)) {

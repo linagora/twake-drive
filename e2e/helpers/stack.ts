@@ -1,4 +1,5 @@
 import CozyClient from 'cozy-client'
+import { getDefaultSchema } from 'cozy-stack-client/dist/NotesSchema'
 
 import { stackExec } from './config'
 
@@ -161,6 +162,85 @@ export async function createFile({
   }
   const body = (await res.json()) as { data: { id: string } }
   return body.data.id
+}
+
+/** Create a note at the root of the instance and return its file id and
+ * name. The stack names the file after the title, plus `.cozy-note`. */
+export async function createNote({
+  instance,
+  title,
+  token = makeFilesToken(instance)
+}: {
+  instance: string
+  title: string
+  token?: string
+}): Promise<{ id: string; name: string }> {
+  const res = await fetch(`http://${instance}/notes`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/vnd.api+json'
+    },
+    body: JSON.stringify({
+      data: {
+        type: 'io.cozy.notes.documents',
+        attributes: {
+          title,
+          schema: getDefaultSchema(),
+          dir_id: ROOT_DIR_ID
+        }
+      }
+    })
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Create note ${title} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as {
+    data: { id: string; attributes: { name: string } }
+  }
+  return { id: body.data.id, name: body.data.attributes.name }
+}
+
+interface SharingDoc {
+  id: string
+  attributes: {
+    drive?: boolean
+    rules?: { values?: string[] }[]
+  }
+}
+
+/** Return the id of the shared drive whose root is `fileId`, as seen by its
+ * owner. The id is the same on every member's instance. */
+export async function findDriveSharingIdForFile({
+  instance,
+  fileId,
+  token = makeFilesToken(instance)
+}: {
+  instance: string
+  fileId: string
+  token?: string
+}): Promise<string> {
+  const res = await fetch(
+    `http://${instance}/sharings/doctype/io.cozy.files?shared_docs=false`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  if (!res.ok) {
+    throw new Error(
+      `List sharings on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as { data: SharingDoc[] }
+  const sharing = body.data.find(
+    doc =>
+      doc.attributes.drive === true &&
+      doc.attributes.rules?.[0]?.values?.includes(fileId)
+  )
+  if (!sharing) {
+    throw new Error(`No shared drive on ${instance} has ${fileId} as root`)
+  }
+  return sharing.id
 }
 
 /** Return the root-level folder named `name`, creating it when absent. */

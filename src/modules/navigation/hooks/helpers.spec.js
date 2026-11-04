@@ -225,6 +225,47 @@ describe('computeFileType', () => {
     }
   )
 
+  describe('note shared alone as a shared drive, on the recipient', () => {
+    // Shapes built by useTransformFolderListHasSharedDriveShortcuts: the name
+    // and mime come from the sharing rule, so they carry no note metadata.
+    const noteRootRow = {
+      _id: 'note-1',
+      id: 'note-1',
+      _type: 'io.cozy.files',
+      type: 'file',
+      name: 'Meeting.cozy-note',
+      mime: 'text/vnd.cozy.note+markdown',
+      dir_id: '',
+      driveId: 'sharing-1',
+      drive_root_type: DRIVE_ROOT_TYPE.FILE
+    }
+
+    it('keeps the note out of OnlyOffice when its .url shortcut is merged in', () => {
+      const file = {
+        ...noteRootRow,
+        class: 'shortcut',
+        metadata: {
+          target: {
+            _type: 'io.cozy.files',
+            drive_root_type: DRIVE_ROOT_TYPE.FILE,
+            class: 'text',
+            mime: 'text/vnd.cozy.note+markdown'
+          }
+        }
+      }
+
+      expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
+        'shared-drive-root-file'
+      )
+    })
+
+    it('keeps the note out of OnlyOffice when no shortcut is merged in', () => {
+      expect(computeFileType(noteRootRow, { isOfficeEnabled: true })).toBe(
+        'shared-drive-root-file'
+      )
+    })
+  })
+
   it('should return "shortcut" for legacy file-root .url shortcuts without metadata.target.mime', () => {
     const file = {
       _id: 'shortcut-1',

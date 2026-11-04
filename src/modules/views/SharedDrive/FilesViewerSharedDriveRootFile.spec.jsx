@@ -21,6 +21,11 @@ jest.mock('react-router-dom', () => ({
 }))
 
 jest.mock('cozy-client', () => ({
+  generateWebLink: jest.requireActual('cozy-client').generateWebLink,
+  useClient: () => ({
+    getStackClient: () => ({ uri: 'https://bob.cozy.example' }),
+    getInstanceOptions: () => ({ subdomain: 'flat' })
+  }),
   useQuery: (...args) => mockUseQuery(...args),
   hasQueryBeenLoaded: (...args) => mockHasQueryBeenLoaded(...args)
 }))
@@ -154,6 +159,61 @@ describe('FilesViewerSharedDriveRootFile', () => {
 
     expect(screen.getByText('files-viewer-loading')).toBeInTheDocument()
     expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  describe('note routing', () => {
+    const note = {
+      _id: 'canonical-id',
+      id: 'canonical-id',
+      type: 'file',
+      class: 'text',
+      mime: 'text/vnd.cozy.note+markdown',
+      name: 'Meeting.cozy-note',
+      metadata: { title: 'Meeting', version: 12 }
+    }
+
+    it('opens a note in the Notes app instead of the viewer', () => {
+      renderRootFileViewer({ fetchedFile: note })
+
+      expect(screen.getByText('navigate')).toBeInTheDocument()
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: `/note/drive-1/canonical-id?returnUrl=${encodeURIComponent(
+          'https://bob-drive.cozy.example/#/sharings/drives'
+        )}`,
+        replace: true
+      })
+      expect(screen.queryByText('files-viewer')).toBe(null)
+    })
+
+    it('returns from the Notes app to the page the note was opened from', () => {
+      renderRootFileViewer({
+        fetchedFile: note,
+        location: {
+          pathname: '/sharings/with-me/shareddrive/drive-1/file/route-id',
+          state: { fromPathname: '/sharings/with-me' }
+        }
+      })
+
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: `/note/drive-1/canonical-id?returnUrl=${encodeURIComponent(
+          'https://bob-drive.cozy.example/#/sharings/with-me'
+        )}`,
+        replace: true
+      })
+    })
+
+    it('opens a note in the Notes app even when office is enabled', () => {
+      mockIsOfficeEnabled.mockReturnValue(true)
+
+      renderRootFileViewer({ fetchedFile: note })
+
+      expect(mockNavigateElement).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: expect.stringMatching(/^\/note\/drive-1\/canonical-id\?/)
+        })
+      )
+      expect(screen.queryByText('files-viewer')).toBe(null)
+    })
   })
 
   describe('office routing', () => {
