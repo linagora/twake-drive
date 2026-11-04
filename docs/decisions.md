@@ -73,3 +73,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Crash-- (CTO), 2026-11-26
 - Why: Twake Mail and Twake Calendar open the MOVE intent to organize a file they just saved, where the mockups say "Save to".
 - Scope: the MOVE intent (`docs/move-intent.md`).
+
+## 2026-11-27, [Tech] Apply Drive-specific code review rules
+
+- Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
+- Decided by: doubleface, in an agent session on 2026-11-27, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630993).
+- Why: make Drive-specific review criteria available without duplicating shared guidelines or loading review-only rules for unrelated tasks.
+- Scope: Twake Drive web code reviews.
