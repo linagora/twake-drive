@@ -7,7 +7,6 @@ import { Provider } from 'react-redux'
 import { BarProvider } from 'cozy-bar'
 import flag from 'cozy-flags'
 import { WebviewIntentProvider } from 'cozy-intent'
-import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import MoveValidationModals from '@/components/MoveValidationModals'
 import PushBannerProvider from '@/components/PushBanner/PushBannerProvider'
@@ -20,12 +19,9 @@ import { PublicProvider } from '@/modules/public/PublicProvider'
 import { onFileUploaded } from '@/modules/views/Upload/UploadUtils'
 
 const Providers = ({ children }) => {
-  const { isMobile } = useBreakpoints()
-
-  const [DnDProvider, dnDProviderProps] =
-    flag('drive.virtualization.enabled') && !isMobile
-      ? [DndProvider, { backend: HTML5Backend }]
-      : [Fragment, {}]
+  const [DnDProvider, dnDProviderProps] = flag('drive.virtualization.enabled')
+    ? [DndProvider, { backend: HTML5Backend }]
+    : [Fragment, {}]
 
   return (
     <BarProvider>

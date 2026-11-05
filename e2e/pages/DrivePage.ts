@@ -3,6 +3,8 @@ import type { Page, Locator } from '@playwright/test'
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import { FileListRequests } from '../helpers/fileListRequests'
+import { expect } from '../helpers/fixtures'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -13,15 +15,23 @@ import { ShareModalPage } from './ShareModalPage'
  */
 export class DrivePage {
   private readonly page: Page
-  private readonly fileList: Locator
+  private readonly fileRequests: FileListRequests
 
   constructor(page: Page) {
     this.page = page
-    this.fileList = page.getByTestId('fil-content-body')
+    this.fileRequests = new FileListRequests(page)
+  }
+
+  /** Legacy empty views nest the message inside the table; prefer that ancestor. */
+  get fileList(): Locator {
+    return this.page
+      .getByRole('table', { includeHidden: true })
+      .or(this.page.getByTestId('empty-folder'))
+      .first()
   }
 
   row(name: string): FileRow {
-    return new FileRow(this.page, this.fileList, name)
+    return new FileRow(this.page, this.fileList, name, this.fileRequests)
   }
 
   get createButton(): Locator {
@@ -90,22 +100,33 @@ export class DrivePage {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: stem })
+      .or(this.fileList.getByTitle(stem, { exact: false }))
   }
 
   async createFolder(name: string): Promise<void> {
     await this.page.getByRole('button', { name: 'Create' }).click()
     await this.page.getByTestId('add-folder-link').click()
     const input = this.page.getByTestId('name-input').locator('input')
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await input.count()
+          if (count === 0) await this.scrollFileListToTop()
+          return count
+        },
+        { intervals: [50], timeout: 10_000 }
+      )
+      .toBeGreaterThan(0)
     await input.waitFor({ state: 'visible' })
     await input.fill(name)
     await input.press('Enter')
     await this.row(name).waitVisible()
   }
 
-
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
   async uploadFiles(filePaths: string | string[]): Promise<void> {
+    await this.fileList.waitFor({ state: 'visible' })
     await this.page
       .locator('input[data-testid="upload-btn"]')
       .first()
@@ -139,37 +160,40 @@ export class DrivePage {
       .setInputFiles(filePaths)
   }
 
-  /** Synthesise an OS drag-and-drop: Playwright can't drag real files, so we
-   * build a DataTransfer in-page and dispatch the drop on the file list, which
-   * bubbles to the react-dropzone root wrapping it.
-   *
-   * react-dropzone's file-selector defaults a dropped file's path to
-   * `./<name>` when `webkitGetAsEntry` is null (always, for a scripted
-   * DataTransfer). Drive reads that `./` as a folder structure and tries to
-   * create a "." folder, which fails. Pinning `webkitRelativePath` to the bare
-   * name yields a slash-free path so Drive treats it as a loose top-level file. */
-  async dropFiles(
-    files: { name: string; mime: string; content: string }[]
-  ): Promise<void> {
-    const dataTransfer = await this.page.evaluateHandle(items => {
-      const dt = new DataTransfer()
-      for (const item of items) {
-        const file = new File([item.content], item.name, { type: item.mime })
-        Object.defineProperty(file, 'webkitRelativePath', {
-          value: item.name,
-          configurable: true
+  /** Chromium supplies real filesystem entries, unlike a scripted DataTransfer. */
+  async dropFiles(filePaths: string[]): Promise<void> {
+    await this.fileList.waitFor({ state: 'visible' })
+    const scroller: Locator = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    const dropTarget: Locator = scroller.or(this.fileList).first()
+    await dropTarget.scrollIntoViewIfNeeded()
+    const bounds = await dropTarget.boundingBox()
+    if (!bounds) throw new Error('File list has no drop target')
+    const session = await this.page.context().newCDPSession(this.page)
+    try {
+      for (const type of ['dragEnter', 'dragOver', 'drop'] as const) {
+        await session.send('Input.dispatchDragEvent', {
+          type,
+          x: bounds.x + bounds.width / 2,
+          y: bounds.y + bounds.height / 2,
+          data: { items: [], files: filePaths, dragOperationsMask: 1 }
         })
-        dt.items.add(file)
       }
-      return dt
-    }, files)
-
-    await this.fileList.dispatchEvent('drop', { dataTransfer })
+    } finally {
+      await session.detach()
+    }
   }
 
-  /** Right-click the empty content area; the dropzone wrapper's onContextMenu
-   * opens the AddMenu. Callers must be in an empty folder so the click lands
-   * on blank space and not on a file row (which opens the file menu instead). */
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.page.getByTestId('virtuoso-scroller')
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  /** Callers must be in an empty folder so the click opens AddMenu, not a row menu. */
   private async openAddContextMenu(): Promise<void> {
     await this.fileList.click({ button: 'right' })
     await this.page.getByRole('menu').waitFor({ state: 'visible' })

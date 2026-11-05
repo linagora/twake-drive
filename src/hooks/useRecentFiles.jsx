@@ -16,6 +16,7 @@ const useDataProxyRecents = () => {
   const recentQuery = useMemo(() => buildRecentQuery(), [])
 
   useEffect(() => {
+    let isCurrent = true
     const fetchRecents = async () => {
       setFetchStatus('loading')
       setError(null)
@@ -23,10 +24,12 @@ const useDataProxyRecents = () => {
       if (dataProxy.dataProxyServicesAvailable) {
         try {
           const data = await dataProxy.recents()
+          if (!isCurrent) return
           setData(data || [])
           setFetchStatus('loaded')
           return
         } catch (err) {
+          if (!isCurrent) return
           logger.error('Error fetching recents from dataproxy', err)
         }
       }
@@ -37,9 +40,11 @@ const useDataProxyRecents = () => {
             definition: recentQuery.definition(),
             options: recentQuery.options
           })
+          if (!isCurrent) return
           setData(result?.data || [])
           setFetchStatus('loaded')
         } catch (err) {
+          if (!isCurrent) return
           logger.warn('Error fetching recents from fallback query', err)
           setError(err)
           setFetchStatus('error')
@@ -51,6 +56,9 @@ const useDataProxyRecents = () => {
     }
 
     fetchRecents()
+    return () => {
+      isCurrent = false
+    }
   }, [dataProxy, client, recentQuery])
 
   return { data, fetchStatus, error }
