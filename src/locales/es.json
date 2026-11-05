@@ -178,7 +178,6 @@
         "subtitle": "Por correo electrónico",
         "email": "Para:",
         "emailPlaceholder": "Entre la dirección email o el nombre del destinatario",
-        "send": "Enviar",
         "genericSuccess": "Usted envía una invitación a %{count} contactos",
         "success": "Ustad envía una invitación a %{email}.",
         "comingsoon": "Dentro de poco, podrá compartir documentos y fotos en un solo clic con su familia, sus amigos e incluso sus compañeros de trabajo. No se preocupe, ¡le avisaremos cuando esté listo!",

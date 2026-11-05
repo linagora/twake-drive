@@ -1,8 +1,9 @@
 import React from 'react'
 
 import { Cross, Icon } from '@linagora/twake-icons'
-import { GroupAvatar, MemberAvatar } from 'cozy-sharing'
+import { MemberAvatar } from 'cozy-sharing'
 import Button from 'cozy-ui/transpiled/react/Button'
+import MemberGroupAvatar from 'cozy-ui/transpiled/react/MemberRow/MemberGroupAvatar'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
@@ -62,7 +63,7 @@ function SharingsFilters({
         option.kind === 'person' ? (
           <MemberAvatar recipient={option.recipient} size="m" />
         ) : (
-          <GroupAvatar color={option.recipient.color} size="m" />
+          <MemberGroupAvatar color={option.recipient.color} size="m" />
         ),
       label: option.label,
       searchableValues: option.searchableValues,

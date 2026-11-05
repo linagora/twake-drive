@@ -122,7 +122,6 @@
         "subtitle": "Via e-mail",
         "email": "Aan:",
         "emailPlaceholder": "Voer het e-mailadres of de naam in van de ontvanger",
-        "send": "Versturen",
         "genericSuccess": "Je hebt een uitnodiging verstuurd aan %{count} contactpersonen.",
         "success": "Je hebt een uitnodiging verstuurd aan %{email}.",
         "comingsoon": "Binnenkort kun je documenten en foto's met één klik delen met je familie, vrienden en zelfs met je collega's! Geen zorgen, we laten je weten wanneer dit beschikbaar is.",

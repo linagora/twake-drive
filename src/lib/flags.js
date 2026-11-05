@@ -34,7 +34,6 @@ const flagsList = () => {
   flag('drive.pdf-editor.enabled')
   flag('drive.onlyoffice.pdf-editing.enabled')
   flag('sharing.auto-open-settings.enabled')
-  flag('sharing.generate-link-button.enabled')
   flag('sharing.contacts-suggest.enabled')
   flag('drive.sign.enabled')
   flag('drive.verify.enabled')

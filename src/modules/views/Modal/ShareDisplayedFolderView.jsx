@@ -29,7 +29,6 @@ const ShareDisplayedFolderView = () => {
         onClose={onClose}
         onRevokeSuccess={onRevokeSuccess}
         autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
-        showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
       />
     )
   }

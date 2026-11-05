@@ -121,7 +121,6 @@
       },
       "shareByEmail": {
         "email": "Do:",
-        "send": "Wyślij",
         "genericSuccess": "Wysłałeś zaproszenie do %{count} kontaktów.",
         "success": "Wysłałeś zaproszenie do %{email}."
       }

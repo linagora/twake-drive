@@ -8004,12 +8004,12 @@ __metadata:
     cozy-pouch-link: "npm:^61.0.1"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.12.1"
-    cozy-sharing: "npm:^40.2.0"
+    cozy-sharing: "npm:^45.0.1"
     cozy-stack-client: "npm:^61.0.0"
     cozy-tsconfig: "npm:^1.8.1"
-    cozy-ui: "npm:^143.0.0"
-    cozy-ui-plus: "npm:^14.0.1"
-    cozy-viewer: "npm:^31.3.1"
+    cozy-ui: "npm:^146.5.1"
+    cozy-ui-plus: "npm:^14.1.10"
+    cozy-viewer: "npm:^32.0.14"
     css-mediaquery: "npm:0.1.2"
     date-fns: "npm:2.30.0"
     diacritics: "npm:1.3.0"
@@ -8167,9 +8167,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^40.2.0":
-  version: 40.2.0
-  resolution: "cozy-sharing@npm:40.2.0"
+"cozy-sharing@npm:^45.0.1":
+  version: 45.0.1
+  resolution: "cozy-sharing@npm:45.0.1"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -8185,13 +8185,13 @@ __metadata:
     cozy-flags: ">=4.8.1"
     cozy-intent: ">=2.29.1"
     cozy-minilog: ">=3.9.1"
-    cozy-ui: ">=140.5.0"
+    cozy-ui: ">=146.5.1"
     cozy-ui-plus: ">=6.0.0"
     prop-types: ">=15.7.2"
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/3596b56e635a2c8b40bf858714cbe6e5b9cbedd20cdc14129dc29ebc4c088f2aa4227d1bc7a87ecc93c3c96a5bed69de011041d82f139db92a029250254c7b81
+  checksum: 10/810e406b0dd0d2aeb1ad837e5f26a8208318f0675de08b0f9dead3674162ae64b8dcd6e42d9cf8d34c5818b624b15bb20d1a86c751aa23ce9f207751b4e80ca6
   languageName: node
   linkType: hard
 
@@ -8220,9 +8220,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-ui-plus@npm:^14.0.1":
-  version: 14.0.1
-  resolution: "cozy-ui-plus@npm:14.0.1"
+"cozy-ui-plus@npm:^14.1.10":
+  version: 14.1.10
+  resolution: "cozy-ui-plus@npm:14.1.10"
   dependencies:
     classnames: "npm:^2.5.1"
     filesize: "npm:8.0.7"
@@ -8246,13 +8246,13 @@ __metadata:
     react: ^16 || ^17 || ^18
     react-dom: ^16 || ^17 || ^18
     twake-i18n: ">=0.3.0"
-  checksum: 10/db2f5929b1706a6e28de5a982f17915876f87f4f6cd1bfae2a7e4da89f591998f91975d777a7bae11f6d3d916dd26df787de511a913d063723e708fc8e14a570
+  checksum: 10/9ec10a328f40f1147686738e9adefe912785a0b144f4665aff13cc08a34d9f33698ea23a9f74e478f19aa7907d67f69e7014ba77adcf6e887b815e7077d41a39
   languageName: node
   linkType: hard
 
-"cozy-ui@npm:^143.0.0":
-  version: 143.0.0
-  resolution: "cozy-ui@npm:143.0.0"
+"cozy-ui@npm:^146.5.1":
+  version: 146.5.1
+  resolution: "cozy-ui@npm:146.5.1"
   dependencies:
     "@babel/runtime": "npm:^7.3.4"
     "@date-io/date-fns": "npm:1"
@@ -8276,7 +8276,9 @@ __metadata:
     react-select: "npm:^4.3.0"
     react-virtuoso: "npm:^4.13.0"
     remark-gfm: "npm:^1.0.0"
+    remark-parse: "npm:^9.0.0"
     rooks: "npm:8.4.0"
+    unified: "npm:^9.0.0"
   peerDependencies:
     "@linagora/twake-icons": ">=2.6.2"
     cozy-device-helper: ">=2.0.0"
@@ -8288,13 +8290,13 @@ __metadata:
     twake-i18n: ">=0.3.0"
   bin:
     rsg-screenshots: scripts/screenshots.js
-  checksum: 10/ef4a4cc0a16d95c5df752a4db414be6f5d208600a081a1159d25a997a74f434749633225772b07185f84a3a461c2e12e36d772b4db8d4eccf0783fa42b6589d7
+  checksum: 10/ac528de39591b7dc69b35b2b2447fd2ed683920d11fb3333dae3b790e152cfe3498d3d4a4135457ea3d8ebf40812761b1f524e52cc48064b51f86f46f64ca6b5
   languageName: node
   linkType: hard
 
-"cozy-viewer@npm:^31.3.1":
-  version: 31.3.1
-  resolution: "cozy-viewer@npm:31.3.1"
+"cozy-viewer@npm:^32.0.14":
+  version: 32.0.14
+  resolution: "cozy-viewer@npm:32.0.14"
   dependencies:
     classnames: "npm:^2.5.1"
     hammerjs: "npm:^2.0.8"
@@ -8315,7 +8317,7 @@ __metadata:
     react-dom: ">=16.14.0"
     react-router-dom: ">=6.14.2"
     twake-i18n: ">=0.3.0"
-  checksum: 10/8418ef561b405cc81b899d96a8bae69aa4381758fa6402622998610dbab77b4824fe4b900bd63097bd048b14de541e2e0549465340b0a82be877846088c8c04b
+  checksum: 10/6b7d4d7a7a81d18e664a9e69e2e6cf78e125fc2fcdcfad7d46beb60d594814b875f6e72ee9c54ed347e4460db064708510b066e6ab5cf6eec3d488b970e945fd
   languageName: node
   linkType: hard
 

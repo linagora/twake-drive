@@ -113,8 +113,7 @@
       "sharedWithMe": "مُشارَك معي",
       "shareByEmail": {
         "subtitle": "عبر البريد الإلكتروني",
-        "email": "إلى :",
-        "send": "إرسل"
+        "email": "إلى :"
       },
       "sharingLink": {
         "title": "رابط المشاركة",

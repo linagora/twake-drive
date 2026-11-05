@@ -33,7 +33,7 @@ async function openShareModal(page: Page): Promise<void> {
 }
 
 /** Close and reopen the share modal so it remounts and re-reads the sharing
- * context; the link recipient row only renders from freshly read permissions. */
+ * context; the "Public access" row only updates from freshly read permissions. */
 async function reopenShareModal(page: Page): Promise<void> {
   const dialog = page.getByRole('dialog')
   await dialog
