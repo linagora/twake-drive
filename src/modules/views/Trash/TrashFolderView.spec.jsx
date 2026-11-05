@@ -1,5 +1,6 @@
 import { act, render, screen } from '@testing-library/react'
 import React from 'react'
+import { Route, Routes } from 'react-router-dom'
 
 import { createMockClient } from 'cozy-client'
 
@@ -13,6 +14,7 @@ jest.mock('react-redux', () => ({
 }))
 
 import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
+import en from '@/locales/en.json'
 
 jest.mock('@/hooks', () => ({
   useCurrentFolderId: jest.fn(() => 'io.cozy.files.trash-dir'),
@@ -41,8 +43,11 @@ jest.mock('@/modules/trash/components/TrashBreadcrumb', () => ({
   TrashBreadcrumb: () => null
 }))
 jest.mock('@/modules/trash/components/TrashToolbar', () => ({
-  TrashToolbar: () => null
+  TrashToolbar: () => <div data-testid="trash-toolbar" />
 }))
+jest.mock('@/modules/filelist/FileListRowsPlaceholder', () => () => (
+  <div data-testid="trash-loading" />
+))
 
 const client = createMockClient({})
 client.query = jest.fn().mockReturnValue({ data: [] })
@@ -79,44 +84,118 @@ describe('TrashFolderView', () => {
 })
 
 describe('TrashFolderView redirection', () => {
-  const setup = async (displayedFolder, folderId = displayedFolder.id) => {
-    useDisplayedFolder.mockReturnValue({ displayedFolder, isNotFound: false })
-    window.location.hash = `#/trash/${folderId}`
+  const getFileQueries = client =>
+    client.query.mock.calls.filter(
+      ([query]) => query.doctype === 'io.cozy.files'
+    )
+
+  afterEach(() => {
+    window.location.hash = ''
+  })
+
+  const setup = async (
+    displayedFolder,
+    {
+      folderId = displayedFolder?.id ?? 'pending-id',
+      childPath = '',
+      isLoading = false,
+      isNotFound = false
+    } = {}
+  ) => {
+    useCurrentFolderId.mockReturnValue(folderId)
+    useDisplayedFolder.mockReturnValue({
+      displayedFolder,
+      isNotFound,
+      isLoading
+    })
+    window.location.hash = `#/trash/${folderId}${childPath}`
     const { store, client } = setupStoreAndClient()
     client.plugins.realtime = { subscribe: jest.fn(), unsubscribe: jest.fn() }
     client.query = jest.fn().mockReturnValue({ data: [] })
     await act(async () => {
       render(
         <AppLike client={client} store={store}>
-          <TrashFolderView />
+          <Routes>
+            <Route path="trash/:folderId/*" element={<TrashFolderView />} />
+            <Route path="folder/:folderId/*" element={null} />
+          </Routes>
         </AppLike>
       )
     })
+    return client
   }
 
   it.each(['/Projects', '/.cozy_trash_backup'])(
     'opens the live folder %s in the drive instead',
     async path => {
-      await setup({ id: 'live-id', path })
+      const client = await setup({ id: 'live-id', path })
 
       expect(window.location.hash).toBe('#/folder/live-id')
       expect(screen.queryByTestId('trash-content')).toBe(null)
+      expect(getFileQueries(client)).toHaveLength(0)
     }
   )
 
   it.each(['/.cozy_trash', '/.cozy_trash/Projects'])(
     'keeps %s in the trash with its trash actions',
     async path => {
-      await setup({ id: 'trashed-id', path })
+      const client = await setup({ id: 'trashed-id', path })
 
       expect(window.location.hash).toBe('#/trash/trashed-id')
       expect(screen.getByTestId('trash-content')).toHaveTextContent('destroy')
+      expect(getFileQueries(client)).toHaveLength(2)
     }
   )
 
-  it('offers no trash action while the folder is not known to be trashed', async () => {
-    await setup(null, 'pending-id')
+  it.each(['/file/file-id', '/file/file-id/revision'])(
+    'preserves the child route %s and query parameters',
+    async childPath => {
+      await setup(
+        { id: 'live-id', path: '/Projects' },
+        { childPath: `${childPath}?test=value` }
+      )
 
-    expect(screen.getByTestId('trash-content')).toBeEmptyDOMElement()
+      expect(window.location.hash).toBe(
+        `#/folder/live-id${childPath}?test=value`
+      )
+    }
+  )
+
+  it.each(['/destroy', '/empty'])(
+    'drops the Bin-only route %s when redirecting',
+    async childPath => {
+      await setup({ id: 'live-id', path: '/Projects' }, { childPath })
+
+      expect(window.location.hash).toBe('#/folder/live-id')
+    }
+  )
+
+  it('waits for the folder before fetching or showing its Bin content', async () => {
+    const client = await setup(null, { isLoading: true })
+
+    expect(screen.getByTestId('trash-loading')).toBeInTheDocument()
+    expect(screen.queryByTestId('trash-content')).toBe(null)
+    expect(screen.queryByTestId('trash-toolbar')).toBe(null)
+    expect(getFileQueries(client)).toHaveLength(0)
+  })
+
+  it('shows an error when the folder lookup fails without a 404', async () => {
+    const client = await setup(null)
+
+    expect(screen.getByText(en.error.open_folder)).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: en.error.button.reload })
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('trash-content')).toBe(null)
+    expect(screen.queryByTestId('trash-toolbar')).toBe(null)
+    expect(getFileQueries(client)).toHaveLength(0)
+  })
+
+  it('keeps the not-found page for a missing folder', async () => {
+    await setup(null, { isNotFound: true })
+
+    expect(screen.getByText(en.NotFound.title)).toBeInTheDocument()
+    expect(screen.queryByText(en.error.open_folder)).toBe(null)
+    expect(screen.queryByTestId('trash-content')).toBe(null)
   })
 })
