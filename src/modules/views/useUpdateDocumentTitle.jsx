@@ -5,6 +5,7 @@ import { useI18n } from 'twake-i18n'
 
 import { TRASH_DIR_PATH } from '@/constants/config'
 import { makeParentFolderPath } from '@/modules/filelist/helpers'
+import { isInTrashDir } from '@/modules/trash/helpers'
 
 export const makeTitle = (file, appFullName, t) => {
   if (!file) return
@@ -19,7 +20,7 @@ export const makeTitle = (file, appFullName, t) => {
   let path = ''
   if (models.file.isDirectory(file)) {
     if (file && file.path) {
-      if (file.path.startsWith(TRASH_DIR_PATH)) {
+      if (isInTrashDir(file.path)) {
         const trashSubDirectories = file.path.split(`${TRASH_DIR_PATH}/`)[1]
         path = trashSubDirectories
           ? `(${t('Nav.item_trash')}/${trashSubDirectories}) `
@@ -30,7 +31,7 @@ export const makeTitle = (file, appFullName, t) => {
     }
   } else {
     if (file && parentFolderPath) {
-      if (parentFolderPath.startsWith(TRASH_DIR_PATH)) {
+      if (isInTrashDir(parentFolderPath)) {
         const trashSubDirectories = parentFolderPath.split(
           `${TRASH_DIR_PATH}/`
         )[1]

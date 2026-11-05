@@ -380,7 +380,9 @@ export const buildFavoritesQuery: QueryBuilder<buildFavoritesQueryParams> = ({
       })
       .partialIndex({
         'cozyMetadata.favorite': true,
-        path: { $or: [{ $exists: false }, { $regex: '^(?!/.cozy_trash)' }] },
+        path: {
+          $or: [{ $exists: false }, { $regex: '^(?!/\\.cozy_trash(/|$))' }]
+        },
         trashed: { $or: [{ $exists: false }, { $eq: false }] },
         driveId: { $exists: false }
       })
