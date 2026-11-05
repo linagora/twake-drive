@@ -178,7 +178,6 @@
         "subtitle": "Bằng email",
         "email": "Tới:",
         "emailPlaceholder": "Nhập địa chỉ email hoặc tên người nhận",
-        "send": "Gửi",
         "genericSuccess": "Bạn đã gửi lời mời đến %{count} liên hệ.",
         "success": "Bạn đã gửi lời mời đến %{email}.",
         "comingsoon": "Sắp ra mắt! Bạn sẽ có thể chia sẻ tài liệu và hình ảnh chỉ với một cú nhấp chuột với gia đình, bạn bè và cả đồng nghiệp. Đừng lo, chúng tôi sẽ thông báo khi tính năng này sẵn sàng!",

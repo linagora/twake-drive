@@ -178,7 +178,6 @@
         "subtitle": "Tramite email",
         "email": "A:",
         "emailPlaceholder": "Inserire l'indirizzo e-mail o il nome del destinatario",
-        "send": "Invia",
         "genericSuccess": "Hai inviato un invito a %{count} contatti.",
         "success": "Hai inviato un invito a %{email}.",
         "comingsoon": "Prossimamente! Potrai condividere documenti e foto con un solo clic con la tua famiglia, i tuoi amici e persino i tuoi colleghi. Non preoccuparti, ti faremo sapere quando sarà disponibile!",

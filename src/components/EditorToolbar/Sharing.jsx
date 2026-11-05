@@ -63,7 +63,6 @@ const Sharing = ({ file }) => {
           onClose={toggleShareModal}
           onRevokeSuccess={handleRevokeSuccess}
           autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
-          showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
         />
       )}
     </>

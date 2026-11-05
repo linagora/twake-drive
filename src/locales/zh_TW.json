@@ -137,7 +137,6 @@
         "subtitle": "由電郵",
         "email": "收件人：",
         "emailPlaceholder": "輸入收件人的電郵地址或名稱",
-        "send": "傳送",
         "genericSuccess": "您傳送了邀請函給 %{count} 個聯絡人。",
         "success": "您傳送了邀請函至 %{email}",
         "type": {

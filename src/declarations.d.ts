@@ -163,12 +163,6 @@ declare module 'cozy-sharing' {
     docId: string
   ) => import('cozy-sharing/types').SharingRecipient[]
 
-  export const GroupAvatar: React.ComponentType<{
-    className?: string
-    color?: string
-    size?: string
-  }>
-
   export const MemberAvatar: React.ComponentType<{
     recipient: import('cozy-sharing/types').SharingMemberRecipient
     size?: string

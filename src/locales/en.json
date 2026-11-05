@@ -178,7 +178,6 @@
         "subtitle": "By email",
         "email": "To:",
         "emailPlaceholder": "Enter the email address or name of the recipient",
-        "send": "Send",
         "genericSuccess": "You sent an invite to %{count} contacts.",
         "success": "You sent an invite to %{email}.",
         "comingsoon": "Coming soon! You will be able to share documents and photos in a single click with your family, your friends, and even your coworkers. Don't worry, we'll let you know when it's ready!",

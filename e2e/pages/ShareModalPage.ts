@@ -1,5 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { expect } from '../helpers/fixtures'
+
 export class ShareModalPage {
   private readonly page: Page
   /** The modal dialog — exposed so tests can assert its inner elements. */
@@ -10,27 +12,23 @@ export class ShareModalPage {
     this.dialog = page.getByRole('dialog')
   }
 
+  /** Send button of the invite field. */
+  get shareButton(): Locator {
+    return this.dialog.getByRole('button', { name: /^share$/i })
+  }
+
   async waitForOpen(): Promise<void> {
     await this.dialog.waitFor({ state: 'visible' })
   }
 
+  /** Validates the typed email: the field turns it into the matching contact
+   * when one is suggested, whose suggestion may show its instance rather than
+   * its email, so the suggestion itself is not clicked. */
   async addMember(email: string): Promise<void> {
     const contactInput = this.dialog.getByRole('textbox').first()
     await contactInput.fill(email)
-    // Either click a matching autocomplete suggestion (existing contact) or
-    // press Enter (free-form email input). The suggestion listbox is
-    // portal'd outside the dialog so we have to match on the page; the
-    // hasText filter keeps the lookup scoped to options that actually
-    // contain the email we typed.
-    const suggestion = this.page
-      .getByRole('option')
-      .filter({ hasText: email })
-      .first()
-    if (await suggestion.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await suggestion.click()
-    } else {
-      await contactInput.press('Enter')
-    }
+    await contactInput.press('Enter')
+    await expect(contactInput).toHaveValue('')
   }
 
   /** Pick the role granted to the members being added. The selector is the
@@ -143,15 +141,18 @@ export class ShareModalPage {
     })
   }
 
-  /** Submits the share form and waits for the modal to close (success).
-   * The name is anchored so it can't also match a link affordance like
-   * "Send link" / "Copy link" or a "Shared with N" control that would
-   * trip strict-mode. */
+  /** Sends the invitations from the field, then closes the modal, which
+   * stays open after sending. The field hides its placeholder while members
+   * are picked and shows it again once the invitations are sent. The name is
+   * anchored so it can't also match "Copy link" or "Send link". */
   async share(): Promise<void> {
-    await this.dialog
-      .getByRole('button', { name: /^(share|send|confirm|ok|done)$/i })
-      .click()
-    await this.dialog.waitFor({ state: 'hidden', timeout: 15_000 })
+    await this.shareButton.click()
+    await expect(this.dialog.getByRole('textbox').first()).toHaveAttribute(
+      'placeholder',
+      /.+/,
+      { timeout: 15_000 }
+    )
+    await this.close()
   }
 
   async close(): Promise<void> {

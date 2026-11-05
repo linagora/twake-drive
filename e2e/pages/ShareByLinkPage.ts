@@ -6,9 +6,9 @@ import { expect } from '../helpers/fixtures'
  * Drives the "share by link" flow inside the share modal.
  *
  * The public link is not created up front: clicking "Copy link" generates it
- * (and copies it to the clipboard), after which a "link recipient" row appears
- * with a cog. Clicking that row opens the ShareRestrictionModal where password
- * and expiration are configured.
+ * (and copies it to the clipboard), after which the "Public access" row tells
+ * who can open it. The cog next to the "Public access" title opens the
+ * ShareRestrictionModal where password and expiration are configured.
  *
  * Assumes the share modal is already open. Label matching assumes English.
  */
@@ -19,21 +19,25 @@ export class ShareByLinkPage {
     this.page = page
   }
 
-  /** The link recipient row, present only once a link exists. Its text flips
-   * to "Anyone with a password" after a password is set. */
+  /** The status of the "Public access" row once a link exists. It reads
+   * "Only users added via email can open it" while there is no link. */
   private get linkRow(): Locator {
-    return this.page.getByText(/Anyone with (the link|a password)/)
+    return this.page.getByText(
+      /^(Anyone who receives this link can (view|edit) the file\.|Password-protected\.)/
+    )
   }
 
   /** The ShareRestrictionModal is a second dialog stacked over the share
-   * modal; scope to it by its "Sharing link" title so its toggles and Confirm
-   * button don't collide with the share modal underneath. */
+   * modal; scope to it by its "Sharing link settings" title so its toggles and
+   * Confirm button don't collide with the share modal underneath. */
   private get restrictionModal(): Locator {
-    return this.page.getByRole('dialog').filter({ hasText: 'Sharing link' })
+    return this.page
+      .getByRole('dialog')
+      .filter({ hasText: 'Sharing link settings' })
   }
 
   /** Generate the public link via "Copy link" and return the copied URL. The
-   * link is created server-side here, but the link recipient row only renders
+   * link is created server-side here, but the "Public access" row only updates
    * after the modal re-fetches permissions, so callers reopen the modal (see
    * waitForLinkRow) before opening restrictions. The caller's browser context
    * must have clipboard permissions granted. */
@@ -58,14 +62,16 @@ export class ShareByLinkPage {
     return text
   }
 
-  /** Wait for the link recipient row to be present (after a modal reopen). */
+  /** Wait for the "Public access" row to tell a link exists (after a modal reopen). */
   async waitForLinkRow(): Promise<void> {
     await this.linkRow.waitFor({ state: 'visible' })
   }
 
-  /** Open the restriction modal by clicking the link recipient row (its cog). */
+  /** Open the restriction modal from the cog of the "Public access" block. */
   async openRestrictions(): Promise<void> {
-    await this.linkRow.click()
+    await this.page
+      .getByRole('button', { name: 'Sharing link settings' })
+      .click()
     await this.restrictionModal.waitFor({ state: 'visible' })
   }
 
@@ -92,7 +98,7 @@ export class ShareByLinkPage {
       .getByRole('dialog')
       .filter({ has: this.linkRow })
       .getByRole('listitem')
-      .filter({ hasText: /Anyone with the link/ })
+      .filter({ has: this.linkRow })
     const roleButton = recipient
       .getByRole('button')
       .filter({ hasText: /^(Editor|Viewer)$/ })

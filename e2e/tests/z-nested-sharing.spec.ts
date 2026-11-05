@@ -105,9 +105,7 @@ for (const combo of COMBOS) {
         await expect(
           modal.dialog.getByRole('button', { name: /^copy link$/i })
         ).toBeVisible()
-        await expect(
-          modal.dialog.getByRole('button', { name: /^done$/i })
-        ).toBeVisible()
+        await expect(modal.shareButton).toBeVisible()
 
         await modal.addMember(USERS.bob.email)
         await modal.share()
@@ -157,9 +155,7 @@ for (const combo of COMBOS) {
           await expect(modal.dialog.getByRole('combobox')).toBeVisible()
           await expect(modal.memberItem('bob')).toBeVisible()
           await expect(modal.memberRole('bob')).toHaveText(/editor/i)
-          await expect(
-            modal.dialog.getByRole('button', { name: /^done$/i })
-          ).toBeVisible()
+          await expect(modal.shareButton).toBeVisible()
 
           // Demoting an inherited member from the child's modal also lowers
           // their rights on the shared parent, so it opens a confirmation
@@ -190,17 +186,13 @@ for (const combo of COMBOS) {
           await expect(parentModal.memberRole('bob')).toHaveText(/viewer/i)
           await parentModal.close()
         } else {
-          // The legacy modal keeps the gate: email sharing is blocked, it
-          // lists direct recipients only — the child inherits none — but
-          // its Done button is always rendered.
+          // The legacy modal keeps the gate: email sharing is blocked and it
+          // lists direct recipients only — the child inherits none.
           await expect(
             modal.dialog.getByText(/can only be shared by link/i)
           ).toBeVisible()
           await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
           await expect(modal.memberItem('bob')).toHaveCount(0)
-          await expect(
-            modal.dialog.getByRole('button', { name: /^done$/i })
-          ).toBeVisible()
 
           await modal.close()
         }
@@ -242,9 +234,7 @@ for (const combo of COMBOS) {
           await modal.waitForOpen()
 
           await expect(modal.dialog.getByRole('combobox')).toBeVisible()
-          await expect(
-            modal.dialog.getByRole('button', { name: /^done$/i })
-          ).toBeVisible()
+          await expect(modal.shareButton).toBeVisible()
           await expect(
             modal.dialog.getByText(/can only be shared by link/i)
           ).toHaveCount(0)
@@ -325,9 +315,7 @@ for (const combo of COMBOS) {
         await expect(
           modal.dialog.getByRole('button', { name: /^copy link$/i })
         ).toBeVisible()
-        await expect(
-          modal.dialog.getByRole('button', { name: /^done$/i })
-        ).toBeVisible()
+        await expect(modal.shareButton).toBeVisible()
 
         await modal.addMember(USERS.bob.email)
         await modal.share()
@@ -347,9 +335,7 @@ for (const combo of COMBOS) {
         await expect(
           sharedModal.dialog.getByRole('button', { name: /^copy link$/i })
         ).toBeVisible()
-        await expect(
-          sharedModal.dialog.getByRole('button', { name: /^done$/i })
-        ).toBeVisible()
+        await expect(sharedModal.shareButton).toBeVisible()
 
         await sharedModal.close()
       })
@@ -396,9 +382,7 @@ for (const combo of COMBOS) {
             parentModal.dialog.getByText(/it contains a shared element/i)
           ).toHaveCount(0)
           await expect(parentModal.dialog.getByRole('combobox')).toBeVisible()
-          await expect(
-            parentModal.dialog.getByRole('button', { name: /^done$/i })
-          ).toBeVisible()
+          await expect(parentModal.shareButton).toBeVisible()
 
           // The newly allowed flow: share the parent by email anyway.
           await parentModal.addMember(USERS.charlie.email)
@@ -419,10 +403,6 @@ for (const combo of COMBOS) {
             parentModal.dialog.getByText(/it contains a shared element/i)
           ).toBeVisible()
           await expect(parentModal.dialog.getByRole('combobox')).toHaveCount(0)
-          // The legacy modal always renders its Done button.
-          await expect(
-            parentModal.dialog.getByRole('button', { name: /^done$/i })
-          ).toBeVisible()
 
           await parentModal.close()
         }
@@ -443,14 +423,12 @@ for (const combo of COMBOS) {
         await modal.waitForOpen()
 
         // No contact sharing at all: no banner text, no contact input,
-        // no Done — only the member list and the link affordance.
+        // no Share button — only the member list and the link affordance.
         await expect(
           modal.dialog.getByText(/can only be shared by link/i)
         ).toHaveCount(0)
         await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
-        await expect(
-          modal.dialog.getByRole('button', { name: /^done$/i })
-        ).toHaveCount(0)
+        await expect(modal.shareButton).toHaveCount(0)
         await expect(modal.dialog.getByText(/who has access/i)).toBeVisible()
         await expect(modal.dialog.getByRole('listitem').first()).toBeVisible()
         await expect(

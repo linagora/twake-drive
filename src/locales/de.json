@@ -178,7 +178,6 @@
         "subtitle": "Per E-Mail",
         "email": "An:",
         "emailPlaceholder": "Geben Sie die E-Mail-Adresse oder den Namen des Empfängers ein",
-        "send": "Senden",
         "genericSuccess": "Sie haben eine Einladung an %{count} Kontakte gesendet.",
         "success": "Sie haben eine Einladung an %{email} gesendet.",
         "comingsoon": "Bald verfügbar: Sie werden mit nur einem Klick Fotos und Dokumente Ihrer Familie, Ihren Freunden und sogar Ihren Kollegen freigeben können. Keine Sorge, wir benachrichtigen Sie sobald es soweit ist!",
