@@ -128,7 +128,7 @@ const useConfig = () => {
           coEditing: { ...serverEditorConfig?.coEditing, mode: 'fast' }
         }),
         customization: {
-          ...(isPdfDoc && serverEditorConfig?.customization),
+          ...serverEditorConfig?.customization,
           reviewDisplay: 'markup'
         },
         // The AI plugin of the editor would sit beside the assistant of
