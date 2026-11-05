@@ -245,6 +245,54 @@ describe('useConfig', () => {
     expect(result.current.config).toBeUndefined()
   })
 
+  it.each([
+    ['an office document', officeDocWithoutPublicName],
+    ['a PDF', pdfOfficeDoc]
+  ])(
+    'gives the editor the whole customization of the stack for %s',
+    async (_, doc) => {
+      flag.mockImplementation(
+        name => name === 'drive.onlyoffice.pdf-editing.enabled'
+      )
+      const stackCustomization = {
+        compactHeader: true,
+        customer: {
+          address: 'Suresnes',
+          logo: 'https://bob.cozy.example/assets/icon-192.png',
+          mail: 'support@cozy.example',
+          name: 'Twake Workplace',
+          www: 'cozy.io'
+        },
+        feedback: false,
+        forcesave: true,
+        goback: false
+      }
+      const { attributes } = doc.data
+      const data = {
+        data: {
+          ...doc.data,
+          attributes: {
+            ...attributes,
+            onlyoffice: {
+              ...attributes.onlyoffice,
+              editor: {
+                ...attributes.onlyoffice.editor,
+                customization: stackCustomization
+              }
+            }
+          }
+        }
+      }
+      const { result } = setup({ data })
+
+      await waitFor(() => expect(result.current.config).toBeDefined())
+
+      expect(
+        result.current.config.docEditorConfig.editorConfig.customization
+      ).toEqual({ ...stackCustomization, reviewDisplay: 'markup' })
+    }
+  )
+
   it('leaves out the AI plugin of OnlyOffice when the assistant of Twake is on', async () => {
     flag.mockImplementation(name => name === 'cozy.assistant.enabled')
     const { result } = setup()
