@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   ci-cd:
-    uses: linagora/twake-workflows/.github/workflows/build-and-publish-cozy-app.yml@7326a5a8138df3df8548f0b0500ffc12b113788b # v1.6.0
+    uses: linagora/twake-workflows/.github/workflows/build-and-publish-cozy-app.yml@c6f6a4de61671a4e5d440d138c5544e4233b58c7 # v1.7.0
     with:
       mattermost-channel: '{"dev":"appvengers","beta":"appvengers,publication","stable":"appvengers,publication"}'
       # Not a secret: the DSN ships in the client bundle. Unset means no
