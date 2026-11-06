@@ -75,6 +75,31 @@ export class ShareByLinkPage {
     await this.linkRow.waitFor({ state: 'visible' })
   }
 
+  /** The role menu button ("Editor"/"Viewer") of the link's row. */
+  private get linkRoleButton(): Locator {
+    const roles = ['two-way', 'one-way']
+      .map(type => escapeRegExp(t(`cozy-sharing:Share.type.${type}`)))
+      .join('|')
+    return this.page
+      .getByRole('dialog')
+      .filter({ has: this.linkRow })
+      .getByRole('listitem')
+      .filter({ has: this.linkRow })
+      .getByRole('button')
+      .filter({ hasText: new RegExp(`^(${roles})$`) })
+  }
+
+  async deactivate(): Promise<void> {
+    await this.linkRoleButton.click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: t('cozy-sharing:Share.permissionLink.deactivate')
+      })
+      .click()
+    await expect(this.linkRow).toHaveCount(0)
+  }
+
   /** Open the restriction modal from the cog of the "Public access" block. */
   async openRestrictions(): Promise<void> {
     await this.page

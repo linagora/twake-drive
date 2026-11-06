@@ -3,7 +3,7 @@ import type { Download, Page, Locator } from '@playwright/test'
 import { DrivePage } from './DrivePage'
 import type { FileRow } from './FileRow'
 import { PublicMoveToPage } from './PublicMoveToPage'
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 /**
@@ -29,6 +29,10 @@ export class PublicLinkPage {
     return this.page.locator('input[type="password"]').first()
   }
 
+  get passwordError(): Locator {
+    return this.page.getByText('Invalid password')
+  }
+
   /** The Drive public folder view's file list once access is granted. */
   get fileList(): Locator {
     return this.page.getByTestId('fil-content-body')
@@ -39,6 +43,36 @@ export class PublicLinkPage {
     return this.page.getByRole('heading', {
       name: t('Error.public_unshared_title')
     })
+  }
+
+  /** Write actions stay hidden until the link's own permissions are
+   * fetched, so a check for their absence has to wait for them. */
+  async open(url: string): Promise<void> {
+    const permissions = this.page.waitForResponse(
+      response =>
+        new URL(response.url()).pathname === '/permissions/self' &&
+        response.ok()
+    )
+    await this.page.goto(url)
+    await permissions
+  }
+
+  /** Create and Upload, offered only by an editable link. */
+  get addButtons(): Locator {
+    const labels = ['toolbar.menu_create', 'upload.label']
+      .map(key => escapeRegExp(t(key)))
+      .join('|')
+    return this.page.getByRole('button', {
+      name: new RegExp(`^(${labels})$`, 'i')
+    })
+  }
+
+  async rowMenuItems(name: string): Promise<string[]> {
+    const menu = await this.row(name).openMenu()
+    const items = await menu.getByRole('menuitem').allInnerTexts()
+    await this.page.keyboard.press('Escape')
+    await menu.waitFor({ state: 'hidden' })
+    return items
   }
 
   row(name: string): FileRow {
