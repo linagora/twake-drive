@@ -113,7 +113,7 @@ const TestComponent = (): JSX.Element => {
         onClick={(): void =>
           showMoveValidationModal(
             'moveOutside',
-            mockFile1,
+            [mockFile1],
             mockFolder,
             async (): Promise<void> => {
               // Empty async function for test
@@ -293,7 +293,7 @@ describe('ClipboardProvider', () => {
         actHook(() => {
           result.current.showMoveValidationModal(
             type,
-            mockFile1,
+            [mockFile1],
             mockFolder,
             async (): Promise<void> => {
               // Empty async function for test
@@ -306,7 +306,7 @@ describe('ClipboardProvider', () => {
 
         expect(result.current.moveValidationModal.type).toBe(type)
         expect(result.current.moveValidationModal.isVisible).toBe(true)
-        expect(result.current.moveValidationModal.file).toEqual(mockFile1)
+        expect(result.current.moveValidationModal.files).toEqual([mockFile1])
         expect(result.current.moveValidationModal.targetFolder).toEqual(
           mockFolder
         )

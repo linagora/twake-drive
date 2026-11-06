@@ -12,18 +12,19 @@ const MoveValidationModals: React.FC = () => {
     return null
   }
 
+  // Hide first: the callback may open the next warning of the same paste.
   const handleCancel = (): void => {
+    hideMoveValidationModal()
     if (moveValidationModal.onCancel) {
       moveValidationModal.onCancel()
     }
-    hideMoveValidationModal()
   }
 
   const handleConfirm = async (): Promise<void> => {
+    hideMoveValidationModal()
     if (moveValidationModal.onConfirm) {
       await moveValidationModal.onConfirm()
     }
-    hideMoveValidationModal()
   }
 
   /** This component renders move validation modals (MoveOutside/Inside/SharedInside)
@@ -33,16 +34,16 @@ const MoveValidationModals: React.FC = () => {
     case 'moveOutside':
       return (
         <MoveOutsideSharedFolderModal
-          entries={[moveValidationModal.file]}
+          entries={moveValidationModal.files}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
-          driveId={moveValidationModal.file?.driveId}
+          driveId={moveValidationModal.files[0]?.driveId}
         />
       )
     case 'moveInside':
       return (
         <MoveInsideSharedFolderModal
-          entries={[moveValidationModal.file]}
+          entries={moveValidationModal.files}
           folderId={moveValidationModal.targetFolder._id}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
@@ -52,7 +53,7 @@ const MoveValidationModals: React.FC = () => {
     case 'moveSharedInside':
       return (
         <MoveSharedFolderInsideAnotherModal
-          entries={[moveValidationModal.file]}
+          entries={moveValidationModal.files}
           folderId={moveValidationModal.targetFolder._id}
           onCancel={handleCancel}
           onConfirm={handleConfirm}

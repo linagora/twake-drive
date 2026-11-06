@@ -16,6 +16,7 @@ import {
   computeNextcloudMoveDirections,
   hasOneOfEntriesShared
 } from '@/modules/move/helpers'
+import { revokeSharingsForEntries } from '@/modules/move/revokeSharings'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { executeMove } from '@/modules/paste'
 import { buildFolderByPathQuery } from '@/queries'
@@ -216,20 +217,14 @@ export function useMoveOperation({
     }
   }
 
-  const revokeEntrySharing = async entry => {
-    if (byDocId[entry._id] !== undefined) {
-      if (isOwner(entry._id)) await revokeAllRecipients(entry)
-      else await revokeSelf(entry)
-    }
-  }
-
   const revokeMoveSharings = async sharingEntries => {
     if (sharingEntries.length === 0) return
-    if (onComplete) await Promise.all(sharingEntries.map(revokeEntrySharing))
-    else
-      sharingEntries.forEach(async entry => {
-        await revokeEntrySharing(entry)
-      })
+    await revokeSharingsForEntries(sharingEntries, {
+      byDocId,
+      isOwner,
+      revokeAllRecipients,
+      revokeSelf
+    })
     refreshSharing()
   }
 
