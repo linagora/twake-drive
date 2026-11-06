@@ -150,6 +150,27 @@ export class DrivePage {
     await this.row(name).waitVisible()
   }
 
+  /** Returns the id of the created file, which opens in OnlyOffice. */
+  async createOfficeDocument(
+    kind: 'text' | 'spreadsheet' | 'slide'
+  ): Promise<string> {
+    await this.createButton.click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(
+          `^${escapeRegExp(t(`toolbar.menu_onlyOffice.${kind}`))}$`
+        )
+      })
+      .click()
+    await this.page.waitForURL(/#\/onlyoffice\/[^/?]+\?fromCreate=true/, {
+      timeout: 30_000
+    })
+    const fileId = this.page.url().match(/onlyoffice\/([^/?]+)/)?.[1]
+    if (!fileId) throw new Error(`No file id in ${this.page.url()}`)
+    return fileId
+  }
+
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
   async uploadFiles(filePaths: string | string[]): Promise<void> {
