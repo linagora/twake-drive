@@ -67,6 +67,13 @@ export class ShareModalPage {
     )
   }
 
+  /** Shown instead of the member list once nobody but the owner is left. */
+  get noMemberNotice(): Locator {
+    return this.dialog.getByText(
+      t('cozy-ui-member-list:MemberList.empty.title')
+    )
+  }
+
   get copyLinkButton(): Locator {
     return this.dialog.getByRole('button', {
       name: new RegExp(
