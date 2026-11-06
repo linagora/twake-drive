@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
@@ -185,6 +185,17 @@ export class FileRow {
       }
     )
     await this.waitHidden()
+  }
+
+  async download(): Promise<Download> {
+    const menu = await this.openMenu()
+    const download = this.page.waitForEvent('download')
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.download'))}$`, 'i')
+      })
+      .click()
+    return await download
   }
 
   async addToFavorites(): Promise<void> {
