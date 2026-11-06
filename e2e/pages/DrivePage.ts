@@ -105,11 +105,13 @@ export class DrivePage {
 
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
-  async uploadFiles(filePaths: string | string[]): Promise<void> {
+  async uploadFiles(
+    files: Parameters<Locator['setInputFiles']>[0]
+  ): Promise<void> {
     await this.page
       .locator('input[data-testid="upload-btn"]')
       .first()
-      .setInputFiles(filePaths)
+      .setInputFiles(files)
   }
 
   /** Right-click the empty file-list area to open RightClickAddMenu (menu id

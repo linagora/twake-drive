@@ -19,6 +19,10 @@ export class FileViewerPage {
     await expect(this.page.getByRole('heading', { name })).toBeVisible()
   }
 
+  async expectTextContent(content: string): Promise<void> {
+    await expect(this.page.getByTestId('viewer-plaintext')).toHaveText(content)
+  }
+
   async expectViewerToolbarVisible(): Promise<void> {
     await expect(this.page.getByTestId('viewer-toolbar')).toBeVisible()
   }
