@@ -3,6 +3,7 @@ import React from 'react'
 
 import { CozyProvider } from 'cozy-client'
 import { DataProxyProvider } from 'cozy-dataproxy-lib'
+import flag from 'cozy-flags'
 import SharingProvider from 'cozy-sharing'
 import { I18n } from 'twake-i18n'
 
@@ -17,7 +18,11 @@ const IntentProvider = ({ client, lang, polyglot, dictRequire, children }) => {
             doctypes: [DOCTYPE_FILES, DOCTYPE_CONTACTS, DOCTYPE_APPS]
           }}
         >
-          <SharingProvider doctype="io.cozy.files" documentType="Files">
+          <SharingProvider
+            doctype="io.cozy.files"
+            documentType="Files"
+            contactsSuggestEnabled={flag('sharing.contacts-suggest.enabled')}
+          >
             {children}
           </SharingProvider>
         </DataProxyProvider>
