@@ -92,6 +92,7 @@
     "more": "المزيد"
   },
   "toolbar": {
+    "menu_upload_folder": "رفع مجلد",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "المزيد",
     "menu_select": "تحديد العناصر",
@@ -279,6 +280,11 @@
       "content_2": "إذا كنت لا تزال ترغب في نقل %{source} إلى %{destination}، فيرجى إيقاف المشاركة:",
       "cancel": "إلغاء النقل",
       "confirm": "إيقاف المشاركة"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "لا يحتوي هذا المجلد على أي ملف، لذلك لم يتم رفع أي شيء."
     }
   },
   "FilePicker": {

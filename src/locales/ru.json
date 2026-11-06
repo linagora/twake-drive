@@ -74,6 +74,7 @@
     "menu_manage_access": "Управление доступом",
     "menu_leave_shared_drive": "Покинуть общий доступ",
     "menu_upload": "Загрузить файлы",
+    "menu_upload_folder": "Загрузить папку",
     "item_more": "Ещё",
     "menu_new_folder": "Папка",
     "menu_select": "Выбрать элементы",
@@ -403,6 +404,7 @@
       "element": "элемент"
     },
     "alert": {
+      "no_files": "В этой папке нет файлов, поэтому ничего не загружено.",
       "success": "%{smart_count} %{type} успешно загружен. |||| %{smart_count} %{type} успешно загружены.",
       "success_conflicts": "%{smart_count} %{type} загружен с %{conflictNumber} конфликтом(-ами). |||| %{smart_count} %{type} загружены с %{conflictNumber} конфликтом(-ами).",
       "success_updated": "%{smart_count} %{type} загружен и %{updatedCount} обновлён. |||| %{smart_count} %{type} загружены и %{updatedCount} обновлены.",

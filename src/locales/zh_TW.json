@@ -96,6 +96,7 @@
     "more": "更多"
   },
   "toolbar": {
+    "menu_upload_folder": "上傳資料夾",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "更多",
     "menu_select": "選擇項目",
@@ -313,6 +314,11 @@
   "Viewer": {
     "loading": {
       "retry": "再試一次"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "此資料夾不含任何檔案，因此未上傳任何內容。"
     }
   },
   "FilePicker": {

@@ -1,5 +1,7 @@
 import { combineReducers } from 'redux'
 
+import { isFlagshipApp, isMobile } from 'cozy-device-helper'
+
 import { MAX_PAYLOAD_SIZE } from '@/constants/config'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
@@ -68,6 +70,10 @@ export const status = {
   ERR_MAX_FILE_SIZE
 }
 
+// Operating system metadata, dropped from folder contents only: a file the
+// user picks on its own is still uploaded.
+const IGNORED_FOLDER_FILES = ['.DS_Store', 'Thumbs.db']
+
 const CONFLICT_ERROR = 409
 const PAYLOAD_TOO_LARGE = 413
 const noop = () => {}
@@ -113,6 +119,10 @@ const normalizeRelativeUploadPath = path => {
   while (cleanPath.startsWith('./')) cleanPath = cleanPath.slice(2)
   return cleanPath
 }
+
+// Dropped files carry `path`; files from a directory picker only carry `webkitRelativePath`.
+export const getRelativeUploadPath = file =>
+  normalizeRelativeUploadPath(file?.path || file?.webkitRelativePath)
 
 const getSpeed = (state, action) => {
   const lastLoaded = state.loaded
@@ -491,7 +501,7 @@ const readAllEntries = async dirReader => {
   const entries = []
   let batch
   while ((batch = await readNextBatch(dirReader)).length > 0) {
-    entries.push(...batch)
+    entries.push(...batch.filter(e => !IGNORED_FOLDER_FILES.includes(e.name)))
   }
   return entries
 }
@@ -933,7 +943,7 @@ export const flattenEntries = async (
     }
     const file = entry.file
     if (!file) continue
-    const cleanPath = normalizeRelativeUploadPath(file.path)
+    const cleanPath = getRelativeUploadPath(file)
     if (!cleanPath.includes('/')) {
       result.push(makeFlatItem(file, rootDirId, null, nonce))
     } else {
@@ -962,10 +972,7 @@ export const removeFileToUploadQueue = file => async dispatch => {
  */
 const isDeferredEntry = entry => {
   if (entry.isDirectory && entry.entry) return true
-  const path = entry.file?.path
-  if (!path) return false
-  const cleanPath = normalizeRelativeUploadPath(path)
-  return cleanPath.includes('/')
+  return getRelativeUploadPath(entry.file).includes('/')
 }
 
 /**
@@ -983,9 +990,7 @@ const collectFolderRoots = entries => {
       roots.add(e.entry.name)
       continue
     }
-    const path = e.file?.path
-    if (!path) continue
-    const cleanPath = normalizeRelativeUploadPath(path)
+    const cleanPath = getRelativeUploadPath(e.file)
     if (cleanPath.includes('/')) {
       roots.add(cleanPath.split('/')[0])
     }
@@ -1200,6 +1205,20 @@ export const selectors = {
 }
 
 // DOM helpers
+// Feature detection is not enough: mobile browsers expose the attribute long
+// before they let the user pick a folder, and iPadOS reports a desktop user agent.
+export const isDirectoryPickerAvailable = () => {
+  const isIPadOS =
+    window.navigator.platform === 'MacIntel' &&
+    window.navigator.maxTouchPoints > 1
+  return (
+    'webkitdirectory' in HTMLInputElement.prototype &&
+    !isFlagshipApp() &&
+    !isMobile() &&
+    !isIPadOS
+  )
+}
+
 export const extractFilesEntries = items => {
   let results = []
   for (let i = 0; i < items.length; i += 1) {
@@ -1212,7 +1231,10 @@ export const extractFilesEntries = items => {
         entry,
         root: true
       })
-    } else {
+    } else if (
+      !IGNORED_FOLDER_FILES.includes(item.name) ||
+      !getRelativeUploadPath(item).includes('/')
+    ) {
       results.push({ file: item, isDirectory: false, entry: null, root: true })
     }
   }

@@ -9,6 +9,8 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Layout from './Layout'
 import AppLike from 'test/components/AppLike'
 
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
+
 jest.mock('cozy-flags', () => jest.fn())
 jest.mock('cozy-bar', () => ({
   BarComponent: () => <div data-testid="bar-component" />
@@ -20,8 +22,17 @@ jest.mock('@/components/pushClient/Button', () => () => null)
 jest.mock('@/components/FilesRealTimeQueries', () => () => null)
 jest.mock('@/modules/navigation/Nav', () => () => <nav data-testid="nav" />)
 jest.mock('@/modules/upload/UploadButton', () => ({
-  UploadButton: () => null
+  UploadButton: ({ isDirectory, folderId, disabled, onUploadStart }) =>
+    isDirectory ? (
+      <div
+        data-testid="upload-folder"
+        data-folder-id={String(folderId)}
+        data-disabled={String(Boolean(disabled))}
+        data-goes-to-root={String(Boolean(onUploadStart))}
+      />
+    ) : null
 }))
+jest.mock('@/hooks/useCurrentFolderWriteAccess', () => jest.fn(() => true))
 jest.mock('@/modules/upload/UploadQueue', () => () => null)
 jest.mock('@/hooks', () => ({
   useDisplayedFolder: () => ({ displayedFolder: null })
@@ -39,6 +50,55 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => {
     __esModule: true,
     default: jest.fn()
   }
+})
+
+describe('Layout folder upload entry', () => {
+  const store = createStore(() => ({
+    navigation: { operationRedirected: false }
+  }))
+  const client = createMockClient({ store })
+  client.store = store
+
+  const renderAt = hash => {
+    window.location.hash = hash
+    render(
+      <AppLike client={client} store={store}>
+        <Layout />
+      </AppLike>
+    )
+    return screen.getByTestId('upload-folder')
+  }
+
+  beforeEach(() => {
+    useBreakpoints.mockReturnValue({ isDesktop: true, isMobile: false })
+    useCurrentFolderWriteAccess.mockReturnValue(true)
+    flag.mockReturnValue(false)
+  })
+
+  afterEach(() => {
+    window.location.hash = ''
+    jest.clearAllMocks()
+  })
+
+  it('targets the root from a view without a folder', () => {
+    const entry = renderAt('#/recent')
+
+    expect(entry).toHaveAttribute('data-folder-id', 'null')
+    expect(entry).toHaveAttribute('data-goes-to-root', 'true')
+  })
+
+  it('targets the current folder', () => {
+    const entry = renderAt('#/folder')
+
+    expect(entry).toHaveAttribute('data-folder-id', 'io.cozy.files.root-dir')
+    expect(entry).toHaveAttribute('data-disabled', 'false')
+  })
+
+  it('is disabled in a read-only folder', () => {
+    useCurrentFolderWriteAccess.mockReturnValue(false)
+
+    expect(renderAt('#/folder')).toHaveAttribute('data-disabled', 'true')
+  })
 })
 
 describe('Layout demo navigation buttons', () => {

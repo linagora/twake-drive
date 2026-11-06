@@ -2,6 +2,7 @@ import type CozyClient from 'cozy-client/types/CozyClient'
 import type { IOCozyFile } from 'cozy-client/types/types'
 
 import { paginatedStatById, type PaginatedStatByIdResult } from '@/lib/files'
+import { getRelativeUploadPath } from '@/modules/upload'
 
 const DIRECTORY_TYPE = 'directory'
 const FILE_TYPE = 'file'
@@ -74,6 +75,10 @@ export const getUploadFirstLevelEntries = (
     .map(entry => {
       if (entry.isDirectory && entry.entry?.name) {
         return { name: entry.entry.name, type: DIRECTORY_TYPE }
+      }
+      const relativePath = getRelativeUploadPath(entry.file) as string
+      if (relativePath.includes('/')) {
+        return { name: relativePath.split('/')[0], type: DIRECTORY_TYPE }
       }
       return { name: entry.file?.name ?? '', type: FILE_TYPE }
     })

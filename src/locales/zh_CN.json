@@ -99,6 +99,7 @@
   },
   "toolbar": {
     "menu_upload": "上传文件",
+    "menu_upload_folder": "上传文件夹",
     "item_more": "更多",
     "menu_new_folder": "文件夹",
     "menu_select": "选择项目",
@@ -227,6 +228,11 @@
   "Viewer": {
     "loading": {
       "retry": "重试"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "此文件夹不包含任何文件，因此未上传任何内容。"
     }
   },
   "FilePicker": {

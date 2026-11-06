@@ -1,4 +1,5 @@
 import { getFullpath } from 'cozy-client/dist/models/file'
+import { isFlagshipApp, isMobile } from 'cozy-device-helper'
 
 import {
   processNextFile,
@@ -13,7 +14,8 @@ import {
   addToUploadQueue,
   onQueueEmpty,
   retryUploadConflicts,
-  uploadConflictStrategies
+  uploadConflictStrategies,
+  isDirectoryPickerAvailable
 } from './index'
 
 import logger from '@/lib/logger'
@@ -21,6 +23,11 @@ import logger from '@/lib/logger'
 jest.mock('cozy-client/dist/models/file', () => ({
   ...jest.requireActual('cozy-client/dist/models/file'),
   getFullpath: jest.fn()
+}))
+jest.mock('cozy-device-helper', () => ({
+  ...jest.requireActual('cozy-device-helper'),
+  isFlagshipApp: jest.fn(),
+  isMobile: jest.fn()
 }))
 
 const createFileSpy = jest.fn().mockName('createFile')
@@ -1111,6 +1118,14 @@ const createBrokenDirEntry = name => ({
   })
 })
 
+const makePickedFile = (name, webkitRelativePath) => {
+  const file = new File(['a'], name)
+  Object.defineProperty(file, 'webkitRelativePath', {
+    value: webkitRelativePath
+  })
+  return file
+}
+
 describe('extractFilesEntries', () => {
   it('should extract plain File objects', () => {
     const files = [new File(['a'], 'a.txt'), new File(['b'], 'b.txt')]
@@ -1173,6 +1188,22 @@ describe('extractFilesEntries', () => {
       entry: null,
       root: true
     })
+  })
+
+  it('drops system files found inside a folder', () => {
+    const results = extractFilesEntries([
+      makePickedFile('.DS_Store', 'R/.DS_Store'),
+      makePickedFile('Thumbs.db', 'R/sub/Thumbs.db'),
+      makePickedFile('a.txt', 'R/a.txt')
+    ])
+
+    expect(results.map(e => e.file.name)).toEqual(['a.txt'])
+  })
+
+  it('keeps a system file picked on its own', () => {
+    const file = new File(['a'], '.DS_Store')
+
+    expect(extractFilesEntries([file]).map(e => e.file)).toEqual([file])
   })
 
   it('should handle empty items', () => {
@@ -1312,6 +1343,57 @@ describe('overwriteFile function', () => {
   })
 })
 
+describe('isDirectoryPickerAvailable', () => {
+  const setPlatform = (platform, maxTouchPoints) => {
+    jest.spyOn(window.navigator, 'platform', 'get').mockReturnValue(platform)
+    Object.defineProperty(window.navigator, 'maxTouchPoints', {
+      value: maxTouchPoints,
+      configurable: true
+    })
+  }
+
+  beforeEach(() => {
+    HTMLInputElement.prototype.webkitdirectory = false
+    isFlagshipApp.mockReturnValue(false)
+    isMobile.mockReturnValue(false)
+    setPlatform('Linux x86_64', 0)
+  })
+
+  afterEach(() => {
+    delete HTMLInputElement.prototype.webkitdirectory
+    jest.restoreAllMocks()
+  })
+
+  it('is available on a desktop browser', () => {
+    expect(isDirectoryPickerAvailable()).toBe(true)
+  })
+
+  it('is not available in the mobile app webview', () => {
+    isFlagshipApp.mockReturnValue(true)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is not available on a mobile browser', () => {
+    isMobile.mockReturnValue(true)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is not available on an iPad reporting a desktop user agent', () => {
+    setPlatform('MacIntel', 5)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is available on a Mac', () => {
+    setPlatform('MacIntel', 0)
+    expect(isDirectoryPickerAvailable()).toBe(true)
+  })
+
+  it('is not available when the browser lacks the attribute', () => {
+    delete HTMLInputElement.prototype.webkitdirectory
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+})
+
 describe('flattenEntries', () => {
   beforeEach(() => {
     createDirectorySpy.mockReset()
@@ -1322,6 +1404,52 @@ describe('flattenEntries', () => {
     createDirectorySpy.mockImplementation(async ({ name }) => ({
       data: { id: `dir-${name}`, name, type: 'directory' }
     }))
+  })
+
+  it('skips system files when walking a dropped directory', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('.DS_Store'),
+      createMockFileEntry('Thumbs.db'),
+      createMockFileEntry('img.jpg')
+    ])
+
+    const result = await flattenEntries(
+      [{ file: null, isDirectory: true, entry: directoryEntry }],
+      'root',
+      fakeClient,
+      null
+    )
+
+    expect(result.map(r => r.relativePath)).toEqual(['photos/img.jpg'])
+  })
+
+  it('recreates the tree of files coming from a directory picker', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Été/a.txt'),
+      makePickedFile('b.txt', 'Été/sous dossier/b.txt')
+    ])
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).toHaveBeenCalledTimes(2)
+    expect(createDirectorySpy).toHaveBeenCalledWith({
+      name: 'Été',
+      dirId: 'root'
+    })
+    expect(createDirectorySpy).toHaveBeenCalledWith({
+      name: 'sous dossier',
+      dirId: 'dir-Été'
+    })
+    expect(result).toEqual([
+      expect.objectContaining({
+        relativePath: 'Été/a.txt',
+        folderId: 'dir-Été'
+      }),
+      expect.objectContaining({
+        relativePath: 'Été/sous dossier/b.txt',
+        folderId: 'dir-sous dossier'
+      })
+    ])
   })
 
   it('should flatten a dropped directory entry into per-file items with relative paths', async () => {
@@ -1636,6 +1764,67 @@ describe('addToUploadQueue placeholder flow', () => {
       uploadBatchId,
       relativePath: 'photos/img1.jpg'
     })
+  })
+
+  it('defers directory picker files so their tree is recreated', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Photos/a.txt'),
+      makePickedFile('b.txt', 'Photos/2026/b.txt')
+    ])
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const resolves = actions.filter(a => a.type === 'RESOLVE_FOLDER_ITEMS')
+    expect(resolves).toHaveLength(1)
+    expect(resolves[0].files).toEqual([
+      expect.objectContaining({
+        relativePath: 'Photos/a.txt',
+        folderId: 'dir-Photos'
+      }),
+      expect.objectContaining({
+        relativePath: 'Photos/2026/b.txt',
+        folderId: 'dir-2026'
+      })
+    ])
+  })
+
+  it('shows one resolving row per picked root folder', async () => {
+    const entries = extractFilesEntries([
+      makePickedFile('a.txt', 'Photos/a.txt'),
+      makePickedFile('b.txt', 'Photos/2026/b.txt')
+    ])
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const adds = actions.filter(a => a.type === 'ADD_TO_UPLOAD_QUEUE')
+    expect(adds[0].files).toEqual([
+      expect.objectContaining({
+        file: expect.objectContaining({ name: 'Photos' }),
+        status: 'resolving'
+      })
+    ])
   })
 
   it('does not create a dot placeholder when a folder file path starts with ./', async () => {

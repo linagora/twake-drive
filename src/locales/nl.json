@@ -76,6 +76,7 @@
     "title_trash": "Prullenbak"
   },
   "toolbar": {
+    "menu_upload_folder": "Map uploaden",
     "menu_create_excalidraw": "Excalidraw",
     "menu_select": "Selecteer items",
     "empty_trash": "Leeg de prullenbak",
@@ -244,6 +245,11 @@
   "Viewer": {
     "loading": {
       "retry": "Opnieuw proberen"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "Deze map bevat geen bestanden, dus er is niets geüpload."
     }
   },
   "FilePicker": {
