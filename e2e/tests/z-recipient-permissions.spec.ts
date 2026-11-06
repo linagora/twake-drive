@@ -4,7 +4,14 @@ import path from 'path'
 import type { Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  test,
+  expect,
+  stamp,
+  safeUnlink,
+  escapeRegExp
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openOwnerFolder,
@@ -17,6 +24,20 @@ import { ShareModalPage } from '../pages/ShareModalPage'
 
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures')
 const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
+
+const YOU = t('cozy-ui-member-row:MemberRow.you')
+const OWNER = new RegExp(
+  escapeRegExp(t('cozy-ui-member-row:MemberRow.owner')),
+  'i'
+)
+const EDITOR = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.two-way')),
+  'i'
+)
+const VIEWER = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.one-way')),
+  'i'
+)
 
 /** The Upload button is enabled before the drive permissions load, so only a
  * real upload proves write access. Retried until a role change propagates. */
@@ -92,19 +113,17 @@ test.describe.serial('Recipient permissions & member controls', () => {
 
     // 1. All members are visible to Reader
     const aliceItem = modal.memberItem(USERS.alice.email)
-    const bobItem = modal
-      .memberItem('You')
-      .or(modal.memberItem(USERS.bob.email))
+    const bobItem = modal.memberItem(YOU).or(modal.memberItem(USERS.bob.email))
     const charlieItem = modal.memberItem(USERS.charlie.email)
 
     await expect(aliceItem).toBeVisible()
-    await expect(aliceItem).toContainText(/owner/i)
+    await expect(aliceItem).toContainText(OWNER)
 
     await expect(bobItem).toBeVisible()
-    await expect(bobItem).toContainText(/viewer/i)
+    await expect(bobItem).toContainText(VIEWER)
 
     await expect(charlieItem).toBeVisible()
-    await expect(charlieItem).toContainText(/editor/i)
+    await expect(charlieItem).toContainText(EDITOR)
 
     // 2. Reader cannot change role or remove other members
     await expect(modal.memberRole(USERS.alice.email)).toHaveCount(0)
@@ -168,16 +187,14 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(modal.memberRemoveButton(USERS.alice.email)).toHaveCount(0)
 
     // Bob (You) CAN see role and remove controls for himself
-    const bobSelf = modal
-      .memberItem('You')
-      .or(modal.memberItem(USERS.bob.email))
+    const bobSelf = modal.memberItem(YOU).or(modal.memberItem(USERS.bob.email))
     await expect(bobSelf).toBeVisible()
     const bobSelfRole = modal
-      .memberRole('You')
+      .memberRole(YOU)
       .or(modal.memberRole(USERS.bob.email))
     await expect(bobSelfRole).toBeVisible()
     const bobSelfRemove = modal
-      .memberRemoveButton('You')
+      .memberRemoveButton(YOU)
       .or(modal.memberRemoveButton(USERS.bob.email))
     await expect(bobSelfRemove).toBeVisible()
 
@@ -194,11 +211,11 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expectUploadSucceeds(bobPage, bobDrive)
 
     const modal = await bobDrive.openShareFromToolbarRecipients()
-    await modal.setMemberRole('You', 'Viewer')
+    await modal.setMemberRole(YOU, 'Viewer')
 
     // Upon self-downgrade to Viewer, the modal transitions to the read-only details modal
-    await expect(modal.memberItem('You')).toContainText(/viewer/i)
-    await expect(modal.memberRole('You')).toHaveCount(0)
+    await expect(modal.memberItem(YOU)).toContainText(VIEWER)
+    await expect(modal.memberRole(YOU)).toHaveCount(0)
     await expect(modal.memberRole(USERS.charlie.email)).toHaveCount(0)
     await modal.close()
 
@@ -243,7 +260,7 @@ test.describe.serial('Recipient permissions & member controls', () => {
     const modal = await bobDrive.openShareFromToolbarRecipients()
 
     // Bob clicks remove on himself ("You")
-    await modal.memberRemoveButton('You').click()
+    await modal.memberRemoveButton(YOU).click()
 
     await expect(modal.dialog).toBeHidden()
     await expect(bobPage).toHaveURL(`${USERS.bob.appUrl}/#/sharings/with-me`)
@@ -404,21 +421,19 @@ test.describe.serial('Recipient edits himself and other members', () => {
     await openSharedDrive(bobPage, USERS.bob, bobDrive, MANAGED_DRIVE)
 
     const modal = await bobDrive.openShareFromToolbarRecipients()
-    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(EDITOR)
     await modal.setMemberRole(USERS.charlie.email, 'Viewer')
 
-    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/viewer/i)
-    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(VIEWER)
+    await expect(modal.memberRole(YOU)).toContainText(EDITOR)
     await modal.close()
 
     await expectUploadSucceeds(bobPage, bobDrive)
 
     await bobPage.reload()
     const reopened = await bobDrive.openShareFromToolbarRecipients()
-    await expect(reopened.memberRole(USERS.charlie.email)).toContainText(
-      /viewer/i
-    )
-    await expect(reopened.memberRole('You')).toContainText(/editor/i)
+    await expect(reopened.memberRole(USERS.charlie.email)).toContainText(VIEWER)
+    await expect(reopened.memberRole(YOU)).toContainText(EDITOR)
     await reopened.close()
   })
 
@@ -432,10 +447,10 @@ test.describe.serial('Recipient edits himself and other members', () => {
       await openOwnerFolder(alicePage, USERS.alice, aliceDrive, MANAGED_DRIVE)
       const modal = await aliceDrive.openShareModal()
       await expect(modal.memberRole(USERS.charlie.email)).toContainText(
-        /viewer/i,
+        VIEWER,
         { timeout: 2_000 }
       )
-      await expect(modal.memberRole(USERS.bob.email)).toContainText(/editor/i)
+      await expect(modal.memberRole(USERS.bob.email)).toContainText(EDITOR)
     }).toPass({ timeout: 30_000 })
 
     await openSharedDrive(
@@ -460,8 +475,8 @@ test.describe.serial('Recipient edits himself and other members', () => {
 
     const modal = await bobDrive.openShareFromToolbarRecipients()
     await modal.setMemberRole(USERS.charlie.email, 'Editor')
-    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
-    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(EDITOR)
+    await expect(modal.memberRole(YOU)).toContainText(EDITOR)
     await modal.close()
 
     await openSharedDrive(
@@ -482,8 +497,8 @@ test.describe.serial('Recipient edits himself and other members', () => {
     const modal = await bobDrive.openShareFromToolbarRecipients()
     await modal.removeMember(USERS.charlie.email)
 
-    await expect(modal.memberItem('You')).toBeVisible()
-    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await expect(modal.memberItem(YOU)).toBeVisible()
+    await expect(modal.memberRole(YOU)).toContainText(EDITOR)
     await modal.close()
 
     await expectUploadSucceeds(bobPage, bobDrive)
@@ -491,7 +506,7 @@ test.describe.serial('Recipient edits himself and other members', () => {
     await bobPage.reload()
     const reopened = await bobDrive.openShareFromToolbarRecipients()
     await expect(reopened.memberItem(USERS.charlie.email)).toHaveCount(0)
-    await expect(reopened.memberItem('You')).toBeVisible()
+    await expect(reopened.memberItem(YOU)).toBeVisible()
     await reopened.close()
   })
 
@@ -534,8 +549,8 @@ test.describe.serial('Recipient edits himself and other members', () => {
     await expect(bobDrive.createButton).toBeDisabled()
 
     const modal = await bobDrive.openShareFromToolbarRecipients()
-    await expect(modal.memberItem('You')).toContainText(/viewer/i)
-    await expect(modal.memberRole('You')).toHaveCount(0)
+    await expect(modal.memberItem(YOU)).toContainText(VIEWER)
+    await expect(modal.memberRole(YOU)).toHaveCount(0)
     await modal.close()
   })
 })

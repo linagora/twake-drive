@@ -1,5 +1,6 @@
 import { USERS } from '../helpers/config'
-import { test, expect, stamp } from '../helpers/fixtures'
+import { escapeRegExp, test, expect, stamp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createFile,
   overwriteFile,
@@ -45,7 +46,11 @@ test.describe('File versions', () => {
     await row.waitVisible()
 
     const menu = await row.openMenu()
-    await menu.getByRole('menuitem', { name: /History/ }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(escapeRegExp(t('SelectionBar.history')))
+      })
+      .click()
 
     const deleteButtons = alicePage.getByTestId('history-row-delete')
     await expect(deleteButtons).toHaveCount(2)
@@ -53,7 +58,12 @@ test.describe('File versions', () => {
     await deleteButtons.first().click()
     // `exact` matters: the trash buttons are labelled "Delete this version",
     // which a substring match would pick up alongside the confirm button.
-    await alicePage.getByRole('button', { name: 'Delete', exact: true }).click()
+    await alicePage
+      .getByRole('button', {
+        name: t('History.deleteVersion.confirm'),
+        exact: true
+      })
+      .click()
 
     await expect(deleteButtons).toHaveCount(1)
     expect(await countFileVersions({ instance: ALICE.instance, fileId })).toBe(1)
@@ -71,7 +81,11 @@ test.describe('File versions', () => {
     await row.waitVisible()
 
     const menu = await row.openMenu()
-    await menu.getByRole('menuitem', { name: /History/ }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(escapeRegExp(t('SelectionBar.history')))
+      })
+      .click()
 
     // Two rows are listed — the current version and its single revision — but
     // only the revision can be deleted.

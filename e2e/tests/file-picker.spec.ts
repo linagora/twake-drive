@@ -3,6 +3,7 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createFile,
   createFolder,
@@ -476,7 +477,7 @@ test.describe('File Picker', () => {
     await expect(picker.documentsButton()).toBeVisible()
     await expect(picker.publicLinkButton()).toHaveCount(0)
     await expect(picker.temporaryDownloadLinkButton()).toHaveCount(0)
-    await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
+    await expect(picker.breadcrumbButton(t('Nav.item_drive'))).toHaveCount(0)
     await expect(picker.item(testFileName)).toHaveCount(0)
 
     await picker.selectItem(photosFileName)

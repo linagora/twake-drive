@@ -1,5 +1,8 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
+
 /** DowngradePermissionConfirmDialog — a second dialog stacked on top of the
  * ShareModal, interposed when downgrading a member's role (Editor→Viewer) on
  * a folder that has a shared parent. Use ShareModalPage.selectMemberRole to
@@ -11,7 +14,10 @@ export class DowngradeConfirmDialogPage {
   constructor(page: Page) {
     this.page = page
     this.dialog = page.getByRole('dialog', {
-      name: /update role for parent folder/i
+      name: new RegExp(
+        escapeRegExp(t('cozy-sharing:DowngradePermissionConfirmDialog.title')),
+        'i'
+      )
     })
   }
 
@@ -31,12 +37,20 @@ export class DowngradeConfirmDialogPage {
   }
 
   async cancel(): Promise<void> {
-    await this.dialog.getByRole('button', { name: 'Cancel' }).click()
+    await this.dialog
+      .getByRole('button', {
+        name: t('cozy-sharing:DowngradePermissionConfirmDialog.cancel')
+      })
+      .click()
     await this.dialog.waitFor({ state: 'hidden' })
   }
 
   async confirm(): Promise<void> {
-    await this.dialog.getByRole('button', { name: 'Update parent' }).click()
+    await this.dialog
+      .getByRole('button', {
+        name: t('cozy-sharing:DowngradePermissionConfirmDialog.confirm')
+      })
+      .click()
     await this.dialog.waitFor({ state: 'hidden' })
   }
 }

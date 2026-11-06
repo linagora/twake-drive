@@ -4,7 +4,14 @@ import path from 'path'
 import type { Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  test,
+  expect,
+  stamp,
+  safeUnlink,
+  escapeRegExp
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
@@ -16,6 +23,7 @@ const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures')
 const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
 
 // Shared across .serial tests in this describe — do not enable fullyParallel.
+const DRAG_HERE = new RegExp(escapeRegExp(t('empty.text')), 'i')
 const DRIVE_NAME = `Write Drive ${stamp()}`
 const SEED_FILE = `write-seed-${stamp()}.txt`
 const BOB_FILE = `write-bob-${stamp()}.txt`
@@ -192,7 +200,7 @@ test.describe.serial('Shared drive write flows (recipient)', () => {
 
     // Wait for the empty folder's settled state before uploading, so the
     // assertion below can't trip on the legitimate first-load skeleton.
-    await expect(bobPage.getByText(/drag them here/i)).toBeVisible({
+    await expect(bobPage.getByText(DRAG_HERE)).toBeVisible({
       timeout: 10_000
     })
 
