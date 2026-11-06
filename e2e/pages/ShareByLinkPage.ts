@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * Drives the "share by link" flow inside the share modal.
@@ -22,9 +23,12 @@ export class ShareByLinkPage {
   /** The status of the "Public access" row once a link exists. It reads
    * "Only users added via email can open it" while there is no link. */
   private get linkRow(): Locator {
-    return this.page.getByText(
-      /^(Anyone who receives this link can (view|edit) the file\.|Password-protected\.)/
-    )
+    const statuses = ['view', 'edit', 'password']
+      .map(status =>
+        escapeRegExp(t(`cozy-sharing:Share.publicAccess.status.${status}`))
+      )
+      .join('|')
+    return this.page.getByText(new RegExp(`^(${statuses})`))
   }
 
   /** The ShareRestrictionModal is a second dialog stacked over the share
@@ -33,7 +37,7 @@ export class ShareByLinkPage {
   private get restrictionModal(): Locator {
     return this.page
       .getByRole('dialog')
-      .filter({ hasText: 'Sharing link settings' })
+      .filter({ hasText: t('cozy-sharing:ShareRestrictionModal.title') })
   }
 
   /** Generate the public link via "Copy link" and return the copied URL. The
@@ -48,7 +52,11 @@ export class ShareByLinkPage {
     const previousUrl = await this.page.evaluate(() =>
       navigator.clipboard.readText().catch(() => '')
     )
-    await this.page.getByRole('button', { name: 'Copy link' }).click()
+    await this.page
+      .getByRole('button', {
+        name: t('cozy-sharing:Files.share.shareByLink.copy')
+      })
+      .click()
     // The link is generated asynchronously and only then copied, so poll
     // until the clipboard holds a URL different from the previous one.
     let text = ''
@@ -70,7 +78,9 @@ export class ShareByLinkPage {
   /** Open the restriction modal from the cog of the "Public access" block. */
   async openRestrictions(): Promise<void> {
     await this.page
-      .getByRole('button', { name: 'Sharing link settings' })
+      .getByRole('button', {
+        name: t('cozy-sharing:Share.publicAccess.settings')
+      })
       .click()
     await this.restrictionModal.waitFor({ state: 'visible' })
   }
@@ -78,8 +88,12 @@ export class ShareByLinkPage {
   /** Toggle password protection on and fill the password field. */
   async enablePassword(password: string): Promise<void> {
     const modal = this.restrictionModal
-    await modal.getByText('Limit access with a password').click()
-    await modal.getByRole('textbox', { name: 'Password' }).fill(password)
+    await modal.getByText(t('cozy-sharing:BoxPassword.text')).click()
+    await modal
+      .getByRole('textbox', {
+        name: t('cozy-sharing:BoxPassword.label')
+      })
+      .fill(password)
   }
 
   /** `date` must already be formatted for the current locale (MM/dd/yyyy in
@@ -87,31 +101,41 @@ export class ShareByLinkPage {
    * rather than navigating the calendar popup. */
   async enableExpiration(date: string): Promise<void> {
     const modal = this.restrictionModal
-    await modal.getByText('Remove access after a deadline').click()
+    await modal.getByText(t('cozy-sharing:BoxDate.text')).click()
     // The DatePicker's label "Deadline" is also the icon button's aria-label,
     // so match the date input by its numeric inputmode (the only one here).
     await modal.locator('input[inputmode="numeric"]').fill(date)
   }
 
   async allowEditing(): Promise<void> {
+    const editor = t('cozy-sharing:Share.type.two-way')
+    const viewer = t('cozy-sharing:Share.type.one-way')
     const recipient = this.page
       .getByRole('dialog')
       .filter({ has: this.linkRow })
       .getByRole('listitem')
       .filter({ has: this.linkRow })
-    const roleButton = recipient
-      .getByRole('button')
-      .filter({ hasText: /^(Editor|Viewer)$/ })
+    const roleButton = recipient.getByRole('button').filter({
+      hasText: new RegExp(`^(${escapeRegExp(editor)}|${escapeRegExp(viewer)})$`)
+    })
     await roleButton.click()
     const menu = this.page.getByRole('menu')
-    await menu.getByRole('menuitem', { name: /^Editor$/ }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(editor)}$`)
+      })
+      .click()
     await menu.waitFor({ state: 'hidden' })
-    await expect(roleButton).toHaveText('Editor')
+    await expect(roleButton).toHaveText(editor)
   }
 
   /** Confirm the restriction modal and wait for it to close. */
   async confirm(): Promise<void> {
-    await this.restrictionModal.getByRole('button', { name: 'Confirm' }).click()
+    await this.restrictionModal
+      .getByRole('button', {
+        name: t('cozy-sharing:ShareRestrictionModal.action.confirm')
+      })
+      .click()
     await this.restrictionModal.waitFor({ state: 'hidden', timeout: 15_000 })
   }
 }

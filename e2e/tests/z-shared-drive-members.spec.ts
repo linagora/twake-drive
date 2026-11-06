@@ -2,7 +2,14 @@ import { copyFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  test,
+  expect,
+  stamp,
+  safeUnlink,
+  escapeRegExp
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
@@ -44,8 +51,12 @@ test.describe.serial('Shared drive members & permissions', () => {
     // Control: on his own drive root the write controls are there, so the
     // hidden-assertions below can't pass because of a wrong selector.
     await bobPage.goto(`${USERS.bob.appUrl}/#/folder`)
-    const createButton = bobPage.getByRole('button', { name: /^create$/i })
-    const uploadButton = bobPage.getByRole('button', { name: /^upload$/i })
+    const createButton = bobPage.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('toolbar.menu_create'))}$`, 'i')
+    })
+    const uploadButton = bobPage.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('upload.label'))}$`, 'i')
+    })
     await expect(createButton).toBeVisible()
     await expect(uploadButton).toBeVisible()
 
@@ -75,7 +86,9 @@ test.describe.serial('Shared drive members & permissions', () => {
       'by-me'
     )
     const modal = await aliceDrive.row(VIEWER_DRIVE).share()
-    await expect(modal.memberItem('bob')).toContainText(/viewer/i)
+    await expect(modal.memberItem('bob')).toContainText(
+      new RegExp(escapeRegExp(t('cozy-sharing:Share.type.one-way')), 'i')
+    )
     await modal.close()
   })
 
@@ -113,7 +126,14 @@ test.describe.serial('Shared drive members & permissions', () => {
     await waitForSharingRow(bobPage, USERS.bob, bobDrive, LEAVE_DRIVE)
 
     const menu = await bobDrive.row(LEAVE_DRIVE).openMenu()
-    await menu.getByRole('menuitem', { name: /leave sharing/i }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(
+          escapeRegExp(t('toolbar.menu_leave_shared_drive')),
+          'i'
+        )
+      })
+      .click()
 
     await expect(async () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)

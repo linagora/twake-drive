@@ -1,5 +1,6 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createFile,
   createFolder,
@@ -476,27 +477,31 @@ test.describe('File Picker v2 Options', () => {
     test('tabs configuration filters visible tabs and opens first effective tab', async () => {
       await picker.openWithPreset('Tabs: sharings and recents')
 
-      await expect(picker.tab('Recents')).toBeVisible()
-      await expect(picker.tab('Sharings')).toBeVisible()
-      await expect(picker.tab('My Drive')).toHaveCount(0)
-      await expect(picker.isTabSelected('Recents')).resolves.toBe(true)
+      await expect(picker.tab(t('Nav.item_recent'))).toBeVisible()
+      await expect(picker.tab(t('Nav.item_sharings'))).toBeVisible()
+      await expect(picker.tab(t('Nav.item_drive'))).toHaveCount(0)
+      await expect(picker.isTabSelected(t('Nav.item_recent'))).resolves.toBe(
+        true
+      )
     })
 
     test('single tab config shows only Drive tab', async () => {
       await picker.openWithPreset('Tabs: drive only')
 
-      await expect(picker.tab('My Drive')).toBeVisible()
-      await expect(picker.tab('Recents')).toHaveCount(0)
-      await expect(picker.tab('Sharings')).toHaveCount(0)
+      await expect(picker.tab(t('Nav.item_drive'))).toBeVisible()
+      await expect(picker.tab(t('Nav.item_recent'))).toHaveCount(0)
+      await expect(picker.tab(t('Nav.item_sharings'))).toHaveCount(0)
     })
 
     test('tabs ordering preserves Drive canonical order regardless of caller array order', async () => {
       await picker.openWithPreset('Tabs: sharings and recents')
 
       // In Drive canonical order, Recents comes before Sharings
-      await expect(picker.tab('Recents')).toBeVisible()
-      await expect(picker.tab('Sharings')).toBeVisible()
-      await expect(picker.isTabSelected('Recents')).resolves.toBe(true)
+      await expect(picker.tab(t('Nav.item_recent'))).toBeVisible()
+      await expect(picker.tab(t('Nav.item_sharings'))).toBeVisible()
+      await expect(picker.isTabSelected(t('Nav.item_recent'))).resolves.toBe(
+        true
+      )
     })
 
     test('negative boundary: empty tabs array rejects intent initialization', async () => {
@@ -529,11 +534,11 @@ test.describe('File Picker v2 Options', () => {
       await expect(picker.item(customFileName)).toBeVisible()
 
       // Upward navigation is NOT restricted: breadcrumb has 'My Drive' button
-      await expect(picker.breadcrumbButton('My Drive')).toBeVisible()
+      await expect(picker.breadcrumbButton(t('Nav.item_drive'))).toBeVisible()
 
       // Tabs are not restricted
-      await expect(picker.tab('Recents')).toBeVisible()
-      await expect(picker.tab('Sharings')).toBeVisible()
+      await expect(picker.tab(t('Nav.item_recent'))).toBeVisible()
+      await expect(picker.tab(t('Nav.item_sharings'))).toBeVisible()
     })
 
     test('unrestricted defaultDirId with nonexistent folder gracefully falls back to Drive root', async () => {
@@ -544,7 +549,7 @@ test.describe('File Picker v2 Options', () => {
       // Picker opens normally at Drive root
       await expect(picker.isOpen()).resolves.toBe(true)
       await expect(picker.item(parentFolder)).toBeVisible()
-      await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
+      await expect(picker.breadcrumbButton(t('Nav.item_drive'))).toHaveCount(0)
     })
 
     test('restrictToDefaultDir confines navigation, hides upward breadcrumbs and restricts tabs to Drive', async () => {
@@ -557,14 +562,14 @@ test.describe('File Picker v2 Options', () => {
       await expect(picker.item(restrictedFileName)).toBeVisible()
 
       // Breadcrumb has restricted folder root but NO 'My Drive' button above it
-      await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
+      await expect(picker.breadcrumbButton(t('Nav.item_drive'))).toHaveCount(0)
 
       // The Drive tab confirms the configured tabs have rendered.
-      await expect(picker.tab('My Drive')).toBeVisible()
+      await expect(picker.tab(t('Nav.item_drive'))).toBeVisible()
 
       // Non-drive tabs (Recents and Sharings) are forbidden and hidden
-      await expect(picker.tab('Recents')).toHaveCount(0)
-      await expect(picker.tab('Sharings')).toHaveCount(0)
+      await expect(picker.tab(t('Nav.item_recent'))).toHaveCount(0)
+      await expect(picker.tab(t('Nav.item_sharings'))).toHaveCount(0)
 
       // Outside folders/files are not present
       await expect(picker.item(parentFolder)).toHaveCount(0)

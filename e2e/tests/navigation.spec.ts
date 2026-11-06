@@ -2,7 +2,14 @@ import { copyFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  test,
+  expect,
+  stamp,
+  safeUnlink
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import { SidebarPage } from '../pages/SidebarPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
@@ -60,7 +67,11 @@ test.describe('Navigation surfaces', () => {
     // knows about it — this avoids racing the indexer for a freshly-uploaded
     // fixture.
     await alicePage.goto(`${USERS.alice.appUrl}/#/search`)
-    const searchInput = alicePage.getByRole('textbox', { name: /search/i }).first()
+    const searchInput = alicePage
+      .getByRole('textbox', {
+        name: new RegExp(escapeRegExp(t('searchbar.placeholder')), 'i')
+      })
+      .first()
     await searchInput.waitFor({ state: 'visible' })
     await searchInput.fill('Photos')
     // The suggestion list shows the file path as a secondary line — using

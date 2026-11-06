@@ -2,6 +2,7 @@ import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS, type User } from '../helpers/config'
 import { expect, expectRowDisabled } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import { createMoveIntent } from '../helpers/intents'
 import { FilePickerPage } from './FilePickerPage'
 
@@ -143,7 +144,9 @@ export class MoveIntentPage {
   }
 
   async selectSharings(): Promise<void> {
-    await this.frame().getByRole('tab', { name: 'Sharings' }).click()
+    await this.frame()
+      .getByRole('tab', { name: t('Nav.item_sharings') })
+      .click()
   }
 
   private breadcrumb(): Locator {
@@ -166,31 +169,39 @@ export class MoveIntentPage {
 
   async expectCanMove(): Promise<void> {
     await expect(
-      this.frame().getByRole('button', { name: 'Move', exact: true })
+      this.frame().getByRole('button', { name: t('Move.action'), exact: true })
     ).toBeEnabled()
   }
 
   async confirmMove(): Promise<void> {
     await this.frame()
-      .getByRole('button', { name: 'Move', exact: true })
+      .getByRole('button', { name: t('Move.action'), exact: true })
       .click()
   }
 
   async confirmInsideSharing(): Promise<void> {
     const dialog = this.frame().getByRole('dialog', {
-      name: 'Move to a shared folder?'
+      name: t('Move.insideSharedFolder.title')
     })
     await expect(dialog).toBeVisible()
-    await dialog.getByRole('button', { name: 'Ok', exact: true }).click()
+    await dialog
+      .getByRole('button', {
+        name: t('Move.insideSharedFolder.confirm'),
+        exact: true
+      })
+      .click()
   }
 
   async confirmOutsideSharing(name: string): Promise<void> {
     const dialog = this.frame().getByRole('dialog', {
-      name: `Moving outside the ${name} folder`
+      name: t('Move.outsideSharedFolder.title', { sharedFolder: name })
     })
     await expect(dialog).toBeVisible()
     await dialog
-      .getByRole('button', { name: 'I understand', exact: true })
+      .getByRole('button', {
+        name: t('Move.outsideSharedFolder.confirm'),
+        exact: true
+      })
       .click()
   }
 
@@ -199,41 +210,47 @@ export class MoveIntentPage {
     failureCount: number
   ): Promise<void> {
     await expect(
-      this.frame().getByText(`Moved: ${successCount}. Failed: ${failureCount}.`)
+      this.frame().getByText(
+        t('Move.partialError', { successCount, failureCount })
+      )
     ).toBeVisible()
     for (const button of await this.breadcrumb().getByRole('button').all())
       await expect(button).toBeDisabled()
     await expect(
-      this.frame().getByRole('button', { name: 'Create folder', exact: true })
+      this.frame().getByRole('button', {
+        name: t('Move.addFolder'),
+        exact: true
+      })
     ).toBeDisabled()
   }
 
   async expectFinalizationError(): Promise<void> {
     await expect(
-      this.frame().getByText(
-        'Could not retrieve the selected documents and their paths.'
-      )
+      this.frame().getByText(t('FilePicker.errors.DOCUMENTS_FAILED'))
     ).toBeVisible()
     await expect(
-      this.frame().getByRole('button', { name: 'Retry', exact: true })
+      this.frame().getByRole('button', {
+        name: t('Viewer.loading.retry'),
+        exact: true
+      })
     ).toBeEnabled()
   }
 
   async retryResult(): Promise<void> {
     await this.frame()
-      .getByRole('button', { name: 'Retry', exact: true })
+      .getByRole('button', { name: t('Viewer.loading.retry'), exact: true })
       .click()
   }
 
   async createFolder(name: string): Promise<void> {
     await this.frame()
-      .getByRole('button', { name: 'Create folder', exact: true })
+      .getByRole('button', { name: t('Move.addFolder'), exact: true })
       .click()
     await this.frame()
-      .getByRole('textbox', { name: 'Folder name', exact: true })
+      .getByRole('textbox', { name: t('Move.folderName'), exact: true })
       .fill(name)
     await this.frame()
-      .getByRole('textbox', { name: 'Folder name', exact: true })
+      .getByRole('textbox', { name: t('Move.folderName'), exact: true })
       .press('Enter')
     await expect(this.row(name)).toBeVisible()
   }
@@ -345,7 +362,7 @@ export class MoveIntentPage {
 
   async cancel(): Promise<void> {
     await this.frame()
-      .getByRole('button', { name: 'Cancel', exact: true })
+      .getByRole('button', { name: t('Move.cancel'), exact: true })
       .click()
     await expect(this.page.locator(MOVE_INTENT_FRAME)).toHaveCount(0)
   }

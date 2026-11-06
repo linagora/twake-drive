@@ -12,7 +12,14 @@ import {
   setLinkExpiry,
   trashById
 } from '../helpers/stack'
-import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  test,
+  expect,
+  safeUnlink,
+  stamp
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import type { DrivePage } from '../pages/DrivePage'
 import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
@@ -31,7 +38,11 @@ function localeDate(offsetDays: number): string {
 
 /** Open the share modal from the folder toolbar and wait for the dialog. */
 async function openShareModal(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /share/i }).click()
+  await page
+    .getByRole('button', {
+      name: new RegExp(escapeRegExp(t('cozy-sharing:Files.share.cta')), 'i')
+    })
+    .click()
   await page.getByRole('dialog').waitFor({ state: 'visible' })
 }
 

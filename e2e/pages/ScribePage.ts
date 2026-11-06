@@ -2,6 +2,7 @@ import type { Frame, FrameLocator, Locator, Page } from '@playwright/test'
 
 import { selectInEditor } from './ScribePluginPage'
 import { expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 // The button under the selection is an asset of 48 px that holds a disc of
 // 24 px, 12 px inside its left edge and 9 px inside its top edge
@@ -151,18 +152,18 @@ export class ScribePage {
   // The button under the selection has the same name
   toolbarButton(): Locator {
     return this.page
-      .getByRole('button', { name: 'Help me write' })
+      .getByRole('button', { name: t('OnlyOffice.scribe.open') })
       .and(this.page.locator(':not([data-testid="scribe-selection-button"] *)'))
   }
 
   selectionButton(): Locator {
     return this.page
       .getByTestId('scribe-selection-button')
-      .getByRole('button', { name: 'Help me write' })
+      .getByRole('button', { name: t('OnlyOffice.scribe.open') })
   }
 
   floatingButton(): Locator {
-    return this.page.getByRole('button', { name: 'Scribe Panel' })
+    return this.page.getByRole('button', { name: t('OnlyOffice.scribe.panel') })
   }
 
   /**
@@ -175,7 +176,10 @@ export class ScribePage {
 
   /** The button of the toolbar of Drive that opens its sharing dialog */
   shareButton(): Locator {
-    return this.page.getByRole('button', { name: 'Share', exact: true })
+    return this.page.getByRole('button', {
+      name: t('cozy-sharing:Files.share.cta'),
+      exact: true
+    })
   }
 
   /** Whether a click at the center of an element would reach it */
@@ -200,7 +204,9 @@ export class ScribePage {
   }
 
   panel(): Locator {
-    return this.page.getByRole('complementary', { name: 'Help me write' })
+    return this.page.getByRole('complementary', {
+      name: t('OnlyOffice.scribe.open')
+    })
   }
 
   /** The frame of the assistant in a surface of the scribe */
@@ -231,7 +237,7 @@ export class ScribePage {
 
   async closeSkippedCellsNotice(surface: Locator): Promise<void> {
     await this.skippedCellsNotice(surface)
-      .getByRole('button', { name: 'Close' })
+      .getByRole('button', { name: t('OnlyOffice.scribe.closeNotice') })
       .click()
   }
 
@@ -327,7 +333,9 @@ export class ScribePage {
   }
 
   resizeHandle(): Locator {
-    return this.panel().getByRole('separator', { name: 'Resize the panel' })
+    return this.panel().getByRole('separator', {
+      name: t('OnlyOffice.scribe.resizeHandle')
+    })
   }
 
   async panelWidth(): Promise<number> {
