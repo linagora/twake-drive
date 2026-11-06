@@ -10,7 +10,9 @@ import {
   openSharedDrive,
   openOwnerFolder
 } from '../helpers/sharing'
+import { createFile } from '../helpers/stack'
 import type { FileRow } from '../pages/FileRow'
+import { SidebarPage } from '../pages/SidebarPage'
 
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures')
 const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
@@ -22,6 +24,9 @@ const BOB_FILE = `write-bob-${stamp()}.txt`
 const BOB_FOLDER = `Write Bob Folder ${stamp()}`
 const ALICE_FILE = `write-alice-${stamp()}.txt`
 const BLINK_FILES = [1, 2, 3].map(n => `write-blink-${n}-${stamp()}.txt`)
+const RENAME_FROM = `write-rename-${stamp()}.txt`
+const RENAME_TO = `write-renamed-${stamp()}.txt`
+const REMOVED = `write-removed-${stamp()}.txt`
 
 /** The loading skeleton FolderViewBody swaps in for the file list. The CSS
  * module hashes a suffix onto the class, so match on the stable stem. */
@@ -210,5 +215,58 @@ test.describe.serial('Shared drive write flows (recipient)', () => {
     } finally {
       await Promise.all(filePaths.map(p => safeUnlink(p)))
     }
+  })
+
+  test('Bob renames a file and Alice sees the new name without reload', async ({
+    alicePage,
+    aliceDrive,
+    bobPage,
+    bobDrive
+  }) => {
+    await openOwnerFolder(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    const driveFolderId = alicePage.url().match(/\/folder\/([^/?]+)/)?.[1]
+    if (!driveFolderId) throw new Error(`No folder id for ${DRIVE_NAME}`)
+    for (const name of [RENAME_FROM, REMOVED]) {
+      await createFile({
+        instance: USERS.alice.instance,
+        name,
+        content: name,
+        parentId: driveFolderId
+      })
+    }
+    await aliceDrive.row(RENAME_FROM).waitVisible()
+    await aliceDrive.row(REMOVED).waitVisible()
+
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
+    await bobDrive.row(RENAME_FROM).rename(RENAME_TO)
+
+    await expect(aliceDrive.row(RENAME_TO).cell).toBeVisible({
+      timeout: 30_000
+    })
+    await expect(aliceDrive.row(RENAME_FROM).cell).toHaveCount(0)
+  })
+
+  test("Bob removes a file: it leaves Alice's list without reload and lands in her Bin", async ({
+    alicePage,
+    aliceDrive,
+    bobPage,
+    bobDrive
+  }) => {
+    await openOwnerFolder(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    await aliceDrive.row(REMOVED).waitVisible()
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
+
+    await bobDrive.row(REMOVED).sendToTrash()
+    await aliceDrive.row(REMOVED).waitHidden({ timeout: 30_000 })
+
+    await new SidebarPage(alicePage).goToTrash()
+    await aliceDrive.row(REMOVED).restore()
+    await openOwnerFolder(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    await expect(aliceDrive.row(REMOVED).cell).toBeVisible()
+    await expect(bobDrive.row(REMOVED).cell).toBeVisible({ timeout: 30_000 })
+
+    await bobPage.reload()
+    await expect(bobDrive.row(RENAME_TO).cell).toBeVisible()
+    await expect(bobDrive.row(RENAME_FROM).cell).toHaveCount(0)
   })
 })
