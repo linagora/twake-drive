@@ -84,6 +84,15 @@ export class DrivePage {
     await desktopBreadcrumb.or(mobileHeading).waitFor({ state: 'attached' })
   }
 
+  async openFolderOnMobile(name: string): Promise<void> {
+    await this.row(name).openOnMobile()
+    await this.page.waitForURL(/\/folder\/[^/]+$/)
+    await this.page
+      .getByRole('banner')
+      .getByRole('heading', { name, exact: true })
+      .waitFor({ state: 'attached' })
+  }
+
   /** Locator for the file list cell whose filename contains the substring —
    *  use for "the original and its (1) copy" style multi-row assertions. */
   matching(stem: string): Locator {
@@ -101,7 +110,6 @@ export class DrivePage {
     await input.press('Enter')
     await this.row(name).waitVisible()
   }
-
 
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */

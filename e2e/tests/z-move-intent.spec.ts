@@ -7,6 +7,7 @@ import {
 import {
   createFile,
   createFolder,
+  makeFilesToken,
   trashById,
   trashByName
 } from '../helpers/stack'
@@ -32,13 +33,13 @@ test.describe('MOVE intent navigation', () => {
       instance: USERS.alice.instance,
       name: rootName
     })
-    childName = `Move child ${stamp()}`
+    childName = `Z Move child ${stamp()}`
     await createFolder({
       instance: USERS.alice.instance,
       name: childName,
       parentId: rootId
     })
-    hiddenFileName = `Move hidden file ${stamp()}.txt`
+    hiddenFileName = `A Move context file ${stamp()}.txt`
     await createFile({
       instance: USERS.alice.instance,
       name: hiddenFileName,
@@ -67,7 +68,7 @@ test.describe('MOVE intent navigation', () => {
     await picker.expectTabs(['My Drive', 'Sharings'])
     await picker.expectTheme('dark')
     await picker.expectBreadcrumb(rootName)
-    await picker.expectRowDisabled(hiddenFileName)
+    await picker.expectFolderBeforeFile(childName, hiddenFileName)
     await picker.expectCanMove()
     await picker.navigateToFolder(childName)
     await expect
@@ -159,9 +160,10 @@ test.describe('MOVE intent navigation', () => {
     bobDrive
   }) => {
     const shareName = `MOVE shared destination ${stamp()}`
-    const nestedName = `MOVE shared child ${stamp()}`
-    const fileName = `MOVE shared hidden ${stamp()}.txt`
+    const nestedName = `Z MOVE shared child ${stamp()}`
+    const fileName = `A MOVE shared context ${stamp()}.txt`
     const bobSourceName = `MOVE Bob source ${stamp()}.txt`
+    let sharedFolderId = ''
     const bobSourceId = await createFile({
       instance: USERS.bob.instance,
       name: bobSourceName,
@@ -173,16 +175,32 @@ test.describe('MOVE intent navigation', () => {
         seed: async () => {
           const folderId = new URL(alicePage.url()).hash.split('/').pop()
           if (!folderId) throw new Error('Shared folder route has no ID')
+          sharedFolderId = folderId
           await createFolder({
             instance: USERS.alice.instance,
             name: nestedName,
             parentId: folderId
           })
+          const token = makeFilesToken(USERS.alice.instance)
+          for (let index = 0; index < 100; index += 10) {
+            await Promise.all(
+              Array.from({ length: 10 }, (_, offset) =>
+                createFile({
+                  instance: USERS.alice.instance,
+                  name: `B MOVE context ${String(index + offset).padStart(3, '0')}.txt`,
+                  parentId: folderId,
+                  content: 'Shared file',
+                  token
+                })
+              )
+            )
+          }
           await createFile({
             instance: USERS.alice.instance,
             name: fileName,
             parentId: folderId,
-            content: 'Hidden shared file'
+            content: 'Shared file',
+            token
           })
         }
       })
@@ -200,16 +218,23 @@ test.describe('MOVE intent navigation', () => {
       await ownedPicker.open({ fileIds: [sourceId] })
       await ownedPicker.waitReady()
       await ownedPicker.navigateToFolder(shareName)
-      await expect(ownedPicker.row(nestedName)).toBeVisible()
-      await ownedPicker.expectRowDisabled(fileName)
+      await ownedPicker.expectFolderBeforeFile(nestedName, fileName)
       await ownedPicker.cancel()
+      const failingPicker = new MoveIntentPage(bobPage, USERS.bob)
+      await failingPicker.open({ fileIds: [bobSourceId] })
+      await failingPicker.waitReady()
+      await failingPicker.selectSharings()
+      await failingPicker.failNextSharedPage(sharedFolderId)
+      await failingPicker.navigateToFolder(shareName)
+      await failingPicker.expectSourceError()
+      await failingPicker.cancel()
       const receivedPicker = new MoveIntentPage(bobPage, USERS.bob)
       await receivedPicker.open({ fileIds: [bobSourceId] })
       await receivedPicker.waitReady()
       await receivedPicker.selectSharings()
       await receivedPicker.navigateToFolder(shareName)
-      await expect(receivedPicker.row(nestedName)).toBeVisible()
-      await receivedPicker.expectRowDisabled(fileName)
+      await receivedPicker.expectFolderBeforeFile(nestedName, fileName)
+      await receivedPicker.expectSharedPagination(sharedFolderId)
       await receivedPicker.navigateToFolder(nestedName)
       await receivedPicker.expectCanMove()
       await receivedPicker.cancel()
