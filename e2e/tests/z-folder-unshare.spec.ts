@@ -1,5 +1,6 @@
 import { USERS } from '../helpers/config'
-import { test, expect, stamp } from '../helpers/fixtures'
+import { escapeRegExp, test, expect, stamp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   waitForSharingRow
@@ -31,7 +32,14 @@ test.describe.serial('Unsharing a folder', () => {
     const dialog = alicePage.getByRole('dialog')
     await expect
       .soft(dialog, 'modal must stay shareable, not link-only')
-      .not.toContainText(/shared parent/i)
+      .not.toContainText(
+        new RegExp(
+          escapeRegExp(
+            t('cozy-sharing:Files.share.shareByEmail.hasSharedParent')
+          ),
+          'i'
+        )
+      )
     await expect
       .soft(dialog.getByRole('textbox').first(), 'owner can still add contacts')
       .toBeVisible()
@@ -40,14 +48,18 @@ test.describe.serial('Unsharing a folder', () => {
     // Folder must still open from My Drive; navigate in-app (page.goto would reload and mask the bug).
     await alicePage
       .locator('nav')
-      .getByRole('link', { name: /my drive/i })
+      .getByRole('link', {
+        name: new RegExp(escapeRegExp(t('Nav.item_drive')), 'i')
+      })
       .first()
       .click()
     await alicePage.waitForURL(/\/folder(\/[^/]+)?$/)
     await aliceDrive.row(FOLDER_NAME).waitVisible()
     await aliceDrive.openFolder(FOLDER_NAME)
     await expect(
-      alicePage.getByText(/something went wrong when opening the folder/i),
+      alicePage.getByText(
+        new RegExp(escapeRegExp(t('error.open_folder')), 'i')
+      ),
       'folder must open without error'
     ).toBeHidden()
   })

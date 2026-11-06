@@ -3,7 +3,8 @@ import type { Page } from '@playwright/test'
 import { FilePickerPage } from './FilePickerPage'
 import { MoveIntentPage, type MovedIntentFile } from './MoveIntentPage'
 import { USERS, type User } from '../helpers/config'
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 interface DemoOptions {
   sourceNames: string[]
@@ -34,10 +35,10 @@ export class MoveIntentDemoPage extends MoveIntentPage {
   async prepare(options: DemoOptions): Promise<void> {
     await this.visit()
     await expect(this.#page.getByRole('alert')).toContainText(
-      'This demo really moves your files.'
+      t('MoveIntentDemo.warning')
     )
     const open = this.#page.getByRole('button', {
-      name: 'Open MOVE demo',
+      name: t('MoveIntentDemo.open'),
       exact: true
     })
     await expect(open).toBeDisabled()
@@ -52,26 +53,33 @@ export class MoveIntentDemoPage extends MoveIntentPage {
       await this.chooseDirectory(options.directoryName, options.sourceNames[0])
     if (options.restrictToDefaultDir)
       await this.#page
-        .getByRole('checkbox', { name: /Restrict destinations/ })
+        .getByRole('checkbox', {
+          name: new RegExp(escapeRegExp(t('MoveIntentDemo.restrict')))
+        })
         .check()
     if (options.driveOnly)
-      await this.#page.getByLabel('Drive only', { exact: true }).check()
+      await this.#page
+        .getByLabel(t('MoveIntentDemo.driveOnly'), { exact: true })
+        .check()
     await expect(open).toBeEnabled()
   }
 
   async openMove(waitReady = true): Promise<void> {
     await this.#page
-      .getByRole('button', { name: 'Open MOVE demo', exact: true })
+      .getByRole('button', { name: t('MoveIntentDemo.open'), exact: true })
       .click()
     if (waitReady) await this.waitReady()
   }
 
   async chooseSources(names: string[]): Promise<void> {
     await this.#page
-      .getByRole('button', { name: 'Choose local files', exact: true })
+      .getByRole('button', {
+        name: t('MoveIntentDemo.chooseSources'),
+        exact: true
+      })
       .click()
     const frame = this.#page.frameLocator('iframe[src*="intents"]')
-    await expect(frame.getByRole('tab')).toHaveText(['My Drive'])
+    await expect(frame.getByRole('tab')).toHaveText([t('Nav.item_drive')])
     await expect(frame.getByTestId('public-link-btn')).toHaveCount(0)
     await expect(frame.getByTestId('temporary-download-link-btn')).toHaveCount(
       0
@@ -92,7 +100,7 @@ export class MoveIntentDemoPage extends MoveIntentPage {
         frame
           .getByRole('contentinfo')
           .getByText(
-            `${names.length} ${names.length === 1 ? 'item' : 'items'} selected`,
+            `${names.length} ${t('SelectionBar.selected_count', { smart_count: names.length })}`,
             { exact: true }
           )
       ).toBeVisible()
@@ -107,10 +115,13 @@ export class MoveIntentDemoPage extends MoveIntentPage {
 
   async chooseDirectory(name: string, fileName: string): Promise<void> {
     await this.#page
-      .getByRole('button', { name: 'Choose default folder', exact: true })
+      .getByRole('button', {
+        name: t('MoveIntentDemo.chooseDirectory'),
+        exact: true
+      })
       .click()
     const frame = this.#page.frameLocator('iframe[src*="intents"]')
-    await expect(frame.getByRole('tab')).toHaveText(['My Drive'])
+    await expect(frame.getByRole('tab')).toHaveText([t('Nav.item_drive')])
     await expect(frame.getByTestId('public-link-btn')).toHaveCount(0)
     await expect(frame.getByTestId('temporary-download-link-btn')).toHaveCount(
       0
@@ -133,7 +144,7 @@ export class MoveIntentDemoPage extends MoveIntentPage {
 
   async waitReady(): Promise<void> {
     await expect(this.#page.getByTestId('move-demo-outcome')).toHaveText(
-      'Destination picker ready. This does not mean files have moved.'
+      t('MoveIntentDemo.ready')
     )
     await expect(
       this.#page
@@ -144,7 +155,9 @@ export class MoveIntentDemoPage extends MoveIntentPage {
 
   async waitResult(): Promise<MovedIntentFile[]> {
     await expect(this.#page.getByTestId('move-demo-outcome')).toContainText(
-      'Completed. Returned files:'
+      t('MoveIntentDemo.completed', { smart_count: '\0' })
+        .split('\0')[0]
+        .trimEnd()
     )
     await expect(this.#page.locator('iframe[src*="intents"]')).toHaveCount(0)
     await expect(this.#page.getByRole('dialog')).toHaveCount(0)
@@ -169,17 +182,17 @@ export class MoveIntentDemoPage extends MoveIntentPage {
     await expect(this.#page.getByRole('dialog')).toHaveCount(0)
     await expect(this.#page.getByTestId('move-demo-result')).toHaveCount(0)
     await expect(this.#page.getByTestId('move-demo-outcome')).toHaveText(
-      'Cancelled; no result returned. Completed moves, if any, remain.'
+      t('MoveIntentDemo.cancelled')
     )
   }
 
   async expectBusy(): Promise<void> {
     const frame = this.#page.frameLocator('iframe[src*="intents"]')
     await expect(
-      frame.getByRole('button', { name: 'Move', exact: true })
+      frame.getByRole('button', { name: t('Move.action'), exact: true })
     ).toBeDisabled()
     await expect(
-      frame.getByRole('button', { name: 'Cancel', exact: true })
+      frame.getByRole('button', { name: t('Move.cancel'), exact: true })
     ).toBeDisabled()
     await expect(
       this.#page
@@ -196,7 +209,7 @@ export class MoveIntentDemoPage extends MoveIntentPage {
     await dialog.locator('..').click({ position: { x: 1, y: 1 } })
     await expect(dialog).toBeVisible()
     await expect(
-      frame.getByRole('button', { name: 'Cancel', exact: true })
+      frame.getByRole('button', { name: t('Move.cancel'), exact: true })
     ).toBeDisabled()
     await expect(this.#page.getByTestId('move-demo-result')).toHaveCount(0)
   }
@@ -210,7 +223,10 @@ export class MoveIntentDemoPage extends MoveIntentPage {
     await expect(this.#page.getByRole('dialog')).toHaveCount(0)
     await expect(this.#page.getByTestId('move-demo-sources')).toHaveCount(0)
     await expect(
-      this.#page.getByRole('button', { name: 'Open MOVE demo', exact: true })
+      this.#page.getByRole('button', {
+        name: t('MoveIntentDemo.open'),
+        exact: true
+      })
     ).toBeDisabled()
   }
 
@@ -218,7 +234,10 @@ export class MoveIntentDemoPage extends MoveIntentPage {
     await this.visit()
     await expect(this.#page.getByTestId('move-intent-demo')).toHaveCount(0)
     await expect(
-      this.#page.getByRole('link', { name: 'MOVE intent demo', exact: true })
+      this.#page.getByRole('link', {
+        name: t('MoveIntentDemo.title'),
+        exact: true
+      })
     ).toHaveCount(0)
   }
 
@@ -226,7 +245,7 @@ export class MoveIntentDemoPage extends MoveIntentPage {
     await this.#page.goto(`${this.#user.appUrl}/#/folder`)
     await this.#page.reload()
     await this.#page
-      .getByRole('link', { name: 'MOVE intent demo', exact: true })
+      .getByRole('link', { name: t('MoveIntentDemo.title'), exact: true })
       .click()
     await expect(this.#page.getByTestId('move-intent-demo')).toBeVisible()
   }

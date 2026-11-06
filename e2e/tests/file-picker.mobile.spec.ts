@@ -6,6 +6,7 @@ import type { Locator } from '@playwright/test'
 import { authenticate } from '../helpers/auth'
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive
@@ -130,14 +131,18 @@ test.describe.serial('File Picker Sharings mobile', () => {
         .getByTestId('list-item')
         .filter({ has: frame.getByTitle(name, { exact: true }) })
     const breadcrumb = frame.getByTestId('file-picker-breadcrumb')
-    const myDriveTab = frame.getByRole('tab', { name: /My Drive/i })
-    const sharingsTab = frame.getByRole('tab', { name: /Sharings/i })
+    const myDriveTab = frame.getByRole('tab', {
+      name: t('Nav.item_drive')
+    })
+    const sharingsTab = frame.getByRole('tab', {
+      name: t('Nav.item_sharings')
+    })
 
     await expect(myDriveTab).toBeVisible()
     await expect(sharingsTab).toBeVisible()
     await sharingsTab.tap()
     await expect(sharingsTab).toHaveAttribute('aria-selected', 'true')
-    await expect(breadcrumb).toHaveText('Sharings')
+    await expect(breadcrumb).toHaveText(t('Nav.item_sharings'))
     await picker.scrollToItem(rootName)
     await expect(row(rootName)).toBeVisible()
 
