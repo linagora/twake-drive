@@ -3,6 +3,7 @@ import type { Page, Locator } from '@playwright/test'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 interface ConfirmDialog {
   button: RegExp
@@ -179,6 +180,21 @@ export class FileRow {
 
   async restore(): Promise<void> {
     await this.runAction(/^restore$/i)
+    await this.waitHidden()
+  }
+
+  /** Bin only. */
+  async deletePermanently(): Promise<void> {
+    await this.runAction(
+      new RegExp(`^${escapeRegExp(t('SelectionBar.destroy'))}$`, 'i'),
+      {
+        button: new RegExp(
+          `^${escapeRegExp(t('DestroyConfirm.delete'))}$`,
+          'i'
+        ),
+        wait: 'required'
+      }
+    )
     await this.waitHidden()
   }
 }
