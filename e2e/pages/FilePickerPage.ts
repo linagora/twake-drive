@@ -1,9 +1,15 @@
 import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS, type User } from '../helpers/config'
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 export type LinkAccessLevel = 'Viewer' | 'Editor'
+
+const PICK_FILE_BUTTON = new RegExp(
+  escapeRegExp(t('Nav.item_file_picker')),
+  'i'
+)
 
 /**
  * Page object for the File Picker intent dialog.
@@ -31,7 +37,7 @@ export class FilePickerPage {
   /** Navigate to the demo page and open the file picker dialog. */
   async open(configName?: string, themeName?: string): Promise<void> {
     await this.visit()
-    await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
+    await this.page.getByRole('button', { name: PICK_FILE_BUTTON }).waitFor({
       state: 'visible'
     })
     if (configName) {
@@ -40,7 +46,7 @@ export class FilePickerPage {
     if (themeName) {
       await this.page.getByRole('radio', { name: themeName }).check()
     }
-    await this.page.getByRole('button', { name: /pick a file/i }).click()
+    await this.page.getByRole('button', { name: PICK_FILE_BUTTON }).click()
     // The picker is loaded inside an iframe inside a MUI/Dialog — wait for it.
     await this.waitForPicker()
   }
@@ -50,7 +56,7 @@ export class FilePickerPage {
     await this.page.goto(`${this.user.appUrl}/#/file-picker-demo`)
     await this.page
       .getByRole('main')
-      .getByRole('button', { name: /pick a file/i })
+      .getByRole('button', { name: PICK_FILE_BUTTON })
       .click()
     await this.waitForPicker()
   }
@@ -62,7 +68,7 @@ export class FilePickerPage {
     waitForPicker = true
   ): Promise<void> {
     await this.visit()
-    await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
+    await this.page.getByRole('button', { name: PICK_FILE_BUTTON }).waitFor({
       state: 'visible'
     })
 
@@ -84,7 +90,7 @@ export class FilePickerPage {
       await restrictCheckbox.uncheck()
     }
 
-    await this.page.getByRole('button', { name: /pick a file/i }).click()
+    await this.page.getByRole('button', { name: PICK_FILE_BUTTON }).click()
     if (waitForPicker) {
       await this.waitForPicker()
     }
@@ -93,7 +99,7 @@ export class FilePickerPage {
   /** Navigate to the mobile demo route and open the picker with a tap. */
   async openMobile(): Promise<void> {
     await this.visit()
-    const button = this.page.getByRole('button', { name: /pick a file/i })
+    const button = this.page.getByRole('button', { name: PICK_FILE_BUTTON })
     await button.waitFor({ state: 'visible' })
     await button.tap()
     await this.waitForPicker()
@@ -109,7 +115,7 @@ export class FilePickerPage {
 
   async showGrid(): Promise<void> {
     await this.getFrameLocator()
-      .getByRole('button', { name: 'Grid view', exact: true })
+      .getByRole('button', { name: t('table.head_view_grid'), exact: true })
       .click()
     await this.getFrameLocator()
       .getByTestId('grid-item')
@@ -298,7 +304,7 @@ export class FilePickerPage {
 
   async navigateBackOnMobile(parentName: string): Promise<void> {
     const frame = this.getFrameLocator()
-    await frame.getByRole('button', { name: 'Back' }).tap()
+    await frame.getByRole('button', { name: t('button.back') }).tap()
     await frame
       .getByTestId('file-picker-breadcrumb')
       .getByText(parentName, { exact: true })
@@ -419,15 +425,24 @@ export class FilePickerPage {
   async setLinkAccess(level: LinkAccessLevel): Promise<void> {
     const frame = this.getFrameLocator()
     await this.getLinkAccessDialog()
-      .getByRole('button', { name: 'Access level' })
+      .getByRole('button', {
+        name: t('cozy-sharing:ShareLinkAccessModal.accessLevel')
+      })
       .click()
-    await frame.getByRole('menuitem', { name: level, exact: true }).click()
+    await frame
+      .getByRole('menuitem', {
+        name: t(`cozy-sharing:ShareLinkAccessModal.${level.toLowerCase()}`),
+        exact: true
+      })
+      .click()
   }
 
   /** Confirm the current access settings and generate the public links. */
   async confirmPublicLinks(): Promise<void> {
     await this.getLinkAccessDialog()
-      .getByRole('button', { name: 'Add links' })
+      .getByRole('button', {
+        name: t('cozy-sharing:ShareLinkAccessModal.addLinks')
+      })
       .click()
   }
 
@@ -502,7 +517,7 @@ export class FilePickerPage {
     // The ConfirmDialog renders a "Close" text button (not the X icon button
     // which also has aria-label "Close"). Use getByText to avoid strict-mode
     // violation from the two matching buttons.
-    await dialog.getByText('Close').click()
+    await dialog.getByText(t('FilePicker.close')).click()
     await dialog.waitFor({ state: 'hidden' })
   }
 
@@ -535,9 +550,11 @@ export class FilePickerPage {
   /** Return the public-link access dialog displayed inside the picker. */
   private getLinkAccessDialog(): Locator {
     const frame = this.getFrameLocator()
-    return frame
-      .getByRole('dialog')
-      .filter({ has: frame.getByText('Set link access', { exact: true }) })
+    return frame.getByRole('dialog').filter({
+      has: frame.getByText(t('cozy-sharing:ShareLinkAccessModal.title'), {
+        exact: true
+      })
+    })
   }
 
   /** Find an item by its untruncated, clean DOM title. */

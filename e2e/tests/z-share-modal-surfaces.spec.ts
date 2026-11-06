@@ -2,7 +2,14 @@ import { copyFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  test,
+  expect,
+  stamp,
+  safeUnlink
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
@@ -118,7 +125,9 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
       .click()
     await bobPage
       .getByRole('menu')
-      .getByRole('menuitem', { name: /^share$/i })
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('Files.share.cta'))}$`, 'i')
+      })
       .click()
 
     // The fixed route: `v/share` under the shared-drive file viewer. The

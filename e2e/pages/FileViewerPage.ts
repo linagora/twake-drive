@@ -1,7 +1,8 @@
 import type { Page } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 export class FileViewerPage {
   private readonly page: Page
@@ -25,7 +26,9 @@ export class FileViewerPage {
 
   async expectWhoHasAccessWith(members: (string | RegExp)[]): Promise<void> {
     await expect(
-      this.page.getByText('Who has access?', { exact: true })
+      this.page.getByText(t('cozy-viewer:Viewer.panel.sharing'), {
+        exact: true
+      })
     ).toBeVisible()
 
     for (const member of members) {
@@ -42,7 +45,9 @@ export class FileViewerPage {
       .click()
     await this.page
       .getByRole('menu')
-      .getByRole('menuitem', { name: /move to/i })
+      .getByRole('menuitem', {
+        name: new RegExp(escapeRegExp(t('SelectionBar.moveto')), 'i')
+      })
       .click()
 
     const moveTo = new MoveToPage(this.page)

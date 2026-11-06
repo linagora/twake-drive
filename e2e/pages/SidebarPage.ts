@@ -1,5 +1,8 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
+
 /** Sidebar / global navigation helpers. Routes that don't have a sidebar
  * entry (Favorites, Search) fall back to a hash-based goto on the current
  * origin so tests don't have to special-case them. */
@@ -19,7 +22,12 @@ export class SidebarPage {
   }
 
   async goToRecent(): Promise<void> {
-    await this.nav.getByRole('link', { name: /recents?/i }).first().click()
+    await this.nav
+      .getByRole('link', {
+        name: new RegExp(escapeRegExp(t('Nav.item_recent')), 'i')
+      })
+      .first()
+      .click()
   }
 
   async goToFavorites(): Promise<void> {
@@ -27,6 +35,11 @@ export class SidebarPage {
   }
 
   async goToTrash(): Promise<void> {
-    await this.nav.getByRole('link', { name: /(bin|trash)/i }).first().click()
+    await this.nav
+      .getByRole('link', {
+        name: new RegExp(escapeRegExp(t('Nav.item_trash')), 'i')
+      })
+      .first()
+      .click()
   }
 }

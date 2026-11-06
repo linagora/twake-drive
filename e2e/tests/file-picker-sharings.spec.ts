@@ -5,7 +5,14 @@ import type { Locator } from '@playwright/test'
 
 import { authenticate } from '../helpers/auth'
 import { USERS } from '../helpers/config'
-import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  expect,
+  safeUnlink,
+  stamp,
+  test
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openOwnerFolder,
@@ -87,57 +94,63 @@ test.describe.serial('File Picker Sharings', () => {
         .filter({ has: frame.getByTitle(name, { exact: true }) })
     const breadcrumb = frame.getByTestId('file-picker-breadcrumb')
     const tabs = frame.getByRole('tab')
-    const myDriveTab = frame.getByRole('tab', { name: /My Drive/i })
-    const recentsTab = frame.getByRole('tab', { name: /Recents/i })
-    const sharingsTab = frame.getByRole('tab', { name: /Sharings/i })
+    const myDriveTab = frame.getByRole('tab', {
+      name: new RegExp(escapeRegExp(t('Nav.item_drive')), 'i')
+    })
+    const recentsTab = frame.getByRole('tab', {
+      name: new RegExp(escapeRegExp(t('Nav.item_recent')), 'i')
+    })
+    const sharingsTab = frame.getByRole('tab', {
+      name: new RegExp(escapeRegExp(t('Nav.item_sharings')), 'i')
+    })
     const publicLinkButton = frame.getByTestId('public-link-btn')
     const downloadLinkButton = frame.getByTestId('temporary-download-link-btn')
 
     await expect(tabs).toHaveCount(3)
     expect(await tabs.allTextContents()).toEqual([
-      'My Drive',
-      'Recents',
-      'Sharings'
+      t('Nav.item_drive'),
+      t('Nav.item_recent'),
+      t('Nav.item_sharings')
     ])
     await expect(myDriveTab).toHaveAttribute('aria-selected', 'true')
-    await expect(breadcrumb).toContainText('My Drive')
+    await expect(breadcrumb).toContainText(t('Nav.item_drive'))
     await expect(downloadLinkButton).toBeDisabled()
 
     await recentsTab.click()
     await expect(recentsTab).toHaveAttribute('aria-selected', 'true')
-    await expect(breadcrumb).toHaveText('Recents')
+    await expect(breadcrumb).toHaveText(t('Nav.item_recent'))
     await expect(breadcrumb.getByRole('button')).toHaveCount(0)
     await expect(row(recentFileName)).toBeVisible()
 
     await sharingsTab.click()
     await expect(sharingsTab).toHaveAttribute('aria-selected', 'true')
-    await expect(breadcrumb).toHaveText('Sharings')
+    await expect(breadcrumb).toHaveText(t('Nav.item_sharings'))
     await expect(row(rootName)).toBeVisible()
 
     await row(rootName).getByTestId('choice-onclick').click()
     await expect(publicLinkButton).toBeEnabled()
 
     await myDriveTab.click()
-    await expect(breadcrumb).toHaveText('My Drive')
+    await expect(breadcrumb).toHaveText(t('Nav.item_drive'))
     await expect(publicLinkButton).toBeDisabled()
 
     await sharingsTab.click()
-    await expect(breadcrumb).toHaveText('Sharings')
+    await expect(breadcrumb).toHaveText(t('Nav.item_sharings'))
     await expect(row(rootName)).toBeVisible()
     await expect(publicLinkButton).toBeDisabled()
 
     await row(rootName).getByTestId('listitem-onclick').dblclick()
-    await expect(breadcrumb).toContainText('Sharings')
+    await expect(breadcrumb).toContainText(t('Nav.item_sharings'))
     await expect(row(nestedName)).toBeVisible()
 
     await row(nestedName).getByTestId('listitem-onclick').dblclick()
-    await expect(breadcrumb).toContainText('Sharings')
+    await expect(breadcrumb).toContainText(t('Nav.item_sharings'))
     await expect(row(fileName)).toBeVisible()
 
     await breadcrumb
-      .getByRole('button', { name: 'Sharings', exact: true })
+      .getByRole('button', { name: t('Nav.item_sharings'), exact: true })
       .click()
-    await expect(breadcrumb).toHaveText('Sharings')
+    await expect(breadcrumb).toHaveText(t('Nav.item_sharings'))
     await expect(row(rootName)).toBeVisible()
 
     await row(rootName).getByTestId('listitem-onclick').dblclick()
@@ -178,7 +191,9 @@ test.describe.serial('File Picker Sharings', () => {
       frame
         .getByTestId('list-item')
         .filter({ has: frame.getByTitle(name, { exact: true }) })
-    const recentsTab = frame.getByRole('tab', { name: /Recents/i })
+    const recentsTab = frame.getByRole('tab', {
+      name: new RegExp(escapeRegExp(t('Nav.item_recent')), 'i')
+    })
     const downloadLinkButton = frame.getByTestId('temporary-download-link-btn')
 
     await recentsTab.click()

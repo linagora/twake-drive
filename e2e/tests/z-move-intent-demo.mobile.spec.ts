@@ -1,5 +1,6 @@
 import { USERS } from '../helpers/config'
 import { expect, stamp, test } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createFile,
   createFolder,
@@ -37,7 +38,7 @@ test('opens the real demo at touch width and moves into a nested destination', a
       restrictToDefaultDir: true
     })
     await demo.expectFullScreenTouch()
-    await demo.expectTabs(['My Drive'])
+    await demo.expectTabs([t('Nav.item_drive')])
     await demo.navigateToFolderOnMobile(nestedName)
     await demo.confirmMove()
     const files = await demo.waitResult()

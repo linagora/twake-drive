@@ -1,5 +1,6 @@
 import { USERS } from '../helpers/config'
 import { expect, stamp, test } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive
@@ -64,7 +65,7 @@ test.describe('MOVE intent navigation', () => {
       tabs: ['sharings', 'drive', 'sharings']
     })
     await picker.waitReady()
-    await picker.expectTabs(['My Drive', 'Sharings'])
+    await picker.expectTabs([t('Nav.item_drive'), t('Nav.item_sharings')])
     await picker.expectTheme('dark')
     await picker.expectBreadcrumb(rootName)
     await picker.expectRowDisabled(hiddenFileName)
@@ -104,11 +105,11 @@ test.describe('MOVE intent navigation', () => {
       restrictToDefaultDir: true
     })
     await picker.waitReady()
-    await picker.expectTabs(['My Drive'])
-    await picker.expectBreadcrumb('My Drive', false)
+    await picker.expectTabs([t('Nav.item_drive')])
+    await picker.expectBreadcrumb(t('Nav.item_drive'), false)
     await picker.expectRowDisabled(hiddenFileName)
     await picker.navigateToFolder(childName)
-    await picker.expectBreadcrumb('My Drive', false)
+    await picker.expectBreadcrumb(t('Nav.item_drive'), false)
     await picker.expectCanMove()
     await picker.cancel()
   })
@@ -123,8 +124,8 @@ test.describe('MOVE intent navigation', () => {
       defaultDirId: `missing-${stamp()}`
     })
     await picker.waitReady()
-    await picker.expectBreadcrumb('My Drive')
-    await picker.expectTabs(['My Drive', 'Sharings'])
+    await picker.expectBreadcrumb(t('Nav.item_drive'))
+    await picker.expectTabs([t('Nav.item_drive'), t('Nav.item_sharings')])
     await picker.cancel()
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
     await aliceDrive.row(sourceName).waitVisible()

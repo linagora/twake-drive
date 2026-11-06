@@ -1,6 +1,7 @@
 import { USERS } from '../helpers/config'
 import { expect, stamp, test } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { t } from '../helpers/i18n'
 import {
   createFile,
   createFolder,
@@ -59,7 +60,7 @@ test.describe('MOVE demo page', () => {
       sourceNames: [sourceName],
       directoryName: destinationName
     })
-    await demo.expectTabs(['My Drive', 'Sharings'])
+    await demo.expectTabs([t('Nav.item_drive'), t('Nav.item_sharings')])
     expect(demo.moveRequestCount(sourceId)).toBe(0)
     const release = await demo.blockNextMove(sourceId)
     try {
@@ -105,8 +106,8 @@ test.describe('MOVE demo page', () => {
         directoryName: destinationName,
         restrictToDefaultDir: true
       })
-      await demo.expectTabs(['My Drive'])
-      await demo.expectBreadcrumb('My Drive', false)
+      await demo.expectTabs([t('Nav.item_drive')])
+      await demo.expectBreadcrumb(t('Nav.item_drive'), false)
       await demo.confirmMove()
       const files = await demo.waitResult()
       expect(files).toHaveLength(2)
@@ -151,7 +152,7 @@ test.describe('MOVE demo page', () => {
       directoryName: destinationName,
       driveOnly: true
     })
-    await demo.expectTabs(['My Drive'])
+    await demo.expectTabs([t('Nav.item_drive')])
     await demo.cancel()
     await demo.expectDismissed()
     expect(demo.moveRequestCount(sourceId)).toBe(0)

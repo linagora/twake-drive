@@ -3,6 +3,7 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive
@@ -55,7 +56,7 @@ test.describe.serial('Move from a shared drive', () => {
 
     const moveTo = await viewer.openMoveTo()
     await viewer.expectFileName(MOVED_FILE)
-    await expect(moveTo.breadcrumb).toHaveText('My Drive')
+    await expect(moveTo.breadcrumb).toHaveText(t('Nav.item_drive'))
     await moveTo.openFolder(DESTINATION)
     await moveTo.clickMove()
 

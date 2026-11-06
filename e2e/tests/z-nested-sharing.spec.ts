@@ -1,6 +1,7 @@
 import { USERS } from '../helpers/config'
-import { test, expect, stamp } from '../helpers/fixtures'
+import { test, expect, stamp, escapeRegExp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { t } from '../helpers/i18n'
 import { openSharedDrive } from '../helpers/sharing'
 import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
@@ -12,6 +13,38 @@ interface FlagCombo {
   sharedDrive: boolean
 }
 
+const SHARE_BUTTON = new RegExp(
+  escapeRegExp(t('cozy-sharing:Files.share.cta')),
+  'i'
+)
+const ONLY_BY_LINK = new RegExp(
+  escapeRegExp(
+    t('cozy-sharing:Files.share.shareByEmail.onlyByLink', {
+      type: t('cozy-sharing:Files.share.shareByEmail.type.folder')
+    })
+  ),
+  'i'
+)
+const HAS_SHARED_CHILD = new RegExp(
+  escapeRegExp(t('cozy-sharing:Files.share.shareByEmail.hasSharedChild')),
+  'i'
+)
+const WHO_HAS_ACCESS = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.contacts.whoHasAccess')),
+  'i'
+)
+const COPY_LINK = new RegExp(
+  `^${escapeRegExp(t('cozy-sharing:Files.share.shareByLink.copy'))}$`,
+  'i'
+)
+const EDITOR = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.two-way')),
+  'i'
+)
+const VIEWER = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.one-way')),
+  'i'
+)
 const COMBOS: FlagCombo[] = []
 for (const federated of [true, false]) {
   for (const hide of [true, false]) {
@@ -92,18 +125,16 @@ for (const combo of COMBOS) {
 
         await aliceDrive.createFolder(SUBFOLDER)
 
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
 
         // Not shared and no shared child: the classic modal.
-        await expect(
-          modal.dialog.getByText(/can only be shared by link/i)
-        ).toHaveCount(0)
+        await expect(modal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
         await expect(modal.dialog.getByRole('combobox')).toBeVisible()
         await expect(modal.dialog.getByRole('listitem').first()).toBeVisible()
         await expect(
-          modal.dialog.getByRole('button', { name: /^copy link$/i })
+          modal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
         await expect(modal.shareButton).toBeVisible()
 
@@ -118,14 +149,14 @@ for (const combo of COMBOS) {
         await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
         await aliceDrive.openFolder(PARENTFOLDER)
 
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
 
         // Auto-accept is on in the e2e stack, so Bob is a confirmed member
         // and carries the per-member role menu.
         await expect(modal.memberItem('bob')).toBeVisible()
-        await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+        await expect(modal.memberRole('bob')).toHaveText(EDITOR)
 
         await modal.close()
       })
@@ -138,23 +169,21 @@ for (const combo of COMBOS) {
         await aliceDrive.openFolder(PARENTFOLDER)
         await aliceDrive.openFolder(SUBFOLDER)
 
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
 
         await expect(
-          modal.dialog.getByRole('button', { name: /^copy link$/i })
+          modal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
         if (combo.federated) {
           // The federated modal lists the parent's members as inherited
           // effective recipients, all manageable, and keeps email sharing
           // available: the hasSharedParent gate is gone.
-          await expect(
-            modal.dialog.getByText(/can only be shared by link/i)
-          ).toHaveCount(0)
+          await expect(modal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
           await expect(modal.dialog.getByRole('combobox')).toBeVisible()
           await expect(modal.memberItem('bob')).toBeVisible()
-          await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+          await expect(modal.memberRole('bob')).toHaveText(EDITOR)
           await expect(modal.shareButton).toBeVisible()
 
           // Demoting an inherited member from the child's modal also lowers
@@ -168,29 +197,27 @@ for (const combo of COMBOS) {
           await expect(confirmDialog.folderRow(SUBFOLDER)).toBeVisible()
 
           await confirmDialog.cancel()
-          await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+          await expect(modal.memberRole('bob')).toHaveText(EDITOR)
 
           // Confirming applies the change to the parent sharing the member
           // comes from.
           await modal.selectMemberRole('bob', 'Viewer')
           await confirmDialog.waitForOpen()
           await confirmDialog.confirm()
-          await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
+          await expect(modal.memberRole('bob')).toHaveText(VIEWER)
           await modal.close()
 
           await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
           await aliceDrive.openFolder(PARENTFOLDER)
-          await alicePage.getByRole('button', { name: /share/i }).click()
+          await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
           const parentModal = new ShareModalPage(alicePage)
           await parentModal.waitForOpen()
-          await expect(parentModal.memberRole('bob')).toHaveText(/viewer/i)
+          await expect(parentModal.memberRole('bob')).toHaveText(VIEWER)
           await parentModal.close()
         } else {
           // The legacy modal keeps the gate: email sharing is blocked and it
           // lists direct recipients only — the child inherits none.
-          await expect(
-            modal.dialog.getByText(/can only be shared by link/i)
-          ).toBeVisible()
+          await expect(modal.dialog.getByText(ONLY_BY_LINK)).toBeVisible()
           await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
           await expect(modal.memberItem('bob')).toHaveCount(0)
 
@@ -209,7 +236,7 @@ for (const combo of COMBOS) {
           await aliceDrive.createFolder(RECIPIENT_PARENT)
           await aliceDrive.openFolder(RECIPIENT_PARENT)
 
-          await alicePage.getByRole('button', { name: /share/i }).click()
+          await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
           const shareModal = new ShareModalPage(alicePage)
           await shareModal.waitForOpen()
           await shareModal.addMember(USERS.bob.email)
@@ -235,11 +262,9 @@ for (const combo of COMBOS) {
 
           await expect(modal.dialog.getByRole('combobox')).toBeVisible()
           await expect(modal.shareButton).toBeVisible()
+          await expect(modal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
           await expect(
-            modal.dialog.getByText(/can only be shared by link/i)
-          ).toHaveCount(0)
-          await expect(
-            modal.dialog.getByRole('button', { name: /^copy link$/i })
+            modal.dialog.getByRole('button', { name: COPY_LINK })
           ).toBeVisible()
 
           await modal.close()
@@ -272,22 +297,22 @@ for (const combo of COMBOS) {
           // parent: confirming must downgrade him on both sharings, or the
           // effective role flips back to editor.
           const modal = await aliceDrive.openShareModal()
-          await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+          await expect(modal.memberRole('bob')).toHaveText(EDITOR)
           await modal.selectMemberRole('bob', 'Viewer')
           const confirmDialog = new DowngradeConfirmDialogPage(alicePage)
           await confirmDialog.waitForOpen()
           await confirmDialog.confirm()
-          await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
+          await expect(modal.memberRole('bob')).toHaveText(VIEWER)
           await modal.close()
 
           const reopenedModal = await aliceDrive.openShareModal()
-          await expect(reopenedModal.memberRole('bob')).toHaveText(/viewer/i)
+          await expect(reopenedModal.memberRole('bob')).toHaveText(VIEWER)
           await reopenedModal.close()
 
           await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
           await aliceDrive.openFolder(BOTH_SHARED_PARENT)
           const parentModal = await aliceDrive.openShareModal()
-          await expect(parentModal.memberRole('bob')).toHaveText(/viewer/i)
+          await expect(parentModal.memberRole('bob')).toHaveText(VIEWER)
           await parentModal.close()
         })
       }
@@ -302,18 +327,16 @@ for (const combo of COMBOS) {
         await aliceDrive.openFolder(child)
 
         // Before sharing: no shared parent, no shared child — classic modal.
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
 
-        await expect(
-          modal.dialog.getByText(/can only be shared by link/i)
-        ).toHaveCount(0)
+        await expect(modal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
         await expect(modal.dialog.getByRole('combobox')).toBeVisible()
         await expect(modal.dialog.getByRole('listitem').first()).toBeVisible()
         await expect(modal.memberItem('bob')).toHaveCount(0)
         await expect(
-          modal.dialog.getByRole('button', { name: /^copy link$/i })
+          modal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
         await expect(modal.shareButton).toBeVisible()
 
@@ -322,18 +345,16 @@ for (const combo of COMBOS) {
 
         // After sharing, the modal stays classic and Bob is a confirmed
         // member with a role menu.
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const sharedModal = new ShareModalPage(alicePage)
         await sharedModal.waitForOpen()
 
-        await expect(
-          sharedModal.dialog.getByText(/can only be shared by link/i)
-        ).toHaveCount(0)
+        await expect(sharedModal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
         await expect(sharedModal.dialog.getByRole('combobox')).toBeVisible()
         await expect(sharedModal.memberItem('bob')).toBeVisible()
-        await expect(sharedModal.memberRole('bob')).toHaveText(/editor/i)
+        await expect(sharedModal.memberRole('bob')).toHaveText(EDITOR)
         await expect(
-          sharedModal.dialog.getByRole('button', { name: /^copy link$/i })
+          sharedModal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
         await expect(sharedModal.shareButton).toBeVisible()
 
@@ -353,7 +374,7 @@ for (const combo of COMBOS) {
         await aliceDrive.openFolder(child)
 
         // Share the child directly.
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
         await modal.addMember(USERS.bob.email)
@@ -364,22 +385,22 @@ for (const combo of COMBOS) {
         await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
         await aliceDrive.openFolder(SHAREDCHILD_PARENT)
 
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const parentModal = new ShareModalPage(alicePage)
         await parentModal.waitForOpen()
 
         await expect(parentModal.memberItem('bob')).toHaveCount(0)
         await expect(
-          parentModal.dialog.getByRole('button', { name: /^copy link$/i })
+          parentModal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
         if (combo.federated) {
           // The hasSharedChild gate is gone: the parent stays shareable by
           // email, with no banner.
+          await expect(parentModal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(
+            0
+          )
           await expect(
-            parentModal.dialog.getByText(/can only be shared by link/i)
-          ).toHaveCount(0)
-          await expect(
-            parentModal.dialog.getByText(/it contains a shared element/i)
+            parentModal.dialog.getByText(HAS_SHARED_CHILD)
           ).toHaveCount(0)
           await expect(parentModal.dialog.getByRole('combobox')).toBeVisible()
           await expect(parentModal.shareButton).toBeVisible()
@@ -388,7 +409,7 @@ for (const combo of COMBOS) {
           await parentModal.addMember(USERS.charlie.email)
           await parentModal.share()
 
-          await alicePage.getByRole('button', { name: /share/i }).click()
+          await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
           const resharedModal = new ShareModalPage(alicePage)
           await resharedModal.waitForOpen()
           await expect(resharedModal.memberItem('charlie')).toBeVisible()
@@ -396,11 +417,9 @@ for (const combo of COMBOS) {
           await resharedModal.close()
         } else {
           // The legacy modal keeps the gate: restricted by the shared child.
+          await expect(parentModal.dialog.getByText(ONLY_BY_LINK)).toBeVisible()
           await expect(
-            parentModal.dialog.getByText(/can only be shared by link/i)
-          ).toBeVisible()
-          await expect(
-            parentModal.dialog.getByText(/it contains a shared element/i)
+            parentModal.dialog.getByText(HAS_SHARED_CHILD)
           ).toBeVisible()
           await expect(parentModal.dialog.getByRole('combobox')).toHaveCount(0)
 
@@ -418,21 +437,19 @@ for (const combo of COMBOS) {
         await aliceDrive.createFolder(parent)
         await aliceDrive.openFolder(parent)
 
-        await alicePage.getByRole('button', { name: /share/i }).click()
+        await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
         const modal = new ShareModalPage(alicePage)
         await modal.waitForOpen()
 
         // No contact sharing at all: no banner text, no contact input,
         // no Share button — only the member list and the link affordance.
-        await expect(
-          modal.dialog.getByText(/can only be shared by link/i)
-        ).toHaveCount(0)
+        await expect(modal.dialog.getByText(ONLY_BY_LINK)).toHaveCount(0)
         await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
         await expect(modal.shareButton).toHaveCount(0)
-        await expect(modal.dialog.getByText(/who has access/i)).toBeVisible()
+        await expect(modal.dialog.getByText(WHO_HAS_ACCESS)).toBeVisible()
         await expect(modal.dialog.getByRole('listitem').first()).toBeVisible()
         await expect(
-          modal.dialog.getByRole('button', { name: /^copy link$/i })
+          modal.dialog.getByRole('button', { name: COPY_LINK })
         ).toBeVisible()
 
         await modal.close()
