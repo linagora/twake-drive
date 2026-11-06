@@ -1,8 +1,10 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -37,6 +39,37 @@ export class DrivePage {
     for (const name of names) {
       await this.row(name).select()
     }
+  }
+
+  /** The toolbar menu stays open after the click, so it is closed here. */
+  async downloadCurrentFolder(): Promise<Download> {
+    await this.page
+      .getByTestId('fil-toolbar-files')
+      .getByRole('button', { name: t('Toolbar.more') })
+      .click()
+    const download = this.page.waitForEvent('download')
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(
+          `^${escapeRegExp(t('toolbar.menu_download_folder'))}$`,
+          'i'
+        )
+      })
+      .click()
+    const result = await download
+    await this.page.keyboard.press('Escape')
+    return result
+  }
+
+  async downloadSelection(): Promise<Download> {
+    const download = this.page.waitForEvent('download')
+    await this.page
+      .getByRole('button', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.download'))}$`, 'i')
+      })
+      .click()
+    return await download
   }
 
   // Click the recipients avatars in the folder toolbar

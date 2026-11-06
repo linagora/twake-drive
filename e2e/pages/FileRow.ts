@@ -1,8 +1,9 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 interface ConfirmDialog {
   button: RegExp
@@ -160,6 +161,17 @@ export class FileRow {
       wait: 'required'
     })
     await this.waitHidden()
+  }
+
+  async download(): Promise<Download> {
+    const menu = await this.openMenu()
+    const download = this.page.waitForEvent('download')
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.download'))}$`, 'i')
+      })
+      .click()
+    return await download
   }
 
   async addToFavorites(): Promise<void> {
