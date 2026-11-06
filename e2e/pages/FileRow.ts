@@ -226,4 +226,19 @@ export class FileRow {
     )
     await this.waitHidden()
   }
+
+  /** Bin only. */
+  async deletePermanently(): Promise<void> {
+    await this.runAction(
+      new RegExp(`^${escapeRegExp(t('SelectionBar.destroy'))}$`, 'i'),
+      {
+        button: new RegExp(
+          `^${escapeRegExp(t('DestroyConfirm.delete'))}$`,
+          'i'
+        ),
+        wait: 'required'
+      }
+    )
+    await this.waitHidden()
+  }
 }
