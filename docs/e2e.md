@@ -174,8 +174,9 @@ The Compose project provides Docs on
 `http://onlyoffice.<root-domain>:<office-port>`. The browser and Stack reach
 Docs through that origin; Docs reaches the three Stack instance domains for
 source downloads and save callbacks. JWT is disabled in this local E2E
-runtime. The nominal opening test therefore does not validate JWT authentication
-or persistence through save callbacks. Published ports bind to host loopback;
+runtime, so the suite does not validate JWT authentication.
+`e2e/tests/onlyoffice-edit.spec.ts` checks that an edit reaches the stored file
+through the save callback. Published ports bind to host loopback;
 this configuration is intended for disposable tests, not deployment.
 
 Check the Office integration with a normal Word document:
