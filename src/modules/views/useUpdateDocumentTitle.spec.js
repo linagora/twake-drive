@@ -11,6 +11,16 @@ const t = p.t.bind(p)
 
 describe('makeTitle', () => {
   describe('for files', () => {
+    it('keeps a live trash-like parent name in the title', () => {
+      expect(
+        makeTitle(
+          { name: 'file.docx', path: '/.cozy_trash_backup' },
+          'Cozy Drive',
+          t
+        )
+      ).toBe('file.docx (.cozy_trash_backup) - Cozy Drive')
+    })
+
     it('should show only the app name', () => {
       expect(makeTitle({}, 'Cozy Drive', t)).toBe('Cozy Drive')
     })
@@ -61,6 +71,20 @@ describe('makeTitle', () => {
   })
 
   describe('for folders', () => {
+    it('does not label a live trash-like folder as Bin content', () => {
+      expect(
+        makeTitle(
+          {
+            type: 'directory',
+            name: '.cozy_trash_backup',
+            path: '/.cozy_trash_backup'
+          },
+          'Cozy Drive',
+          t
+        )
+      ).toBe('.cozy_trash_backup - Cozy Drive')
+    })
+
     it('should show trash folder with human frendly name even if no subdirectory', () => {
       expect(
         makeTitle(

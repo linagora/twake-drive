@@ -4,6 +4,7 @@ import { ROOT_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
 import { normalizeSearchText } from '@/lib/normalizeSearchText'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
+import { isInTrashDir } from '@/modules/trash/helpers'
 import {
   makeOnlyOfficeFileRoute,
   shouldOpenWithOnlyOffice
@@ -101,7 +102,7 @@ export const indexFiles = async (client, officeEnabled = false) => {
   const files = resp.rows.map(row => ({ id: row.id, ...row.doc }))
   const folders = files.filter(file => file.type === TYPE_DIRECTORY)
 
-  const notInTrash = file => !file.trashed && !/^\/\.cozy_trash/.test(file.path)
+  const notInTrash = file => !file.trashed && !isInTrashDir(file.path)
   const notOrphans = file =>
     folders.find(folder => folder._id === file.dir_id) !== undefined
   const notRoot = file => file._id !== ROOT_DIR_ID

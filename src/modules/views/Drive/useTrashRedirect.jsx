@@ -1,12 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { TRASH_DIR_PATH } from '@/constants/config'
+import { isInTrashDir } from '@/modules/trash/helpers'
+
 export const useTrashRedirect = displayedFolder => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    if (displayedFolder && displayedFolder.path.startsWith(TRASH_DIR_PATH)) {
+    if (displayedFolder && isInTrashDir(displayedFolder.path)) {
       navigate('/trash/' + displayedFolder.id)
     }
   }, [navigate, displayedFolder])
