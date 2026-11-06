@@ -12,12 +12,30 @@ import {
   setLinkExpiry,
   trashById
 } from '../helpers/stack'
-import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  test,
+  expect,
+  safeUnlink,
+  stamp
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import type { DrivePage } from '../pages/DrivePage'
 import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
+const WRITE_ACTIONS = new RegExp(
+  [
+    'SelectionBar.rename',
+    'SelectionBar.moveto',
+    'actions.duplicateTo.label',
+    'SelectionBar.trash'
+  ]
+    .map(key => escapeRegExp(t(key)))
+    .join('|'),
+  'i'
+)
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
 
 /** MM/dd/yyyy for the English DatePicker, `offsetDays` from today. */
@@ -224,6 +242,9 @@ test.describe('Share by link', () => {
     await withAnonymousPage(browser, async pub => {
       await pub.goto(url)
       const publicPage = new PublicLinkPage(pub)
+      await publicPage.enterPassword(`wrong-${password}`)
+      await expect(publicPage.passwordError).toBeVisible()
+      await expect(publicPage.fileList).toHaveCount(0)
       await publicPage.enterPassword(password)
       await expect(publicPage.fileList).toBeVisible({ timeout: 15_000 })
     })
@@ -270,5 +291,71 @@ test.describe('Share by link', () => {
       })
       await expect(publicPage.fileList).toHaveCount(0)
     })
+  })
+
+  test('a viewer link is read-only and stops working once deactivated', async ({
+    alicePage,
+    aliceDrive,
+    publicPage
+  }) => {
+    await alicePage
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write'])
+
+    const { folderId, link } = await openShareForNewFolder(
+      alicePage,
+      aliceDrive
+    )
+    const fileName = `public-${stamp()}.txt`
+    const content = `public content ${stamp()}`
+    await createFile({
+      instance: USERS.alice.instance,
+      name: fileName,
+      content,
+      parentId: folderId
+    })
+    const url = await link.createLink()
+
+    const visitor = new PublicLinkPage(publicPage)
+    await visitor.open(url)
+    await expect(visitor.row(fileName).cell).toBeVisible({ timeout: 15_000 })
+    await expect(visitor.addButtons).toHaveCount(0)
+    const items = await visitor.rowMenuItems(fileName)
+    expect(items).toContain(t('SelectionBar.download'))
+    expect(items.filter(item => WRITE_ACTIONS.test(item))).toEqual([])
+
+    const sharecode = url.match(/sharecode=([^&#]+)/)?.[1]
+    if (!sharecode) throw new Error(`No sharecode in ${url}`)
+    await expect(
+      createFile({
+        instance: USERS.alice.instance,
+        name: `intruder-${stamp()}.txt`,
+        content: 'written through the link',
+        parentId: folderId,
+        token: sharecode
+      })
+    ).rejects.toThrow(/\(403\)/)
+
+    await visitor.row(fileName).open()
+    await visitor.expectFileContent(content)
+
+    await reopenShareModal(alicePage)
+    await link.waitForLinkRow()
+    await link.deactivate()
+    await expect
+      .poll(async () => {
+        try {
+          await findLinkPermission(USERS.alice.instance, folderId)
+          return true
+        } catch (err) {
+          if (/No share-by-link permission/.test(String(err))) return false
+          throw err
+        }
+      })
+      .toBe(false)
+
+    await publicPage.reload()
+    await expect(visitor.unavailableMessage).toBeVisible({ timeout: 15_000 })
+    await expect(visitor.fileList).toHaveCount(0)
   })
 })

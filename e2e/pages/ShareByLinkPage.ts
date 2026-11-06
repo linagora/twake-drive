@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * Drives the "share by link" flow inside the share modal.
@@ -65,6 +66,31 @@ export class ShareByLinkPage {
   /** Wait for the "Public access" row to tell a link exists (after a modal reopen). */
   async waitForLinkRow(): Promise<void> {
     await this.linkRow.waitFor({ state: 'visible' })
+  }
+
+  /** The role menu button ("Editor"/"Viewer") of the link's row. */
+  private get linkRoleButton(): Locator {
+    const roles = ['two-way', 'one-way']
+      .map(type => escapeRegExp(t(`cozy-sharing:Share.type.${type}`)))
+      .join('|')
+    return this.page
+      .getByRole('dialog')
+      .filter({ has: this.linkRow })
+      .getByRole('listitem')
+      .filter({ has: this.linkRow })
+      .getByRole('button')
+      .filter({ hasText: new RegExp(`^(${roles})$`) })
+  }
+
+  async deactivate(): Promise<void> {
+    await this.linkRoleButton.click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: t('cozy-sharing:Share.permissionLink.deactivate')
+      })
+      .click()
+    await expect(this.linkRow).toHaveCount(0)
   }
 
   /** Open the restriction modal from the cog of the "Public access" block. */
