@@ -71,9 +71,15 @@ services:
       - ./plugins/onlyoffice-scribe/build:/var/www/onlyoffice/documentserver/sdkjs-plugins/twake-scribe:ro
     # Document Server ignores SIGTERM and would hold every stop for 10s
     stop_grace_period: 0s
+    # Once started, the Document Server generates its fonts and themes, then
+    # restarts its services, which drops the sessions of the editors open by
+    # then: it is ready when the generation is over
     healthcheck:
       test:
-        ["CMD-SHELL", 'test "$(curl -fsS http://localhost/healthcheck)" = true']
+        [
+          "CMD-SHELL",
+          '! pgrep -f "[d]ocumentserver-generate-allfonts" && test -s /var/www/onlyoffice/documentserver/sdkjs/common/AllFonts.js && test "$(curl -fsS http://localhost/healthcheck)" = true',
+        ]
       interval: 5s
       timeout: 5s
       retries: 60
