@@ -263,12 +263,12 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await scribe.selectInEditor('P1@start..P1@end')
     await scribe.editorTab('Plugins').click()
-    await scribe.editorToolbarButton('Scribe').click()
+    await scribe.pluginsTabScribeButton().click()
     await expect(scribe.panel()).toBeVisible()
     await expect(scribe.intentFrame(scribe.panel())).toBeVisible({
       timeout: 60_000
     })
-    await scribe.editorToolbarButton('Scribe').click()
+    await scribe.pluginsTabScribeButton().click()
     await expect(scribe.panel()).toBeHidden()
   })
 
