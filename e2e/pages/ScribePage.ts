@@ -1,7 +1,7 @@
 import type { Frame, FrameLocator, Locator, Page } from '@playwright/test'
 
 import { selectInEditor } from './ScribePluginPage'
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 
 // The button under the selection is an asset of 48 px that holds a disc of
 // 24 px, 12 px inside its left edge and 9 px inside its top edge
@@ -146,6 +146,20 @@ export class ScribePage {
     return this.page
       .frameLocator('iframe[name="frameEditor"]')
       .getByRole('button', { name, exact: true })
+  }
+
+  /**
+   * The scribe button of the Plugins tab. Once the scribe panel narrows the
+   * editor, the ribbon hides the captions of its last buttons, and with them
+   * their accessible names: the button is found by its caption. "Scribe" is
+   * the label of the plugin, the same in English and French
+   * (plugins/onlyoffice-scribe/scripts/toolbar.js): Drive does not translate it
+   */
+  pluginsTabScribeButton(): Locator {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .locator('.panel.active .btn-slot .x-huge')
+      .filter({ hasText: new RegExp(`^\\s*${escapeRegExp('Scribe')}\\s*$`) })
   }
 
   // The button under the selection has the same name
