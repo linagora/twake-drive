@@ -110,7 +110,7 @@
     "cozy-search": "^3.0.0",
     "cozy-sharing": "^45.0.1",
     "cozy-stack-client": "^61.0.0",
-    "cozy-ui": "^146.5.1",
+    "cozy-ui": "^146.5.3",
     "cozy-ui-plus": "^15.0.0",
     "cozy-viewer": "^33.0.0",
     "date-fns": "2.30.0",
