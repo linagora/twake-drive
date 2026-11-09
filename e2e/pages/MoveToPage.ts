@@ -101,13 +101,41 @@ export class MoveToPage {
     await expect(this.breadcrumb).toHaveText('Sharings')
   }
 
-  folderRow(name: string): Locator {
+  async folderRow(name: string): Promise<Locator> {
     const splitAt = Math.ceil(name.length / 2)
     const prefix = name.slice(0, splitAt)
     const suffix = name.slice(splitAt)
-    return this.dialog.getByRole('row', {
+    const row: Locator = this.dialog.getByRole('row', {
       name: new RegExp(`^${escapeRegExp(prefix)}.*${escapeRegExp(suffix)}`)
     })
+    const scroller: Locator = this.dialog.getByTestId('virtuoso-scroller')
+
+    // Virtualized rows must be mounted before Playwright can scroll to them.
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count: number = await row.count()
+          if (count === 0) {
+            await scroller.evaluate((element: HTMLElement) => {
+              const maxScrollTop: number =
+                element.scrollHeight - element.clientHeight
+              element.scrollTop =
+                element.scrollTop >= maxScrollTop
+                  ? 0
+                  : Math.min(
+                      element.scrollTop + element.clientHeight,
+                      maxScrollTop
+                    )
+            })
+          }
+          return count
+        },
+        { intervals: [50], timeout: 5_000 }
+      )
+      .toBeGreaterThan(0)
+
+    await row.scrollIntoViewIfNeeded()
+    return row
   }
 
   row(name: string): Locator {
@@ -121,18 +149,21 @@ export class MoveToPage {
   }
 
   async folderId(name: string): Promise<string> {
-    const folderId = await this.folderRow(name).getAttribute('data-file-id')
+    const row: Locator = await this.folderRow(name)
+    const folderId = await row.getAttribute('data-file-id')
     if (!folderId) throw new Error(`No folder id found for ${name}`)
     return folderId
   }
 
   async selectFolder(name: string): Promise<void> {
-    await this.folderRow(name).click()
+    const row: Locator = await this.folderRow(name)
+    await row.click()
     await expect(this.moveButton).toBeEnabled()
   }
 
   async openFolder(name: string): Promise<void> {
-    await this.folderRow(name).dblclick()
+    const row: Locator = await this.folderRow(name)
+    await row.dblclick()
     await expect(
       this.dialog.getByTestId('file-picker-breadcrumb')
     ).toContainText(name)
@@ -144,7 +175,7 @@ export class MoveToPage {
   }
 
   async expectFolderDisabled(name: string, reason: RegExp): Promise<void> {
-    const row = this.folderRow(name)
+    const row: Locator = await this.folderRow(name)
     await expect(row).toHaveAttribute('aria-disabled', 'true')
     await expect(row).toHaveAccessibleName(reason)
     await row.getByTestId('picker-item-name').hover()
@@ -245,9 +276,8 @@ export class MoveToPage {
   }
 
   async isFolderSelected(name: string): Promise<boolean> {
-    return this.folderRow(name).evaluate(row =>
-      row.classList.contains('Mui-selected')
-    )
+    const row: Locator = await this.folderRow(name)
+    return row.evaluate(row => row.classList.contains('Mui-selected'))
   }
 
   get breadcrumb(): Locator {
