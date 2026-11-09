@@ -7941,9 +7941,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-devtools@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "cozy-devtools@npm:3.0.0"
+"cozy-devtools@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "cozy-devtools@npm:4.0.0"
   dependencies:
     date-fns: "npm:2.29.3"
     lodash: "npm:^4.17.21"
@@ -7957,7 +7957,7 @@ __metadata:
     cozy-ui: ">=139.0.2"
     react: ">=16.12.0"
     react-dom: ">=16.12.0"
-  checksum: 10/2e4d188175db4305fc49ea225eb4c8f6b1d6f550b8b107b44931bebd07f4c3d7b19d5fb8dbd95ed8abbfd3bd6472bfe41de323d40421bf00e7ba6b0fc0984011
+  checksum: 10/bfde76724c0afdd7f3bd7300e78a8661d9446eb1f5d861667ff45f9e56f07892ed75d6eec00f657f3f8094e7b87a08f9b841e6e2913f852af29069751350aa55
   languageName: node
   linkType: hard
 
@@ -7995,7 +7995,7 @@ __metadata:
     cozy-client: "npm:^61.0.1"
     cozy-dataproxy-lib: "npm:^4.15.6"
     cozy-device-helper: "npm:^4.0.3"
-    cozy-devtools: "npm:^3.0.0"
+    cozy-devtools: "npm:^4.0.0"
     cozy-flags: "npm:^4.9.1"
     cozy-intent: "npm:^2.31.1"
     cozy-interapp: "npm:^0.21.0"
