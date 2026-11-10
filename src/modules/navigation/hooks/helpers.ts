@@ -48,6 +48,7 @@ interface ComputeFileTypeOptions {
   isExcalidrawEnabled?: boolean
   isPublic?: boolean
   cozyUrl?: string
+  isNotesInstalled?: boolean
 }
 
 interface ComputePathOptions {
@@ -64,7 +65,8 @@ export const computeFileType = (
     isOfficeEnabled = false,
     isExcalidrawEnabled = false,
     isPublic = false,
-    cozyUrl = ''
+    cozyUrl = '',
+    isNotesInstalled = true
   }: ComputeFileTypeOptions = {}
 ): string => {
   if (file._id === TRASH_DIR_ID) {
@@ -75,7 +77,7 @@ export const computeFileType = (
     return 'shared-drive'
   } else if (file._type === 'io.cozy.remote.nextcloud.files') {
     return isDirectory(file) ? 'nextcloud-directory' : 'nextcloud-file'
-  } else if (isNote(file)) {
+  } else if (isNote(file) && isNotesInstalled) {
     // createdOn url ends with a trailing slash whereas cozyUrl does not joinPath fixes this
     const isSameInstance =
       joinPath(cozyUrl, '') === file.cozyMetadata?.createdOn

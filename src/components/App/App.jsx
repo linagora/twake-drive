@@ -12,6 +12,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import MoveValidationModals from '@/components/MoveValidationModals'
 import PushBannerProvider from '@/components/PushBanner/PushBannerProvider'
 import ClipboardProvider from '@/contexts/ClipboardProvider'
+import { NotesInstalledProvider } from '@/hooks/useIsNotesInstalled'
 import { AcceptingSharingProvider } from '@/lib/AcceptingSharingContext'
 import DriveProvider from '@/lib/DriveProvider'
 import { ModalContextProvider } from '@/lib/ModalContext'
@@ -34,10 +35,12 @@ const Providers = ({ children }) => {
           <AcceptingSharingProvider>
             <ViewSwitcherContextProvider>
               <ModalContextProvider>
-                <DnDProvider {...dnDProviderProps}>
-                  {children}
-                  <MoveValidationModals />
-                </DnDProvider>
+                <NotesInstalledProvider>
+                  <DnDProvider {...dnDProviderProps}>
+                    {children}
+                    <MoveValidationModals />
+                  </DnDProvider>
+                </NotesInstalledProvider>
               </ModalContextProvider>
             </ViewSwitcherContextProvider>
           </AcceptingSharingProvider>

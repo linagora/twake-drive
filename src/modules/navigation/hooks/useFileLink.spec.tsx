@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { computeIsSharingsOwner, useFileLink } from './useFileLink'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+import { useIsNotesInstalled } from '@/hooks/useIsNotesInstalled'
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
@@ -19,6 +20,9 @@ jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: jest.fn(() => ({ isDesktop: true }))
+}))
+jest.mock('@/hooks/useIsNotesInstalled', () => ({
+  useIsNotesInstalled: jest.fn(() => null)
 }))
 jest.mock('@/modules/public/PublicProvider', () => ({
   usePublicContext: jest.fn(() => ({ isPublic: false }))
@@ -143,4 +147,40 @@ describe('computeIsSharingsOwner', () => {
       })
     ).toBe(false)
   })
+})
+
+describe('useFileLink for a note', () => {
+  const note = {
+    _id: 'note-1',
+    _type: 'io.cozy.files',
+    type: 'file',
+    name: 'Journal.cozy-note',
+    dir_id: 'io.cozy.files.root-dir',
+    metadata: { title: '', version: '0' },
+    cozyMetadata: { createdOn: 'http://cozy.localhost:8080/' }
+  }
+  const renderLink = (): { app: string } =>
+    renderHook(() => useFileLink(note), {
+      wrapper: ({ children }: { children: React.ReactNode }) => (
+        <MemoryRouter
+          future={ROUTER_FUTURE_FLAGS}
+          initialEntries={['/folder/io.cozy.files.root-dir']}
+        >
+          {children}
+        </MemoryRouter>
+      )
+    }).result.current.link
+
+  it.each([
+    { isInstalled: true, app: 'notes' },
+    { isInstalled: false, app: 'drive' },
+    { isInstalled: null, app: 'drive' }
+  ])(
+    'opens it with $app when Notes installed is $isInstalled',
+    ({ isInstalled, app }) => {
+      jest.mocked(useIsNotesInstalled).mockReturnValue(isInstalled)
+
+      expect(renderLink().app).toBe(app)
+    }
+  )
 })
