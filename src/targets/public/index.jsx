@@ -25,6 +25,7 @@ import AppRouter from './components/AppRouter'
 
 import App from '@/components/App/App'
 import ErrorShare from '@/components/Error/ErrorShare'
+import { fetchIsNotesInstalled } from '@/hooks/useIsNotesInstalled'
 import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import logger from '@/lib/logger'
@@ -67,6 +68,9 @@ const init = async () => {
     useCustomStore: true
   })
   registerClientPlugins(client)
+  // Started now so a note clicked right after the page loads already knows
+  // whether Notes is installed.
+  void fetchIsNotesInstalled(client)
 
   const dictRequire = await loadLocales(lang)
   const polyglot = initTranslation(lang, dictRequire)
@@ -85,9 +89,7 @@ const init = async () => {
       .collection('io.cozy.files')
       .get(isOnlyOfficeDocShared ? onlyOfficeDocId : sharedDocumentId)
 
-    const isNote = models.file.isNote(data)
-
-    if (isNote) {
+    if (models.file.isNote(data) && (await fetchIsNotesInstalled(client))) {
       window.location.href = await models.note.fetchURL(client, data, {
         pathname: joinPath(location.pathname, '')
       })
