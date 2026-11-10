@@ -1,6 +1,7 @@
 import { USERS } from '../helpers/config'
-import { test, expect, stamp } from '../helpers/fixtures'
+import { test, expect, stamp, escapeRegExp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
@@ -9,6 +10,14 @@ import {
 import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 
+const EDITOR = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.two-way')),
+  'i'
+)
+const VIEWER = new RegExp(
+  escapeRegExp(t('cozy-sharing:Share.type.one-way')),
+  'i'
+)
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
 const NESTED_FOLDER = `Nested Folder ${stamp()}`
 const NESTED_CHARLIE_FOLDER = `Nested Charlie ${stamp()}`
@@ -55,12 +64,12 @@ test.describe
 
     // 2. Open share modal on nested folder and verify Bob has Viewer role
     const modal = await aliceDrive.row(NESTED_FOLDER).share()
-    await expect(modal.memberItem('bob')).toContainText(/viewer/i)
+    await expect(modal.memberItem('bob')).toContainText(VIEWER)
 
     // 3. Alice changes Bob's role on nested from Viewer to Editor
     const confirmDialog = new DowngradeConfirmDialogPage(alicePage)
     await modal.selectMemberRole('bob', 'Editor')
-    await expect(modal.memberItem('bob')).toContainText(/editor/i)
+    await expect(modal.memberItem('bob')).toContainText(EDITOR)
 
     // linagora/twake-drive#4205: an upgrade must not route through the
     // parent's sharing, so no "Update parent" confirm dialog appears.
@@ -99,7 +108,7 @@ test.describe
 
     // In issue linagora/twake-drive#4200:
     // Expected: Bob remains Viewer on parent
-    await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
+    await expect(parentModal.memberItem('bob')).toContainText(VIEWER)
     await parentModal.close()
     await alicePage.goto('about:blank')
   })
@@ -150,13 +159,13 @@ test.describe
 
     // 3. Reopening nested folder modal confirms Charlie is an Editor
     const childModal = await aliceDrive.row(NESTED_CHARLIE_FOLDER).share()
-    await expect(childModal.memberItem('charlie')).toContainText(/editor/i)
+    await expect(childModal.memberItem('charlie')).toContainText(EDITOR)
     await childModal.close()
 
     // 4. Checking parent folder modal confirms Charlie is NOT added to parent folder
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
     const parentModal = await aliceDrive.row(PARENT_FOLDER).share()
-    await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
+    await expect(parentModal.memberItem('bob')).toContainText(VIEWER)
     await expect(parentModal.memberItem('charlie')).toHaveCount(0)
     await parentModal.close()
     await alicePage.goto('about:blank')
@@ -213,7 +222,7 @@ test.describe
 
     // 2. Open share modal on nested folder: Bob is inherited with Editor role
     const modal = await aliceDrive.row(NESTED_EDITOR_FOLDER).share()
-    await expect(modal.memberItem('bob')).toContainText(/editor/i)
+    await expect(modal.memberItem('bob')).toContainText(EDITOR)
 
     // 3. Alice attempts to downgrade Bob to Viewer -> Downgrade confirmation dialog appears
     await modal.selectMemberRole('bob', 'Viewer')
@@ -225,19 +234,19 @@ test.describe
 
     // 4. Cancelling keeps Bob as Editor
     await confirmDialog.cancel()
-    await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+    await expect(modal.memberRole('bob')).toHaveText(EDITOR)
 
     // 5. Confirming downgrade updates Bob's role to Viewer
     await modal.selectMemberRole('bob', 'Viewer')
     await confirmDialog.waitForOpen()
     await confirmDialog.confirm()
-    await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
+    await expect(modal.memberRole('bob')).toHaveText(VIEWER)
     await modal.close()
 
     // 6. Verify parent folder share modal also downgraded Bob to Viewer
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
     const parentModal = await aliceDrive.row(PARENT_EDITOR_FOLDER).share()
-    await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
+    await expect(parentModal.memberItem('bob')).toContainText(VIEWER)
     await parentModal.close()
     await alicePage.goto('about:blank')
   })

@@ -1,6 +1,5 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
-import { ShareModalPage } from '../pages/ShareModalPage'
 
 // Shared across .serial tests in this describe — do not enable fullyParallel.
 const FOLDER_NAME = `Shared Folder ${stamp()}`
@@ -16,10 +15,7 @@ test.describe.serial('Folder sharing', () => {
     await aliceDrive.row(FOLDER_NAME).open()
     await alicePage.waitForURL(/\/folder\/[^/]+$/)
 
-    await alicePage.getByRole('button', { name: /share/i }).click()
-
-    const shareModal = new ShareModalPage(alicePage)
-    await shareModal.waitForOpen()
+    const shareModal = await aliceDrive.openShareModal()
     await shareModal.addMember(USERS.bob.email)
     await shareModal.share()
   })

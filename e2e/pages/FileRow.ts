@@ -3,6 +3,7 @@ import type { Page, Locator } from '@playwright/test'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 interface ConfirmDialog {
   button: RegExp
@@ -45,7 +46,7 @@ export class FileRow {
     // Each row is a plain <div> with no semantic role; locate the closest
     // ancestor that contains the per-row "More" button — that's the row.
     return this.cell.locator(
-      'xpath=ancestor::*[.//button[@aria-label="More"]][1]'
+      `xpath=ancestor::*[.//button[@aria-label="${t('Toolbar.more')}"]][1]`
     )
   }
 
@@ -58,12 +59,16 @@ export class FileRow {
   }
 
   async isNewSharingShortcut(): Promise<boolean> {
-    return this.rowEl.getByLabel('New sharing shortcut').isVisible()
+    return this.rowEl
+      .getByLabel(t('table.row_sharing_shortcut_aria_label'))
+      .isVisible()
   }
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
+    const fileId = href?.match(
+      /\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/
+    )?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
@@ -82,7 +87,7 @@ export class FileRow {
   }
 
   async openMenu(): Promise<Locator> {
-    await this.rowEl.getByRole('button', { name: 'More' }).click()
+    await this.rowEl.getByRole('button', { name: t('Toolbar.more') }).click()
     return this.page.getByRole('menu')
   }
 
@@ -117,7 +122,11 @@ export class FileRow {
 
   async rename(newName: string): Promise<void> {
     const menu = await this.openMenu()
-    await menu.getByRole('menuitem', { name: /^rename$/i }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.rename'))}$`, 'i')
+      })
+      .click()
     const input = this.page.getByTestId('name-input').locator('input')
     await input.waitFor({ state: 'visible' })
     await input.fill(newName)
@@ -130,11 +139,21 @@ export class FileRow {
 
   async openMoveTo(): Promise<MoveToPage> {
     const menu = await this.openMenu()
-    const menuItem = menu.getByRole('menuitem', { name: /move to/i })
+    const menuItem = menu.getByRole('menuitem', {
+      name: t('SelectionBar.moveto')
+    })
     if (await menuItem.isVisible()) {
       await menuItem.click()
     } else {
-      await this.page.getByRole('button', { name: /^move$/i }).click()
+      // On a phone the action sheet lists buttons, labelled for mobile
+      await this.page
+        .getByRole('button', {
+          name: new RegExp(
+            `^${escapeRegExp(t('SelectionBar.moveto_mobile'))}$`,
+            'i'
+          )
+        })
+        .click()
     }
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
@@ -148,22 +167,30 @@ export class FileRow {
   }
 
   async duplicate(): Promise<void> {
-    await this.runAction(/duplicate/i, {
-      button: /duplicate|confirm|ok/i,
-      wait: 'optional'
-    })
+    await this.runAction(
+      new RegExp(escapeRegExp(t('actions.duplicateTo.label')), 'i'),
+      {
+        button: new RegExp(escapeRegExp(t('DuplicateModal.confirmLabel')), 'i'),
+        wait: 'optional'
+      }
+    )
   }
 
   async sendToTrash(): Promise<void> {
-    await this.runAction(/^remove$/i, {
-      button: /^remove$/i,
-      wait: 'required'
-    })
+    await this.runAction(
+      new RegExp(`^${escapeRegExp(t('SelectionBar.trash'))}$`, 'i'),
+      {
+        button: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i'),
+        wait: 'required'
+      }
+    )
     await this.waitHidden()
   }
 
   async addToFavorites(): Promise<void> {
-    await this.runAction(/add to favorites/i)
+    await this.runAction(
+      new RegExp(escapeRegExp(t('favorites.label.add')), 'i')
+    )
   }
 
   /** Open the row's action menu and click "Share", then return a ready-to-use
@@ -171,14 +198,32 @@ export class FileRow {
    *  (e.g. when acting on a file, which has no folder-scoped toolbar). */
   async share(): Promise<ShareModalPage> {
     const menu = await this.openMenu()
-    await menu.getByRole('menuitem', { name: /^share$/i }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('Files.share.cta'))}$`, 'i')
+      })
+      .click()
     const modal = new ShareModalPage(this.page)
     await modal.waitForOpen()
     return modal
   }
 
+  async leaveSharing(): Promise<void> {
+    const menu = await this.openMenu()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(
+          escapeRegExp(t('toolbar.menu_leave_shared_drive')),
+          'i'
+        )
+      })
+      .click()
+  }
+
   async restore(): Promise<void> {
-    await this.runAction(/^restore$/i)
+    await this.runAction(
+      new RegExp(`^${escapeRegExp(t('SelectionBar.restore'))}$`, 'i')
+    )
     await this.waitHidden()
   }
 }

@@ -3,6 +3,8 @@ import type { Page, Locator } from '@playwright/test'
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import { escapeRegExp } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -25,11 +27,47 @@ export class DrivePage {
   }
 
   get createButton(): Locator {
-    return this.page.getByRole('button', { name: /^create$/i })
+    return this.page.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('toolbar.menu_create'))}$`, 'i')
+    })
   }
 
   get uploadButton(): Locator {
-    return this.page.getByRole('button', { name: /^upload$/i })
+    return this.page.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('upload.label'))}$`, 'i')
+    })
+  }
+
+  get openFolderError(): Locator {
+    return this.page.getByText(t('error.open_folder'))
+  }
+
+  get emptyState(): Locator {
+    return this.page.getByText(t('empty.text'))
+  }
+
+  async waitForEmptyState(): Promise<void> {
+    await this.emptyState.waitFor({ state: 'visible', timeout: 10_000 })
+  }
+
+  async filterByFolders(): Promise<void> {
+    await this.page
+      .getByRole('button', { name: t('filters.type.label'), exact: true })
+      .click()
+    await this.page
+      .getByRole('option', { name: t('filters.type.options.folder') })
+      .click()
+  }
+
+  get selectedFoldersFilter(): Locator {
+    return this.page.getByRole('button', {
+      name: t('filters.type.options.folder'),
+      exact: true
+    })
+  }
+
+  get breadcrumb(): Locator {
+    return this.page.locator('main').getByRole('navigation').first()
   }
 
   async selectRows(names: string[]): Promise<void> {
@@ -53,14 +91,22 @@ export class DrivePage {
   }
 
   async openMoveToForSelection(): Promise<MoveToPage> {
-    await this.page.getByRole('button', { name: /move to/i }).click()
+    await this.page
+      .getByRole('button', {
+        name: t('SelectionBar.moveto')
+      })
+      .click()
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo
   }
 
   async openShareModal(): Promise<ShareModalPage> {
-    await this.page.getByRole('button', { name: /share/i }).click()
+    await this.page
+      .getByRole('button', {
+        name: t('cozy-sharing:Files.share.cta')
+      })
+      .click()
     const shareModal = new ShareModalPage(this.page)
     await shareModal.waitForOpen()
     return shareModal
@@ -93,7 +139,9 @@ export class DrivePage {
   }
 
   async createFolder(name: string): Promise<void> {
-    await this.page.getByRole('button', { name: 'Create' }).click()
+    await this.page
+      .getByRole('button', { name: t('toolbar.menu_create') })
+      .click()
     await this.page.getByTestId('add-folder-link').click()
     const input = this.page.getByTestId('name-input').locator('input')
     await input.waitFor({ state: 'visible' })
@@ -101,7 +149,6 @@ export class DrivePage {
     await input.press('Enter')
     await this.row(name).waitVisible()
   }
-
 
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */

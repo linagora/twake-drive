@@ -3,6 +3,7 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, stamp, safeUnlink } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openOwnerFolder,
@@ -55,6 +56,9 @@ test.describe('Viewer sharing access panel', () => {
 
     const viewer = new FileViewerPage(alicePage)
     await viewer.waitForOpen()
-    await viewer.expectWhoHasAccessWith(['You', /bob/i])
+    await viewer.expectWhoHasAccessWith([
+      t('cozy-sharing:Share.recipients.you'),
+      /bob/i
+    ])
   })
 })

@@ -1,7 +1,9 @@
 import type { Page } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
-import { expect } from '../helpers/fixtures'
+import { ShareModalPage } from './ShareModalPage'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 export class FileViewerPage {
   private readonly page: Page
@@ -25,7 +27,9 @@ export class FileViewerPage {
 
   async expectWhoHasAccessWith(members: (string | RegExp)[]): Promise<void> {
     await expect(
-      this.page.getByText('Who has access?', { exact: true })
+      this.page.getByText(t('cozy-viewer:Viewer.panel.sharing'), {
+        exact: true
+      })
     ).toBeVisible()
 
     for (const member of members) {
@@ -42,12 +46,35 @@ export class FileViewerPage {
       .click()
     await this.page
       .getByRole('menu')
-      .getByRole('menuitem', { name: /move to/i })
+      .getByRole('menuitem', {
+        name: t('SelectionBar.moveto')
+      })
       .click()
 
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo
+  }
+
+  /** new-file-viewer-ui is off in the e2e stack, so the viewer's Share entry
+   * lives in the actions (dots) menu. That trigger is icon-only; the Download
+   * button carries a text label, so restricting to text-less buttons keeps the
+   * target stable if cozy-viewer appends a labelled toolbar button. The
+   * returned modal is not awaited, so a caller can assert the route first. */
+  async openShareFromMenu(): Promise<ShareModalPage> {
+    await this.page
+      .getByTestId('viewer-toolbar')
+      .getByRole('button')
+      .filter({ hasNotText: /\S/ })
+      .last()
+      .click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('Files.share.cta'))}$`, 'i')
+      })
+      .click()
+    return new ShareModalPage(this.page)
   }
 
   /** Closes the viewer by navigating back, then waits for the file route to drop. */

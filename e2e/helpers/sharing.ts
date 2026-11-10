@@ -1,7 +1,8 @@
 import type { Page, Response } from '@playwright/test'
 
 import { USERS, User } from './config'
-import { expect } from './fixtures'
+import { escapeRegExp, expect } from './fixtures'
+import { t } from './i18n'
 import { DrivePage } from '../pages/DrivePage'
 
 /**
@@ -74,9 +75,9 @@ export async function openSharedDrive(
   await waitForSharingRow(page, user, drive, name)
   const sharingRow = drive.row(name)
   const isNewSharingShortcut = await sharingRow.isNewSharingShortcut()
-  const sharingsLink = page
-    .getByRole('complementary')
-    .getByRole('link', { name: /Sharings/ })
+  const sharingsLink = page.getByRole('complementary').getByRole('link', {
+    name: new RegExp(escapeRegExp(t('Nav.item_sharings')))
+  })
   const sharingsLinkText = isNewSharingShortcut
     ? await sharingsLink.textContent()
     : null

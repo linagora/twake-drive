@@ -4,6 +4,7 @@ import { DrivePage } from './DrivePage'
 import type { FileRow } from './FileRow'
 import { PublicMoveToPage } from './PublicMoveToPage'
 import { expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 
 /**
  * A public share link opened in a fresh, unauthenticated browser context.
@@ -35,7 +36,9 @@ export class PublicLinkPage {
 
   /** Shown when the link is expired or revoked (Error.public_unshared_title). */
   get unavailableMessage(): Locator {
-    return this.page.getByRole('heading', { name: /no longer available/i })
+    return this.page.getByRole('heading', {
+      name: t('Error.public_unshared_title')
+    })
   }
 
   row(name: string): FileRow {
@@ -49,7 +52,9 @@ export class PublicLinkPage {
   async downloadFolder(): Promise<Download> {
     const download = this.page.waitForEvent('download')
     await this.page.getByTestId('more-menu').getByRole('button').click()
-    await this.page.getByRole('menuitem', { name: 'Download' }).click()
+    await this.page
+      .getByRole('menuitem', { name: t('SelectionBar.download') })
+      .click()
     return await download
   }
 
@@ -59,7 +64,11 @@ export class PublicLinkPage {
 
   async openMoveTo(name: string): Promise<PublicMoveToPage> {
     const menu = await this.row(name).openMenu()
-    await menu.getByRole('menuitem', { name: /move to/i }).click()
+    await menu
+      .getByRole('menuitem', {
+        name: t('SelectionBar.moveto')
+      })
+      .click()
     const moveTo = new PublicMoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo

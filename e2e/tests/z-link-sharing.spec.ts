@@ -14,6 +14,7 @@ import {
 } from '../helpers/stack'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
 import type { DrivePage } from '../pages/DrivePage'
+import { ShareModalPage } from '../pages/ShareModalPage'
 import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
 
@@ -29,22 +30,11 @@ function localeDate(offsetDays: number): string {
   return `${mm}/${dd}/${d.getFullYear()}`
 }
 
-/** Open the share modal from the folder toolbar and wait for the dialog. */
-async function openShareModal(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /share/i }).click()
-  await page.getByRole('dialog').waitFor({ state: 'visible' })
-}
-
 /** Close and reopen the share modal so it remounts and re-reads the sharing
  * context; the "Public access" row only updates from freshly read permissions. */
-async function reopenShareModal(page: Page): Promise<void> {
-  const dialog = page.getByRole('dialog')
-  await dialog
-    .getByRole('button', { name: /^(done|close)$/i })
-    .first()
-    .click()
-  await dialog.waitFor({ state: 'hidden' })
-  await openShareModal(page)
+async function reopenShareModal(page: Page, drive: DrivePage): Promise<void> {
+  await new ShareModalPage(page).dismiss()
+  await drive.openShareModal()
 }
 
 /** Create an empty folder, enter it, open the share modal. Returns the folder
@@ -61,7 +51,7 @@ async function openShareForNewFolder(
   const folderId = page.url().match(/\/folder\/([^/?]+)/)?.[1] ?? ''
   expect(folderId).not.toBe('')
 
-  await openShareModal(page)
+  await drive.openShareModal()
   return { folderId, link: new ShareByLinkPage(page) }
 }
 
@@ -141,7 +131,9 @@ test.describe('Share by link', () => {
         execFileSync('unzip', ['-p', archive, rootPath], { encoding: 'utf8' })
       ).toBe('root content')
       expect(
-        execFileSync('unzip', ['-p', archive, nestedPath], { encoding: 'utf8' })
+        execFileSync('unzip', ['-p', archive, nestedPath], {
+          encoding: 'utf8'
+        })
       ).toBe('nested content')
     } finally {
       await trashById(USERS.alice.instance, folderId)
@@ -175,10 +167,10 @@ test.describe('Share by link', () => {
       await aliceDrive.uploadFiles(sourcePath)
       await aliceDrive.row(sourceFile).waitVisible()
 
-      await openShareModal(alicePage)
+      await aliceDrive.openShareModal()
       const link = new ShareByLinkPage(alicePage)
       const url = await link.createLink()
-      await reopenShareModal(alicePage)
+      await reopenShareModal(alicePage, aliceDrive)
       await link.waitForLinkRow()
       await link.allowEditing()
 
@@ -215,7 +207,7 @@ test.describe('Share by link', () => {
     const url = await link.createLink()
     expect(url).toMatch(/^https?:\/\//)
 
-    await reopenShareModal(alicePage)
+    await reopenShareModal(alicePage, aliceDrive)
     await link.waitForLinkRow()
     await link.openRestrictions()
     await link.enablePassword(password)
@@ -244,7 +236,7 @@ test.describe('Share by link', () => {
     )
     const url = await link.createLink()
 
-    await reopenShareModal(alicePage)
+    await reopenShareModal(alicePage, aliceDrive)
     await link.waitForLinkRow()
     await link.openRestrictions()
     // The picker rejects past dates, so set a future deadline to exercise the

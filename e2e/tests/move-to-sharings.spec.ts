@@ -2,7 +2,14 @@ import { copyFile, readFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  expect,
+  safeUnlink,
+  stamp,
+  test
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   openOwnerFolder,
@@ -265,7 +272,10 @@ test.describe.serial('MoveTo sharing destinations', () => {
 
     const moveTo = await bobDrive.row('Administrative').openMoveTo()
     await moveTo.openSharings()
-    await moveTo.expectFolderDisabled(VIEWER_SHARE, /read-only/i)
+    await moveTo.expectFolderDisabled(
+      VIEWER_SHARE,
+      new RegExp(escapeRegExp(t('Move.destinationReadOnly')), 'i')
+    )
     await moveTo.expectMoveDisabled()
     await expect(moveTo.createFolderButton).toHaveCount(0)
     await moveTo.close()

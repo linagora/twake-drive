@@ -16,6 +16,10 @@ docs: `../docs/e2e.md`.
    created with `helpers/stack.ts`, don't click it into existence.
 5. Temp files are removed with `safeUnlink()` in a `finally`.
 6. A literal name used inside a `RegExp` goes through `escapeRegExp()`.
+7. **A visible label comes from `t('<key>')` of `helpers/i18n.ts`**, with the
+   key the rendering component passes to its own `t()`, or from a
+   `data-testid`. A translation change then leaves the suite green. Text with
+   no key (pages of the stack, OnlyOffice, test data) stays literal.
 
 ## Helpers (grep these before writing your own)
 
@@ -32,6 +36,9 @@ docs: `../docs/e2e.md`.
   `setLinkExpiry()`.
 - `helpers/flags.ts` — `setFlags(instance, {...})`.
 - `helpers/apps.ts` — `isAppInstalled()`, `ensureAppInstalled()`.
+- `helpers/i18n.ts`: `t(key, vars?)`, the English text the app renders for a
+  key of `src/locales/en.json`; a prefix such as `cozy-sharing:` reads one of
+  the library dictionaries listed in the file.
 
 Page objects live in `pages/` (DrivePage, FileRow, SidebarPage, ShareModal,
 FileViewer, FilePicker, …). Read the file for its methods.

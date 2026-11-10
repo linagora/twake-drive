@@ -65,7 +65,7 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
 
     // Breadcrumb anchors the proxied view under the drive (prefix match: the
     // tail is truncated).
-    const breadcrumb = bobPage.locator('main').getByRole('navigation').first()
+    const breadcrumb = bobDrive.breadcrumb
     await expect(breadcrumb).toContainText(DRIVE_PREFIX)
   })
 
@@ -83,9 +83,7 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
 
     // The subfolder is empty — the dropzone empty state renders instead of an
     // error or a stuck skeleton.
-    await expect(bobPage.getByText(/drag them here/i)).toBeVisible({
-      timeout: 10_000
-    })
+    await bobDrive.waitForEmptyState()
 
     // Climb back up through the breadcrumb (prefix match: the tail truncates).
     const breadcrumb = bobPage.locator('main').getByRole('navigation').first()

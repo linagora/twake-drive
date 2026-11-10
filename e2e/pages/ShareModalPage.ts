@@ -1,6 +1,20 @@
 import type { Page, Locator } from '@playwright/test'
 
-import { expect } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
+
+type Role = 'Viewer' | 'Editor'
+
+/** The label the app renders for a role. */
+const roleLabel = (role: Role): string =>
+  t(
+    role === 'Editor'
+      ? 'cozy-sharing:Share.type.two-way'
+      : 'cozy-sharing:Share.type.one-way'
+  )
+
+const anyRoleLabel = (): string =>
+  `${escapeRegExp(roleLabel('Viewer'))}|${escapeRegExp(roleLabel('Editor'))}`
 
 export class ShareModalPage {
   private readonly page: Page
@@ -14,7 +28,60 @@ export class ShareModalPage {
 
   /** Send button of the invite field. */
   get shareButton(): Locator {
-    return this.dialog.getByRole('button', { name: /^share$/i })
+    return this.dialog.getByRole('button', {
+      name: new RegExp(
+        `^${escapeRegExp(t('cozy-sharing:MemberAutocomplete.send'))}$`,
+        'i'
+      )
+    })
+  }
+
+  get onlyByLinkNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(
+          t('cozy-sharing:Files.share.shareByEmail.onlyByLink', {
+            type: t('cozy-sharing:Files.share.shareByEmail.type.folder')
+          })
+        ),
+        'i'
+      )
+    )
+  }
+
+  get hasSharedChildNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(t('cozy-sharing:Files.share.shareByEmail.hasSharedChild')),
+        'i'
+      )
+    )
+  }
+
+  get whoHasAccess(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(t('cozy-sharing:Share.contacts.whoHasAccess')),
+        'i'
+      )
+    )
+  }
+
+  get copyLinkButton(): Locator {
+    return this.dialog.getByRole('button', {
+      name: new RegExp(
+        `^${escapeRegExp(t('cozy-sharing:Files.share.shareByLink.copy'))}$`,
+        'i'
+      )
+    })
+  }
+
+  get contactCombobox(): Locator {
+    return this.dialog.getByRole('combobox')
+  }
+
+  get firstListItem(): Locator {
+    return this.dialog.getByRole('listitem').first()
   }
 
   async waitForOpen(): Promise<void> {
@@ -39,11 +106,13 @@ export class ShareModalPage {
   async setNewMemberRole(role: 'Viewer' | 'Editor'): Promise<void> {
     await this.dialog
       .getByRole('combobox')
-      .getByRole('button', { name: /^(Viewer|Editor)$/i })
+      .getByRole('button', { name: new RegExp(`^(${anyRoleLabel()})$`, 'i') })
       .click()
     const menu = this.page.getByRole('menu')
     await menu
-      .getByRole('menuitem', { name: new RegExp(`^${role}$`, 'i') })
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(roleLabel(role))}$`, 'i')
+      })
       .click()
     await menu.waitFor({ state: 'hidden' })
   }
@@ -59,7 +128,9 @@ export class ShareModalPage {
     await this.memberRole(nameOrEmail).click()
     const menu = this.page.getByRole('menu')
     await menu
-      .getByRole('menuitem', { name: new RegExp(`^${role}$`, 'i') })
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(roleLabel(role))}$`, 'i')
+      })
       .click()
     await menu.waitFor({ state: 'hidden' })
   }
@@ -76,9 +147,15 @@ export class ShareModalPage {
 
     const confirmButton = this.page
       .getByRole('dialog')
-      .filter({ has: this.page.getByRole('button', { name: 'Update parent' }) })
+      .filter({
+        has: this.page.getByRole('button', {
+          name: t('cozy-sharing:DowngradePermissionConfirmDialog.confirm')
+        })
+      })
       .last()
-      .getByRole('button', { name: 'Update parent' })
+      .getByRole('button', {
+        name: t('cozy-sharing:DowngradePermissionConfirmDialog.confirm')
+      })
     const appeared = await confirmButton
       .waitFor({ state: 'visible', timeout: 2_000 })
       .then(() => true)
@@ -100,13 +177,16 @@ export class ShareModalPage {
   memberRole(nameOrEmail: string): Locator {
     return this.memberItem(nameOrEmail)
       .getByRole('button')
-      .filter({ hasText: /^(editor|viewer)$/i })
+      .filter({ hasText: new RegExp(`^(${anyRoleLabel()})$`, 'i') })
   }
 
   /** Remove/revoke button of a member row. */
   memberRemoveButton(nameOrEmail: string): Locator {
     return this.memberItem(nameOrEmail).getByRole('button', {
-      name: /remove from sharing/i
+      name: new RegExp(
+        escapeRegExp(t('cozy-ui-member-row:MemberRow.remove')),
+        'i'
+      )
     })
   }
 
@@ -115,7 +195,12 @@ export class ShareModalPage {
    * shows up within a short grace window. */
   async removeMember(nameOrEmail: string): Promise<void> {
     await this.memberItem(nameOrEmail)
-      .getByRole('button', { name: /remove from sharing/i })
+      .getByRole('button', {
+        name: new RegExp(
+          escapeRegExp(t('cozy-ui-member-row:MemberRow.remove')),
+          'i'
+        )
+      })
       .click()
     // A confirm dialog, if it appears, is a SECOND dialog on top of this
     // share modal. Scope to the dialog that actually carries a revoke button
@@ -153,6 +238,15 @@ export class ShareModalPage {
       { timeout: 15_000 }
     )
     await this.close()
+  }
+
+  /** Closes through the "Done" or "Close" button, whichever the modal shows. */
+  async dismiss(): Promise<void> {
+    await this.dialog
+      .getByRole('button', { name: /^(done|close)$/i })
+      .first()
+      .click()
+    await this.dialog.waitFor({ state: 'hidden' })
   }
 
   async close(): Promise<void> {

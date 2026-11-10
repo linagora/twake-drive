@@ -192,9 +192,7 @@ test.describe.serial('Shared drive write flows (recipient)', () => {
 
     // Wait for the empty folder's settled state before uploading, so the
     // assertion below can't trip on the legitimate first-load skeleton.
-    await expect(bobPage.getByText(/drag them here/i)).toBeVisible({
-      timeout: 10_000
-    })
+    await bobDrive.waitForEmptyState()
 
     const filePaths = BLINK_FILES.map(name => path.join(FIXTURE_DIR, name))
     try {

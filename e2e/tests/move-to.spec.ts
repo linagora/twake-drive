@@ -4,7 +4,14 @@ import path from 'path'
 import type { Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
-import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
+import {
+  escapeRegExp,
+  expect,
+  safeUnlink,
+  stamp,
+  test
+} from '../helpers/fixtures'
+import { t } from '../helpers/i18n'
 import { trashById } from '../helpers/stack'
 import type { DrivePage } from '../pages/DrivePage'
 import type { MoveToPage } from '../pages/MoveToPage'
@@ -99,7 +106,7 @@ test.describe('MoveTo folder creation', () => {
 
       await expect(moveTo.creationForm).toBeHidden()
       createdFolder = folderName
-      await expect(moveTo.breadcrumb).toHaveText('My Drive')
+      await expect(moveTo.breadcrumb).toHaveText(t('Nav.item_drive'))
       await expect(moveTo.isFolderSelected(folderName)).resolves.toBe(false)
 
       await moveTo.openFolder(folderName)
@@ -132,7 +139,10 @@ test.describe('MoveTo folder creation', () => {
       created = true
 
       const moveTo = await aliceDrive.row(sourceFolder).openMoveTo()
-      await moveTo.expectFolderDisabled(sourceFolder, /being moved/i)
+      await moveTo.expectFolderDisabled(
+        sourceFolder,
+        new RegExp(escapeRegExp(t('Move.destinationSource')), 'i')
+      )
       await moveTo.expectMoveDisabled()
       await moveTo.close()
     } finally {
@@ -256,7 +266,10 @@ test.describe('MoveTo execution', () => {
       await scenario.moveTo.clickMove()
       await scenario.moveTo.expectPartialResult(1, 1)
       await scenario.moveTo.close()
-      await scenario.moveTo.expectSuccessNotification(scenario.entries[0])
+      await scenario.moveTo.expectSuccessNotification(
+        scenario.entries[0],
+        scenario.destination
+      )
 
       await aliceDrive.row(scenario.entries[0]).waitHidden()
       await expect(aliceDrive.row(scenario.entries[1]).cell).toBeVisible()
