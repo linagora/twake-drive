@@ -78,6 +78,17 @@ describe('PDF OnlyOffice support', () => {
   })
 })
 
+describe('shouldOpenWithOnlyOffice for notes', () => {
+  it.each([
+    ['a .cozy-note name', { name: 'Journal.cozy-note' }],
+    ['the note mime', { name: 'Journal', mime: 'text/vnd.cozy.note+markdown' }]
+  ])('never opens a file with %s in OnlyOffice', (_, attributes) => {
+    const file = { type: 'file', class: 'text', ...attributes }
+
+    expect(shouldOpenWithOnlyOffice(file, true)).toBe(false)
+  })
+})
+
 describe('showCreateCozyButton', () => {
   const baseProps = {
     isPublic: true,
