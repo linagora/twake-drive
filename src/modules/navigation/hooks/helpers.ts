@@ -3,7 +3,6 @@ import {
   isShortcut,
   isNote,
   isDocs,
-  shouldBeOpenedByOnlyOffice,
   isDirectory
 } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
@@ -33,7 +32,8 @@ import {
 } from '@/modules/views/Excalidraw/helpers'
 import {
   canOpenPdfWithOnlyOffice,
-  makeOnlyOfficeFileRoute
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
 } from '@/modules/views/OnlyOffice/helpers'
 import { isPdf } from '@/modules/views/Pdf/helpers'
 import {
@@ -108,7 +108,7 @@ export const computeFileType = (
     // explicitly to avoid the `no-unsafe-assignment` lint on the access below.
     const targetClass: unknown = file.metadata?.target?.['class']
     const targetMime: unknown = file.metadata?.target?.['mime']
-    const isOfficeTarget = shouldBeOpenedByOnlyOffice({
+    const isOfficeTarget = shouldOpenWithOnlyOffice({
       ...file,
       class: targetClass as string,
       mime: targetMime as string
@@ -122,7 +122,7 @@ export const computeFileType = (
     return 'shared-drive-root-file'
   } else if (isPdf(file) && canOpenPdfWithOnlyOffice(isOfficeEnabled)) {
     return 'onlyoffice'
-  } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
+  } else if (shouldOpenWithOnlyOffice(file) && isOfficeEnabled) {
     // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
     // an Office file shared as a drive root routes through OnlyOffice (its own
     // viewer) rather than the generic shared-drive-root-file viewer. See the

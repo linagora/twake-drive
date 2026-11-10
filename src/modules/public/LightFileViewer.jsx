@@ -23,6 +23,7 @@ import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import PublicToolbar from '@/modules/public/PublicToolbar'
 import {
   canOpenPdfWithOnlyOffice,
+  isNoteFile,
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
@@ -93,7 +94,8 @@ const LightFileViewer = ({ files, isPublic }) => {
           disableModal
           componentsProps={{
             OnlyOfficeViewer: {
-              isEnabled: isOfficeEnabled(isDesktop),
+              // cozy-viewer would offer OnlyOffice for a note without a mime.
+              isEnabled: isOfficeEnabled(isDesktop) && !files.some(isNoteFile),
               opener: onlyOfficeOpener
             },
             PdfViewer: {
