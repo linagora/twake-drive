@@ -23,10 +23,13 @@ const Sharing = ({ file }) => {
 
   const handleRevokeSuccess = () => {
     const redirectLink = new URLSearchParams(search).get('redirectLink')
-    const { slug, hash } = redirectLink
-      ? deconstructRedirectLink(redirectLink)
-      : {}
-    const fromPathname = slug === 'drive' ? hash : ''
+    let fromPathname = ''
+    try {
+      const { slug, hash } = deconstructRedirectLink(redirectLink)
+      if (slug === 'drive' && hash) fromPathname = hash
+    } catch {
+      // No or invalid redirect link: back to the default sharings tab
+    }
 
     navigate(getSharingsRootRoute(fromPathname), { replace: true })
   }
