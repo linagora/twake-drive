@@ -38,6 +38,38 @@ export class DrivePage {
     })
   }
 
+  get openFolderError(): Locator {
+    return this.page.getByText(t('error.open_folder'))
+  }
+
+  get emptyState(): Locator {
+    return this.page.getByText(t('empty.text'))
+  }
+
+  async waitForEmptyState(): Promise<void> {
+    await this.emptyState.waitFor({ state: 'visible', timeout: 10_000 })
+  }
+
+  async filterByFolders(): Promise<void> {
+    await this.page
+      .getByRole('button', { name: t('filters.type.label'), exact: true })
+      .click()
+    await this.page
+      .getByRole('option', { name: t('filters.type.options.folder') })
+      .click()
+  }
+
+  get selectedFoldersFilter(): Locator {
+    return this.page.getByRole('button', {
+      name: t('filters.type.options.folder'),
+      exact: true
+    })
+  }
+
+  get breadcrumb(): Locator {
+    return this.page.locator('main').getByRole('navigation').first()
+  }
+
   async selectRows(names: string[]): Promise<void> {
     if (names.length === 0) throw new Error('At least one row is required')
     for (const name of names) {
@@ -117,7 +149,6 @@ export class DrivePage {
     await input.press('Enter')
     await this.row(name).waitVisible()
   }
-
 
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */

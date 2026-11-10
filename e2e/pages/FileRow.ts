@@ -66,7 +66,9 @@ export class FileRow {
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
+    const fileId = href?.match(
+      /\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/
+    )?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
@@ -204,6 +206,18 @@ export class FileRow {
     const modal = new ShareModalPage(this.page)
     await modal.waitForOpen()
     return modal
+  }
+
+  async leaveSharing(): Promise<void> {
+    const menu = await this.openMenu()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(
+          escapeRegExp(t('toolbar.menu_leave_shared_drive')),
+          'i'
+        )
+      })
+      .click()
   }
 
   async restore(): Promise<void> {

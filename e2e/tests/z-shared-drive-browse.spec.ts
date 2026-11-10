@@ -2,14 +2,7 @@ import { copyFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import {
-  test,
-  expect,
-  stamp,
-  safeUnlink,
-  escapeRegExp
-} from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
+import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
@@ -22,7 +15,6 @@ const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
 // Shared across .serial tests in this describe — do not enable fullyParallel.
 // Names lead with a stable, short token: the breadcrumb truncates the tail,
 // so assertions/clicks match on the prefix which always survives.
-const DRAG_HERE = new RegExp(escapeRegExp(t('empty.text')), 'i')
 const DRIVE_PREFIX = 'BrowseDrive'
 const SUB_PREFIX = 'BrowseSub'
 const DRIVE_NAME = `${DRIVE_PREFIX}-${stamp()}`
@@ -73,7 +65,7 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
 
     // Breadcrumb anchors the proxied view under the drive (prefix match: the
     // tail is truncated).
-    const breadcrumb = bobPage.locator('main').getByRole('navigation').first()
+    const breadcrumb = bobDrive.breadcrumb
     await expect(breadcrumb).toContainText(DRIVE_PREFIX)
   })
 
@@ -91,9 +83,7 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
 
     // The subfolder is empty — the dropzone empty state renders instead of an
     // error or a stuck skeleton.
-    await expect(bobPage.getByText(DRAG_HERE)).toBeVisible({
-      timeout: 10_000
-    })
+    await bobDrive.waitForEmptyState()
 
     // Climb back up through the breadcrumb (prefix match: the tail truncates).
     const breadcrumb = bobPage.locator('main').getByRole('navigation').first()

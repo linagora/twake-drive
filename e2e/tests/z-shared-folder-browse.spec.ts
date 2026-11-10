@@ -1,13 +1,7 @@
 import { USERS } from '../helpers/config'
-import { test, expect, stamp, escapeRegExp } from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
-import { ShareModalPage } from '../pages/ShareModalPage'
+import { test, expect, stamp } from '../helpers/fixtures'
 
 // Shared across .serial tests in this describe — do not enable fullyParallel.
-const SHARE_BUTTON = new RegExp(
-  escapeRegExp(t('cozy-sharing:Files.share.cta')),
-  'i'
-)
 const SHARED_FOLDER_NAME = `Shared Folder ${stamp()}`
 const FOLDER_INSIDE = `Inside Folder ${stamp()}`
 
@@ -22,9 +16,7 @@ test.describe.serial('Shared folder browsing', () => {
     await aliceDrive.row(SHARED_FOLDER_NAME).open()
     await alicePage.waitForURL(/\/folder\/[^/]+$/)
 
-    await alicePage.getByRole('button', { name: SHARE_BUTTON }).click()
-    const shareModal = new ShareModalPage(alicePage)
-    await shareModal.waitForOpen()
+    const shareModal = await aliceDrive.openShareModal()
     await shareModal.addMember(USERS.bob.email)
     await shareModal.share()
 
