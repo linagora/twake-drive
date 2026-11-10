@@ -20,8 +20,8 @@ const BOB_ROOT = `${USERS.bob.appUrl}/#/folder`
 const EDITOR_SHARE = `Move Editor Share ${stamp()}`
 const DESTINATION_SHARE = `Move Destination Share ${stamp()}`
 const VIEWER_SHARE = `Move Viewer Share ${stamp()}`
-const NESTED_DESTINATION = `Move Nested Destination ${stamp()}`
-const SEEDED_FILE = `Move Seeded File ${stamp()}.txt`
+const NESTED_DESTINATION = `Z Move Nested Destination ${stamp()}`
+const SEEDED_FILE = `A Move Seeded File ${stamp()}.txt`
 let seededFileId: string | null = null
 
 test.describe.serial('MoveTo sharing destinations', () => {
@@ -88,7 +88,8 @@ test.describe.serial('MoveTo sharing destinations', () => {
         await aliceDrive.row(sourceFile).waitVisible()
         const moveTo = await aliceDrive.row(sourceFile).openMoveTo()
         await moveTo.openFolder(EDITOR_SHARE)
-        if (!nested) await moveTo.expectRowDisabled(SEEDED_FILE)
+        if (!nested)
+          await moveTo.expectFolderBeforeFile(NESTED_DESTINATION, SEEDED_FILE)
         if (nested) await moveTo.openFolder(NESTED_DESTINATION)
         await moveTo.confirmSharedFolderMove()
 
@@ -128,7 +129,7 @@ test.describe.serial('MoveTo sharing destinations', () => {
       await moveTo.expectDestinationTabs()
       await moveTo.openSharings()
       await moveTo.openFolder(EDITOR_SHARE)
-      await moveTo.expectRowDisabled(SEEDED_FILE)
+      await moveTo.expectFolderBeforeFile(NESTED_DESTINATION, SEEDED_FILE)
       await moveTo.openFolder(NESTED_DESTINATION)
       await moveTo.confirmSharedFolderMove()
 

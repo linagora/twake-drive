@@ -30,7 +30,7 @@ interface SharedDriveFolderReturn {
   // dropping an already-loaded folder back to the loading skeleton on refetch.
   lastUpdate: number | null
   hasMore: boolean
-  fetchMore: () => Promise<void>
+  fetchMore: () => Promise<boolean | null>
 }
 
 const useSharedDriveFolder = ({
@@ -97,6 +97,7 @@ const useSharedDriveFolder = ({
         let allIncluded: IOCozyFile[] = []
         let folder: IOCozyFile | undefined
         let cursor: string | null = null
+        let pagesLoaded = 0
 
         for (let page = 0; page < pagesToLoad; page++) {
           const result: PaginatedStatByIdResult = await statById(
@@ -104,9 +105,15 @@ const useSharedDriveFolder = ({
             cursor
           )
           folder = result.folder
-          allIncluded = [...allIncluded, ...(result.included ?? [])]
+          const included = result.included ?? []
+          allIncluded = [...allIncluded, ...included]
           cursor = result.nextCursor
-          if (!result.nextCursor) break
+          pagesLoaded += 1
+          if (
+            !result.nextCursor ||
+            fetchGeneration.current !== currentGeneration
+          )
+            break
         }
 
         if (fetchGeneration.current === currentGeneration) {
@@ -115,7 +122,7 @@ const useSharedDriveFolder = ({
           setLastUpdate(Date.now())
           nextCursorRef.current = cursor
           setNextCursor(cursor)
-          loadedPagesCount.current = pagesToLoad
+          loadedPagesCount.current = pagesLoaded
         }
       } catch (error) {
         logger.error('Error fetching shared drive folder:', error)
@@ -159,6 +166,7 @@ const useSharedDriveFolder = ({
     }
 
     return (): void => {
+      fetchGeneration.current += 1
       if (realtime) {
         realtime.removeListener('ready', debouncedFetch)
         realtime.stop()
@@ -167,8 +175,8 @@ const useSharedDriveFolder = ({
     }
   }, [client, driveId, folderId, statById])
 
-  const fetchMore = useCallback(async (): Promise<void> => {
-    if (isFetchingMore.current || !nextCursorRef.current || !client) return
+  const fetchMore = useCallback(async (): Promise<boolean | null> => {
+    if (isFetchingMore.current || !nextCursorRef.current || !client) return null
 
     isFetchingMore.current = true
     const currentGeneration = fetchGeneration.current
@@ -178,25 +186,26 @@ const useSharedDriveFolder = ({
         folderId,
         nextCursorRef.current
       )
-
-      if (fetchGeneration.current !== currentGeneration) return
+      if (fetchGeneration.current !== currentGeneration) return null
 
       setSharedDriveResult(prev => ({
         ...prev,
-
-        included: [...(prev.included ?? []), ...(included ?? [])]
+        included: [...(prev.included ?? []), ...included]
       }))
       nextCursorRef.current = cursor
       setNextCursor(cursor)
       loadedPagesCount.current += 1
+      return true
     } catch (error) {
+      if (fetchGeneration.current !== currentGeneration) return null
       logger.error('Error fetching more shared drive files:', error)
+      return false
     } finally {
       isFetchingMore.current = false
     }
   }, [client, folderId, statById])
 
-  const hasMore = !!nextCursor
+  const hasMore = Boolean(nextCursor)
 
   return {
     sharedDriveQuery,

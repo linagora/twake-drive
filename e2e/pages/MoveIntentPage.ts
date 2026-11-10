@@ -4,6 +4,7 @@ import { USERS, type User } from '../helpers/config'
 import { expect, expectRowDisabled } from '../helpers/fixtures'
 import { createMoveIntent } from '../helpers/intents'
 import { FilePickerPage } from './FilePickerPage'
+import { expectFolderBeforeFile } from './pickerOrdering'
 
 export interface MoveIntentMessage {
   type: string
@@ -35,12 +36,22 @@ export class MoveIntentPage {
   private readonly moveCounts = new Map<string, number>()
   private readonly readCounts = new Map<string, number>()
   private sharedMoveCount = 0
+  private readonly sharedPageFolders = new Set<string>()
   constructor(
     private readonly page: Page,
     private readonly user: User = USERS.alice
   ) {
     page.on('request', request => {
-      const path = new URL(request.url()).pathname
+      const url = new URL(request.url())
+      const path = url.pathname
+      const sharedPage = path.match(/^\/sharings\/drives\/[^/]+\/([^/]+)$/)
+      if (
+        request.method() === 'GET' &&
+        sharedPage &&
+        url.searchParams.has('page[cursor]')
+      ) {
+        this.sharedPageFolders.add(sharedPage[1])
+      }
       const id = path.match(/\/files\/([^/]+)\/?$/)?.[1]
       if (id && request.method() === 'PATCH')
         this.moveCounts.set(id, (this.moveCounts.get(id) ?? 0) + 1)
@@ -56,6 +67,7 @@ export class MoveIntentPage {
     const intent = await createMoveIntent(this.user)
     await this.page.evaluate(
       ({ intent, data }) => {
+        document.getElementById('move-intent-messages')?.remove()
         const output = document.createElement('output')
         output.id = 'move-intent-messages'
         output.textContent = '[]'
@@ -127,6 +139,10 @@ export class MoveIntentPage {
 
   async expectRowDisabled(name: string): Promise<void> {
     await expectRowDisabled(this.row(name))
+  }
+
+  async expectFolderBeforeFile(folder: string, file: string): Promise<void> {
+    await expectFolderBeforeFile(this.row(folder), this.row(file))
   }
 
   async navigateToFolder(name: string): Promise<void> {
@@ -246,6 +262,58 @@ export class MoveIntentPage {
   }
   crossDriveMoveRequestCount(): number {
     return this.sharedMoveCount
+  }
+
+  async expectSharedPagination(folderId: string): Promise<void> {
+    await expect
+      .poll(async () => {
+        if (this.sharedPageFolders.has(folderId)) return true
+        await this.frame()
+          .getByTestId('virtuoso-scroller')
+          .evaluate(element => {
+            element.scrollTop = element.scrollHeight
+          })
+        return false
+      })
+      .toBe(true)
+    await this.frame()
+      .getByTestId('virtuoso-scroller')
+      .evaluate(element => {
+        element.scrollTop = 0
+      })
+  }
+
+  async failNextSharedPage(folderId: string): Promise<void> {
+    await this.page.route(
+      url =>
+        url.pathname.startsWith('/sharings/drives/') &&
+        url.pathname.endsWith(`/${folderId}`) &&
+        url.searchParams.has('page[cursor]'),
+      route =>
+        route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            errors: [{ status: '503', title: 'Unavailable' }]
+          })
+        }),
+      { times: 1 }
+    )
+  }
+
+  async expectSourceError(): Promise<void> {
+    const error = this.frame().getByTestId('file-picker-source-error')
+    await expect
+      .poll(async () => {
+        if (await error.isVisible()) return true
+        await this.frame()
+          .getByTestId('virtuoso-scroller')
+          .evaluate(element => {
+            element.scrollTop = element.scrollHeight
+          })
+        return false
+      })
+      .toBe(true)
   }
 
   async failNextMove(fileId: string): Promise<void> {
