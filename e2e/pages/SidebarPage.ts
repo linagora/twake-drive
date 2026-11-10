@@ -1,6 +1,5 @@
 import type { Page, Locator } from '@playwright/test'
 
-import { escapeRegExp } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 /** Sidebar / global navigation helpers. Routes that don't have a sidebar
@@ -19,6 +18,16 @@ export class SidebarPage {
     const url = new URL(this.page.url())
     url.hash = hash
     await this.page.goto(url.toString())
+  }
+
+  /** In-app click, so the app's own routing runs (no reload). */
+  async goToMyDrive(): Promise<void> {
+    await this.nav
+      .getByRole('link', {
+        name: t('Nav.item_drive')
+      })
+      .first()
+      .click()
   }
 
   async goToRecent(): Promise<void> {

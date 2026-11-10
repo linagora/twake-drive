@@ -3,7 +3,6 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
   waitForSharingRow
@@ -54,20 +53,10 @@ test.describe.serial('Filtered federated re-sharing', () => {
       root.dataset.e2eDocumentMarker = marker
     }, DOCUMENT_MARKER)
 
-    await bobPage
-      .getByRole('button', { name: t('filters.type.label'), exact: true })
-      .click()
-    await bobPage
-      .getByRole('option', { name: t('filters.type.options.folder') })
-      .click()
+    await bobDrive.filterByFolders()
 
     await expect(bobPage).toHaveURL(/#\/sharings\/with-me\?f\.type=directory$/)
-    await expect(
-      bobPage.getByRole('button', {
-        name: t('filters.type.options.folder'),
-        exact: true
-      })
-    ).toBeVisible()
+    await expect(bobDrive.selectedFoldersFilter).toBeVisible()
     await expect(bobDrive.row(FOLDER_NAME).cell).toBeVisible()
     await expect(bobDrive.row(DOCUMENT_NAME).cell).toHaveCount(0)
 
@@ -79,12 +68,7 @@ test.describe.serial('Filtered federated re-sharing', () => {
     await shareModal.share()
 
     await expect(bobPage).toHaveURL(/#\/sharings\/with-me\?f\.type=directory$/)
-    await expect(
-      bobPage.getByRole('button', {
-        name: t('filters.type.options.folder'),
-        exact: true
-      })
-    ).toBeVisible()
+    await expect(bobDrive.selectedFoldersFilter).toBeVisible()
     await expect(bobDrive.row(FOLDER_NAME).cell).toBeVisible()
     await expect(bobDrive.row(DOCUMENT_NAME).cell).toHaveCount(0)
 

@@ -5,6 +5,7 @@ import {
   createAndShareFolderWithBob,
   waitForSharingRow
 } from '../helpers/sharing'
+import { SidebarPage } from '../pages/SidebarPage'
 
 // Guards linagora/twake-drive#4264: after removing a shared folder's last recipient, the owner must still be able to share and open it.
 const FOLDER_NAME = `Unshared Folder ${stamp()}`
@@ -46,20 +47,12 @@ test.describe.serial('Unsharing a folder', () => {
     await modal.close()
 
     // Folder must still open from My Drive; navigate in-app (page.goto would reload and mask the bug).
-    await alicePage
-      .locator('nav')
-      .getByRole('link', {
-        name: new RegExp(escapeRegExp(t('Nav.item_drive')), 'i')
-      })
-      .first()
-      .click()
+    await new SidebarPage(alicePage).goToMyDrive()
     await alicePage.waitForURL(/\/folder(\/[^/]+)?$/)
     await aliceDrive.row(FOLDER_NAME).waitVisible()
     await aliceDrive.openFolder(FOLDER_NAME)
     await expect(
-      alicePage.getByText(
-        new RegExp(escapeRegExp(t('error.open_folder')), 'i')
-      ),
+      aliceDrive.openFolderError,
       'folder must open without error'
     ).toBeHidden()
   })

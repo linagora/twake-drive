@@ -2,19 +2,13 @@ import { copyFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
-import {
-  escapeRegExp,
-  test,
-  expect,
-  stamp,
-  safeUnlink
-} from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
+import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
 import {
   createAndShareFolderWithBob,
   openSharedDrive,
   waitForSharingRow
 } from '../helpers/sharing'
+import { FileViewerPage } from '../pages/FileViewerPage'
 
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures')
 const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
@@ -112,28 +106,12 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     await bobDrive.row(FILE_NAME).open()
     await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+\/file\/[^/]+/)
 
-    // new-file-viewer-ui is off in the e2e stack, so the viewer's Share
-    // affordance lives in the actions (dots) menu. That trigger is icon-only;
-    // the Download button carries a text label, so restricting to text-less
-    // buttons keeps the target stable if cozy-viewer appends a labelled
-    // toolbar button (summarize, print, ...).
-    const toolbar = bobPage.getByTestId('viewer-toolbar')
-    await toolbar
-      .getByRole('button')
-      .filter({ hasNotText: /\S/ })
-      .last()
-      .click()
-    await bobPage
-      .getByRole('menu')
-      .getByRole('menuitem', {
-        name: new RegExp(`^${escapeRegExp(t('Files.share.cta'))}$`, 'i')
-      })
-      .click()
+    const shareModal = await new FileViewerPage(bobPage).openShareFromMenu()
 
     // The fixed route: `v/share` under the shared-drive file viewer. The
     // regression rendered a blank page here — no dialog, no viewer.
     await expect(bobPage).toHaveURL(/\/v\/share($|\?|#)/)
-    const dialog = bobPage.getByRole('dialog')
+    const { dialog } = shareModal
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText(FILE_PREFIX)
   })

@@ -51,12 +51,7 @@ test.describe.serial('Shared drive members & permissions', () => {
     // Control: on his own drive root the write controls are there, so the
     // hidden-assertions below can't pass because of a wrong selector.
     await bobPage.goto(`${USERS.bob.appUrl}/#/folder`)
-    const createButton = bobPage.getByRole('button', {
-      name: new RegExp(`^${escapeRegExp(t('toolbar.menu_create'))}$`, 'i')
-    })
-    const uploadButton = bobPage.getByRole('button', {
-      name: new RegExp(`^${escapeRegExp(t('upload.label'))}$`, 'i')
-    })
+    const { createButton, uploadButton } = bobDrive
     await expect(createButton).toBeVisible()
     await expect(uploadButton).toBeVisible()
 
@@ -125,15 +120,7 @@ test.describe.serial('Shared drive members & permissions', () => {
     await createAndShareFolderWithBob(alicePage, aliceDrive, LEAVE_DRIVE)
     await waitForSharingRow(bobPage, USERS.bob, bobDrive, LEAVE_DRIVE)
 
-    const menu = await bobDrive.row(LEAVE_DRIVE).openMenu()
-    await menu
-      .getByRole('menuitem', {
-        name: new RegExp(
-          escapeRegExp(t('toolbar.menu_leave_shared_drive')),
-          'i'
-        )
-      })
-      .click()
+    await bobDrive.row(LEAVE_DRIVE).leaveSharing()
 
     await expect(async () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)

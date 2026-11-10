@@ -36,6 +36,54 @@ export class ShareModalPage {
     })
   }
 
+  get onlyByLinkNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(
+          t('cozy-sharing:Files.share.shareByEmail.onlyByLink', {
+            type: t('cozy-sharing:Files.share.shareByEmail.type.folder')
+          })
+        ),
+        'i'
+      )
+    )
+  }
+
+  get hasSharedChildNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(t('cozy-sharing:Files.share.shareByEmail.hasSharedChild')),
+        'i'
+      )
+    )
+  }
+
+  get whoHasAccess(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(t('cozy-sharing:Share.contacts.whoHasAccess')),
+        'i'
+      )
+    )
+  }
+
+  get copyLinkButton(): Locator {
+    return this.dialog.getByRole('button', {
+      name: new RegExp(
+        `^${escapeRegExp(t('cozy-sharing:Files.share.shareByLink.copy'))}$`,
+        'i'
+      )
+    })
+  }
+
+  get contactCombobox(): Locator {
+    return this.dialog.getByRole('combobox')
+  }
+
+  get firstListItem(): Locator {
+    return this.dialog.getByRole('listitem').first()
+  }
+
   async waitForOpen(): Promise<void> {
     await this.dialog.waitFor({ state: 'visible' })
   }
@@ -190,6 +238,15 @@ export class ShareModalPage {
       { timeout: 15_000 }
     )
     await this.close()
+  }
+
+  /** Closes through the "Done" or "Close" button, whichever the modal shows. */
+  async dismiss(): Promise<void> {
+    await this.dialog
+      .getByRole('button', { name: /^(done|close)$/i })
+      .first()
+      .click()
+    await this.dialog.waitFor({ state: 'hidden' })
   }
 
   async close(): Promise<void> {
