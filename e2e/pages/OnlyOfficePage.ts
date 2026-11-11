@@ -1,11 +1,31 @@
 import type { FrameLocator, Page } from '@playwright/test'
 
 import type { FileRow } from './FileRow'
+import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 export class OnlyOfficePage {
   constructor(private readonly page: Page) {}
+
+  /** The Share button of the toolbar of Drive above the editor. */
+  async openShareModal(): Promise<ShareModalPage> {
+    await this.page
+      .getByRole('button', {
+        name: t('cozy-sharing:Files.share.cta'),
+        exact: true
+      })
+      .click()
+    // The editor is a full-screen dialog of its own
+    const modal = new ShareModalPage(
+      this.page,
+      this.page
+        .getByRole('dialog')
+        .filter({ hasNot: this.page.locator('iframe[name="frameEditor"]') })
+    )
+    await modal.waitForOpen()
+    return modal
+  }
 
   async openFromRow(row: FileRow, fileId: string): Promise<void> {
     const configResponse = this.page.waitForResponse(
