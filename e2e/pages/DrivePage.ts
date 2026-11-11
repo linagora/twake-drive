@@ -108,13 +108,9 @@ export class DrivePage {
 
   /** The toolbar menu stays open after the click, so it is closed here. */
   async downloadCurrentFolder(): Promise<Download> {
-    await this.page
-      .getByTestId('fil-toolbar-files')
-      .getByRole('button', { name: t('Toolbar.more') })
-      .click()
+    const menu = await this.openToolbarMenu()
     const download = this.page.waitForEvent('download')
-    await this.page
-      .getByRole('menu')
+    await menu
       .getByRole('menuitem', {
         name: new RegExp(
           `^${escapeRegExp(t('toolbar.menu_download_folder'))}$`,
@@ -129,23 +125,13 @@ export class DrivePage {
 
   /** Sends the folder on display to the Bin from the menu of the toolbar. */
   async trashCurrentFolder(): Promise<void> {
-    await this.page
-      .getByTestId('fil-toolbar-files')
-      .getByRole('button', { name: t('Toolbar.more') })
-      .click()
-    await this.page
-      .getByRole('menu')
+    const menu = await this.openToolbarMenu()
+    await menu
       .getByRole('menuitem', {
         name: new RegExp(`^${escapeRegExp(t('toolbar.trash'))}$`, 'i')
       })
       .click()
-    const dialog = this.page.getByRole('dialog')
-    await dialog
-      .getByRole('button', {
-        name: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i')
-      })
-      .click()
-    await dialog.waitFor({ state: 'hidden' })
+    await this.confirmTrash()
   }
 
   async downloadSelection(): Promise<Download> {
@@ -160,6 +146,18 @@ export class DrivePage {
 
   async trashSelectionWithDeleteKey(): Promise<void> {
     await this.page.keyboard.press('Delete')
+    await this.confirmTrash()
+  }
+
+  private async openToolbarMenu(): Promise<Locator> {
+    await this.page
+      .getByTestId('fil-toolbar-files')
+      .getByRole('button', { name: t('Toolbar.more') })
+      .click()
+    return this.page.getByRole('menu')
+  }
+
+  private async confirmTrash(): Promise<void> {
     const dialog = this.page.getByRole('dialog')
     await dialog
       .getByRole('button', {
