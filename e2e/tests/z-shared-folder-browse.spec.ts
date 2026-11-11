@@ -47,13 +47,13 @@ test.describe.serial('Shared folder browsing', () => {
   }) => {
     await alicePage.goto(`${USERS.alice.appUrl}/#/sharings/by-me`)
     await aliceDrive.row(SHARED_FOLDER_NAME).open()
-    await expect(alicePage.getByText(SHARED_FOLDER_NAME).first()).toBeVisible()
+    await expect(aliceDrive.breadcrumb).toContainText(SHARED_FOLDER_NAME)
     await aliceDrive.createFolder(FOLDER_INSIDE)
 
     await expect(async () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)
       await bobDrive.row(SHARED_FOLDER_NAME).open()
-      await expect(bobPage.getByText(SHARED_FOLDER_NAME).first()).toBeVisible({
+      await expect(bobDrive.breadcrumb).toContainText(SHARED_FOLDER_NAME, {
         timeout: 5_000
       })
       await bobDrive.row(FOLDER_INSIDE).waitVisible({ timeout: 5_000 })

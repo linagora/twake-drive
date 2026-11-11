@@ -85,6 +85,21 @@ export class ShareModalPage {
     })
   }
 
+  get hasSharedParentNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(
+          t('cozy-sharing:Files.share.shareByEmail.hasSharedParent')
+        ),
+        'i'
+      )
+    )
+  }
+
+  get contactInput(): Locator {
+    return this.dialog.getByRole('textbox').first()
+  }
+
   get contactCombobox(): Locator {
     return this.dialog.getByRole('combobox')
   }
@@ -101,10 +116,9 @@ export class ShareModalPage {
    * when one is suggested, whose suggestion may show its instance rather than
    * its email, so the suggestion itself is not clicked. */
   async addMember(email: string): Promise<void> {
-    const contactInput = this.dialog.getByRole('textbox').first()
-    await contactInput.fill(email)
-    await contactInput.press('Enter')
-    await expect(contactInput).toHaveValue('')
+    await this.contactInput.fill(email)
+    await this.contactInput.press('Enter')
+    await expect(this.contactInput).toHaveValue('')
   }
 
   /** Pick the role granted to the members being added. The selector is the
@@ -241,11 +255,9 @@ export class ShareModalPage {
    * anchored so it can't also match "Copy link" or "Send link". */
   async share(): Promise<void> {
     await this.shareButton.click()
-    await expect(this.dialog.getByRole('textbox').first()).toHaveAttribute(
-      'placeholder',
-      /.+/,
-      { timeout: 15_000 }
-    )
+    await expect(this.contactInput).toHaveAttribute('placeholder', /.+/, {
+      timeout: 15_000
+    })
     await this.close()
   }
 
