@@ -1,6 +1,5 @@
 import { USERS } from '../helpers/config'
-import { escapeRegExp, test, expect, stamp } from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
+import { test, expect, stamp } from '../helpers/fixtures'
 import {
   createAndShareFolderWithBob,
   waitForSharingRow
@@ -30,19 +29,14 @@ test.describe.serial('Unsharing a folder', () => {
     await modal.removeMember('bob')
 
     // Modal must stay shareable (no link-only "shared parent" restriction, contact input present). Soft so the open-folder check below also runs.
-    const dialog = alicePage.getByRole('dialog')
     await expect
-      .soft(dialog, 'modal must stay shareable, not link-only')
-      .not.toContainText(
-        new RegExp(
-          escapeRegExp(
-            t('cozy-sharing:Files.share.shareByEmail.hasSharedParent')
-          ),
-          'i'
-        )
+      .soft(
+        modal.hasSharedParentNotice,
+        'modal must stay shareable, not link-only'
       )
+      .toHaveCount(0)
     await expect
-      .soft(dialog.getByRole('textbox').first(), 'owner can still add contacts')
+      .soft(modal.contactInput, 'owner can still add contacts')
       .toBeVisible()
     await modal.close()
 

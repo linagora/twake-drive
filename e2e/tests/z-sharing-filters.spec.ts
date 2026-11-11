@@ -47,11 +47,9 @@ test.describe.serial('Filtered federated re-sharing', () => {
     await waitForSharingRow(bobPage, USERS.bob, bobDrive, FOLDER_NAME)
 
     await charliePage.goto(`${USERS.charlie.appUrl}/#/sharings/with-me`)
-    await expect(charliePage.getByTestId('sharings-filters')).toBeVisible()
+    await expect(charlieDrive.sharingsFilters).toBeVisible()
     await expect(charlieDrive.row(FOLDER_NAME).cell).toHaveCount(0)
-    await charliePage.locator('html').evaluate((root, marker) => {
-      root.dataset.e2eDocumentMarker = marker
-    }, DOCUMENT_MARKER)
+    await charlieDrive.markDocument(DOCUMENT_MARKER)
 
     await bobDrive.filterByFolders()
 
@@ -76,9 +74,6 @@ test.describe.serial('Filtered federated re-sharing', () => {
       timeout: 30_000
     })
     await expect(charliePage).toHaveURL(/#\/sharings\/with-me$/)
-    await expect(charliePage.locator('html')).toHaveAttribute(
-      'data-e2e-document-marker',
-      DOCUMENT_MARKER
-    )
+    await expect(charlieDrive.markedDocument(DOCUMENT_MARKER)).toHaveCount(1)
   })
 })

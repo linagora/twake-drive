@@ -15,7 +15,7 @@ import { t } from '../helpers/i18n'
  */
 export class DrivePage {
   private readonly page: Page
-  private readonly fileList: Locator
+  readonly fileList: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -66,8 +66,30 @@ export class DrivePage {
     })
   }
 
+  get sharingsFilters(): Locator {
+    return this.page.getByTestId('sharings-filters')
+  }
+
   get breadcrumb(): Locator {
     return this.page.locator('main').getByRole('navigation').first()
+  }
+
+  /** The tail of a long name is truncated, so `prefix` may be partial. */
+  async openBreadcrumbItem(prefix: string): Promise<void> {
+    await this.breadcrumb.getByText(prefix, { exact: false }).first().click()
+  }
+
+  /** Leaves a mark on the document that a full page load would wipe. */
+  async markDocument(marker: string): Promise<void> {
+    await this.page.locator('html').evaluate((root, value) => {
+      root.dataset.e2eDocumentMarker = value
+    }, marker)
+  }
+
+  markedDocument(marker: string): Locator {
+    return this.page.locator(
+      `html[data-e2e-document-marker="${marker.replace(/["\\]/g, '\\$&')}"]`
+    )
   }
 
   /** With drive.virtualization.enabled, a row of the virtualized table. */

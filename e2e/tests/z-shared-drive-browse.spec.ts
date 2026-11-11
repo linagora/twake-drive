@@ -85,9 +85,7 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
     // error or a stuck skeleton.
     await bobDrive.waitForEmptyState()
 
-    // Climb back up through the breadcrumb (prefix match: the tail truncates).
-    const breadcrumb = bobPage.locator('main').getByRole('navigation').first()
-    await breadcrumb.getByText(DRIVE_PREFIX, { exact: false }).first().click()
+    await bobDrive.openBreadcrumbItem(DRIVE_PREFIX)
     await bobDrive.row(SUBFOLDER).waitVisible({ timeout: 10_000 })
     await bobDrive.row(FILE_NAME).waitVisible()
   })
