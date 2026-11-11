@@ -25,6 +25,9 @@ const DICTIONARIES: Record<string, string> = {
   ),
   'cozy-ui-member-list': require.resolve(
     `cozy-ui/react/MemberList/locales/${LOCALE}.json`
+  ),
+  'cozy-ui-plus-paywall': require.resolve(
+    `cozy-ui-plus/src/Paywall/locales/${LOCALE}.json`
   )
 }
 
