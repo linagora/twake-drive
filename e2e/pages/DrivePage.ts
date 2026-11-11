@@ -3,7 +3,7 @@ import type { Download, Page, Locator } from '@playwright/test'
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 /**
@@ -170,6 +170,20 @@ export class DrivePage {
       .getByRole('banner')
       .getByRole('heading', { name, exact: true })
     await desktopBreadcrumb.or(mobileHeading).waitFor({ state: 'attached' })
+  }
+
+  async cutSelection(): Promise<void> {
+    await this.page.keyboard.press('ControlOrMeta+x')
+    await expect(
+      this.page.getByRole('alert').filter({ hasText: t('alert.item_cut') })
+    ).toBeVisible()
+  }
+
+  async paste(): Promise<void> {
+    await this.page.keyboard.press('ControlOrMeta+v')
+    await expect(
+      this.page.getByRole('alert').filter({ hasText: t('alert.item_pasted') })
+    ).toBeVisible()
   }
 
   /** Locator for the file list cell whose filename contains the substring —
