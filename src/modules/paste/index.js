@@ -80,6 +80,32 @@ export const executeMove = async (
 }
 
 /**
+ * Copies a file or folder, going through the shared drive API when the copy
+ * crosses a shared drive boundary.
+ *
+ * @param {CozyClient} client - The cozy client instance
+ * @param {import('@/components/FolderPicker/types').File} entry - The file or folder to copy
+ * @param {import('@/components/FolderPicker/types').File} destDirectory - The destination directory
+ * @returns {Promise<Object>} The result of the copy operation
+ */
+export const executeCopy = async (client, entry, destDirectory) => {
+  const isCrossDriveCopy =
+    entry._type !== NEXTCLOUD_FILE_ID &&
+    destDirectory._type !== NEXTCLOUD_FILE_ID &&
+    (entry.driveId || destDirectory.driveId) &&
+    entry.driveId !== destDirectory.driveId
+  if (isCrossDriveCopy) {
+    return await executeSharedDriveMoveOrCopy(
+      client,
+      entry,
+      destDirectory,
+      'copy'
+    )
+  }
+  return await copy(client, entry, destDirectory, { driveId: entry.driveId })
+}
+
+/**
  * Handles paste operations (copy or cut) for multiple files/folders.
  * Processes each file individually and handles validation, conflicts, and sharing permissions.
  *
@@ -183,7 +209,7 @@ const handleDuplicateWithValidation = async (
 ) => {
   const { showAlert, t } = options
 
-  const result = await copy(client, file, targetFolder)
+  const result = await executeCopy(client, file, targetFolder)
 
   const isCopyingInsideNextcloud = targetFolder._type === NEXTCLOUD_FILE_ID
   if (isCopyingInsideNextcloud) {
