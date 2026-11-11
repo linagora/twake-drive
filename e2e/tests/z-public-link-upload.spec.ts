@@ -1,13 +1,12 @@
 import { USERS } from '../helpers/config'
 import { expect, stamp, test } from '../helpers/fixtures'
+import { createEditableLink } from '../helpers/sharing'
 import {
   createFile,
   createFolder,
   fetchFileMetadataByPath
 } from '../helpers/stack'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
-import { ShareByLinkPage } from '../pages/ShareByLinkPage'
-import { ShareModalPage } from '../pages/ShareModalPage'
 
 const ALICE = USERS.alice
 
@@ -16,9 +15,6 @@ test('a visitor uploads a file through an editable public link', async ({
   aliceDrive,
   publicPage
 }) => {
-  await alicePage
-    .context()
-    .grantPermissions(['clipboard-read', 'clipboard-write'])
   const folder = `Public upload ${stamp()}`
   const folderId = await createFolder({
     instance: ALICE.instance,
@@ -35,14 +31,7 @@ test('a visitor uploads a file through an editable public link', async ({
 
   await alicePage.goto(`${ALICE.appUrl}/#/folder/${folderId}`)
   await aliceDrive.row(name).waitVisible()
-  await aliceDrive.openShareModal()
-  const link = new ShareByLinkPage(alicePage)
-  const url = await link.createLink()
-  // The role of the link shows once the modal reads it again
-  await new ShareModalPage(alicePage).dismiss()
-  await aliceDrive.openShareModal()
-  await link.waitForLinkRow()
-  await link.allowEditing()
+  const url = await createEditableLink(alicePage, aliceDrive)
 
   const visitor = new PublicLinkPage(publicPage)
   await visitor.open(url)
