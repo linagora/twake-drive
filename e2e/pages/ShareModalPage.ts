@@ -21,9 +21,11 @@ export class ShareModalPage {
   /** The modal dialog — exposed so tests can assert its inner elements. */
   readonly dialog: Locator
 
-  constructor(page: Page) {
+  /** `dialog` narrows the modal down when another dialog stays open around
+   * it, such as the editor of OnlyOffice. */
+  constructor(page: Page, dialog: Locator = page.getByRole('dialog')) {
     this.page = page
-    this.dialog = page.getByRole('dialog')
+    this.dialog = dialog
   }
 
   /** Send button of the invite field. */
