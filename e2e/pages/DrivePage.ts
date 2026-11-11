@@ -98,6 +98,27 @@ export class DrivePage {
     return result
   }
 
+  /** Sends the folder on display to the Bin from the menu of the toolbar. */
+  async trashCurrentFolder(): Promise<void> {
+    await this.page
+      .getByTestId('fil-toolbar-files')
+      .getByRole('button', { name: t('Toolbar.more') })
+      .click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('toolbar.trash'))}$`, 'i')
+      })
+      .click()
+    const dialog = this.page.getByRole('dialog')
+    await dialog
+      .getByRole('button', {
+        name: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i')
+      })
+      .click()
+    await dialog.waitFor({ state: 'hidden' })
+  }
+
   async downloadSelection(): Promise<Download> {
     const download = this.page.waitForEvent('download')
     await this.page
