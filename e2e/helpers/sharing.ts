@@ -4,6 +4,8 @@ import { USERS, User } from './config'
 import { escapeRegExp, expect } from './fixtures'
 import { t } from './i18n'
 import { DrivePage } from '../pages/DrivePage'
+import { ShareByLinkPage } from '../pages/ShareByLinkPage'
+import { ShareModalPage } from '../pages/ShareModalPage'
 
 /**
  * Cross-instance sharing flows shared by the shared-drive specs. With the
@@ -155,4 +157,25 @@ export async function openOwnerFolder(
   await page.goto(`${user.appUrl}/#/folder`)
   await drive.row(name).open()
   await page.waitForURL(/\/folder\/[^/]+$/)
+}
+
+/**
+ * Create the public link of the folder on display and let its visitors edit,
+ * then close the share modal. Returns the URL of the link.
+ */
+export async function createEditableLink(
+  page: Page,
+  drive: DrivePage
+): Promise<string> {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await drive.openShareModal()
+  const link = new ShareByLinkPage(page)
+  const url = await link.createLink()
+  // The role of the link only shows once the modal reads it again
+  await new ShareModalPage(page).dismiss()
+  await drive.openShareModal()
+  await link.waitForLinkRow()
+  await link.allowEditing()
+  await new ShareModalPage(page).dismiss()
+  return url
 }

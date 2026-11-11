@@ -20,6 +20,7 @@ import {
   stamp
 } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
+import { createEditableLink } from '../helpers/sharing'
 import type { DrivePage } from '../pages/DrivePage'
 import { ShareModalPage } from '../pages/ShareModalPage'
 import { ShareByLinkPage } from '../pages/ShareByLinkPage'
@@ -163,10 +164,6 @@ test.describe('Share by link', () => {
     aliceDrive,
     publicPage
   }) => {
-    await alicePage
-      .context()
-      .grantPermissions(['clipboard-read', 'clipboard-write'])
-
     await alicePage.goto(ALICE_ROOT)
     const sharedFolder = `Public move ${stamp()}`
     const destination = `Destination ${stamp()}`
@@ -185,12 +182,7 @@ test.describe('Share by link', () => {
       await aliceDrive.uploadFiles(sourcePath)
       await aliceDrive.row(sourceFile).waitVisible()
 
-      await aliceDrive.openShareModal()
-      const link = new ShareByLinkPage(alicePage)
-      const url = await link.createLink()
-      await reopenShareModal(alicePage, aliceDrive)
-      await link.waitForLinkRow()
-      await link.allowEditing()
+      const url = await createEditableLink(alicePage, aliceDrive)
 
       await publicPage.goto(url)
       const publicLink = new PublicLinkPage(publicPage)
