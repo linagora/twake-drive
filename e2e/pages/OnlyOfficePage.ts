@@ -1,4 +1,4 @@
-import type { FrameLocator, Page } from '@playwright/test'
+import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import type { FileRow } from './FileRow'
 import { ShareModalPage } from './ShareModalPage'
@@ -108,5 +108,17 @@ export class OnlyOfficePage {
     if (!reopened) return
     await this.page.keyboard.press('Escape')
     await menu.waitFor({ state: 'hidden' })
+  }
+
+  /** Shown when the file goes to the Bin while it is being edited. */
+  get deletedNotice(): Locator {
+    return this.page.getByText(t('FileDeletedModal.title'), { exact: true })
+  }
+
+  async restoreDeletedFile(): Promise<void> {
+    await this.page
+      .getByRole('button', { name: t('FileDeletedModal.confirm') })
+      .click()
+    await this.deletedNotice.waitFor({ state: 'hidden' })
   }
 }
