@@ -108,6 +108,17 @@ export class DrivePage {
     return await download
   }
 
+  async trashSelectionWithDeleteKey(): Promise<void> {
+    await this.page.keyboard.press('Delete')
+    const dialog = this.page.getByRole('dialog')
+    await dialog
+      .getByRole('button', {
+        name: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i')
+      })
+      .click()
+    await dialog.waitFor({ state: 'hidden' })
+  }
+
   // Click the recipients avatars in the folder toolbar
   // to open the ShareModal for the folder itself
   async openShareFromToolbarRecipients(): Promise<ShareModalPage> {
