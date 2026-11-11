@@ -1,4 +1,4 @@
-import type { FrameLocator, Page } from '@playwright/test'
+import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import type { FileRow } from './FileRow'
 import { ShareModalPage } from './ShareModalPage'
@@ -54,6 +54,11 @@ export class OnlyOfficePage {
         .frameLocator('iframe[name="frameEditor"]')
         .getByText('Page 1 of 1')
     ).toBeVisible({ timeout: 90_000 })
+  }
+
+  /** Shown when the file changes on the stack while it is being edited. */
+  get divergedNotice(): Locator {
+    return this.page.getByText(t('FileDivergedModal.title'), { exact: true })
   }
 
   private get editor(): FrameLocator {
