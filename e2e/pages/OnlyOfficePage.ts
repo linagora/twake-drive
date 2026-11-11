@@ -79,7 +79,11 @@ export class OnlyOfficePage {
     return modal
   }
 
-  async openFromRow(row: FileRow, fileId: string): Promise<void> {
+  async openFromRow(
+    row: FileRow,
+    fileId: string,
+    documentType: 'word' | 'pdf' = 'word'
+  ): Promise<void> {
     const configResponse = this.page.waitForResponse(
       response => response.url().includes(`/office/${fileId}/open`),
       { timeout: 60_000 }
@@ -95,7 +99,7 @@ export class OnlyOfficePage {
     const body = (await response.json()) as {
       data: { attributes: { onlyoffice: { documentType: string } } }
     }
-    expect(body.data.attributes.onlyoffice.documentType).toBe('word')
+    expect(body.data.attributes.onlyoffice.documentType).toBe(documentType)
 
     await expect(this.page.getByTestId('onlyoffice-title')).toBeVisible()
     await expect(this.page.locator('iframe[name="frameEditor"]')).toBeVisible({
