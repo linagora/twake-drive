@@ -123,5 +123,9 @@ test.describe('Upload over an existing file', () => {
       })
       expect(copy.status).toBe(404)
     }
+
+    await alicePage.reload()
+    await aliceDrive.row(names[1]).waitVisible()
+    await expect(aliceDrive.matching(stem)).toHaveCount(names.length)
   })
 })

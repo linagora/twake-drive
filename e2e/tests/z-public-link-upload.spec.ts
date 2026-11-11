@@ -53,4 +53,7 @@ test('a visitor uploads a file through an editable public link', async ({
         ).status
     )
     .toBe(200)
+
+  await alicePage.reload()
+  await aliceDrive.row(uploaded).waitVisible()
 })
