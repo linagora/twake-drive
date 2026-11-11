@@ -112,5 +112,13 @@ test.describe.serial('Sharing invitation banner', () => {
     // come back.
     await waitForSharingRow(bobPage, USERS.bob, bobDrive, CLOSED)
     await expect.poll(isNew).toBe(false)
+
+    // The row shows the sharings are loaded, so the banner would be back too
+    await bobPage.reload()
+    await bobDrive.row(CLOSED).waitVisible()
+    await expect.poll(isNew).toBe(false)
+    expect(await new InvitationBannerPage(bobPage).sharedName()).not.toBe(
+      CLOSED
+    )
   })
 })
