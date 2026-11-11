@@ -79,6 +79,12 @@ export class PublicLinkPage {
     return this.drive.row(name)
   }
 
+  async uploadFiles(
+    files: Parameters<Locator['setInputFiles']>[0]
+  ): Promise<void> {
+    await this.drive.uploadFiles(files)
+  }
+
   async openFolder(name: string): Promise<void> {
     await this.drive.openFolder(name)
   }
