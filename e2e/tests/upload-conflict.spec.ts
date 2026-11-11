@@ -4,7 +4,8 @@ import {
   countFileVersions,
   createFile,
   createFolder,
-  fetchFileContent
+  fetchFileContent,
+  fetchFileMetadataByPath
 } from '../helpers/stack'
 import { FileViewerPage } from '../pages/FileViewerPage'
 import { UploadConflictDialogPage } from '../pages/UploadConflictDialogPage'
@@ -70,5 +71,57 @@ test.describe('Upload over an existing file', () => {
     await copy.waitVisible()
     await expect(aliceDrive.matching(stem)).toHaveCount(2)
     expect(await contentOf(fileId)).toBe('second')
+  })
+
+  test('one Replace applies to every conflicting file of an upload', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    const folder = `Conflict batch ${stamp()}`
+    const folderId = await createFolder({
+      instance: ALICE.instance,
+      name: folder
+    })
+    const stem = `batch-${stamp()}`
+    const names = [`${stem}-a.txt`, `${stem}-b.txt`]
+    const fileIds: string[] = []
+    for (const name of names) {
+      fileIds.push(
+        await createFile({
+          instance: ALICE.instance,
+          name,
+          content: 'before',
+          parentId: folderId
+        })
+      )
+    }
+
+    await alicePage.goto(`${ALICE.appUrl}/#/folder/${folderId}`)
+    await aliceDrive.row(names[1]).waitVisible()
+    await aliceDrive.uploadFiles(
+      names.map(name => ({
+        name,
+        mimeType: 'text/plain',
+        buffer: Buffer.from(`after ${name}`)
+      }))
+    )
+    // Asked once: a second dialog would hold the second file back
+    await new UploadConflictDialogPage(alicePage).replace()
+
+    for (const [index, name] of names.entries()) {
+      await expect
+        .poll(() =>
+          fetchFileContent({ instance: ALICE.instance, fileId: fileIds[index] })
+        )
+        .toBe(`after ${name}`)
+    }
+    // Both uploads are done: none of them left a "(1)" copy on the stack
+    for (const name of names) {
+      const copy = await fetchFileMetadataByPath({
+        instance: ALICE.instance,
+        path: `/${folder}/${name.replace(/\.txt$/, ' (1).txt')}`
+      })
+      expect(copy.status).toBe(404)
+    }
   })
 })
