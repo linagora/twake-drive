@@ -75,6 +75,49 @@ const getBreadcrumbPath = async ({
   return returnPath
 }
 
+const usePublicFolderActions = ({
+  base,
+  refreshAfterChange,
+  hasWritePermissions,
+  files,
+  displayedFolder
+}) => {
+  const { isOwner, byDocId } = useSharingContext()
+  const actionOptions = {
+    ...base,
+    refresh: refreshAfterChange,
+    hasWriteAccess: hasWritePermissions,
+    canMove: hasWritePermissions,
+    canDuplicate: hasWritePermissions,
+    isPublic: true,
+    isOwner,
+    byDocId,
+    selectAll: () => base.toggleSelectAllItems(files),
+    displayedFolder,
+    onClose: () => {
+      refreshAfterChange()
+    }
+  }
+  return makeActions(
+    [
+      selectAllItems,
+      download,
+      hr,
+      summariseByAI,
+      hr,
+      moveTo,
+      duplicateTo,
+      hr,
+      rename,
+      personalizeFolder,
+      versions,
+      hr,
+      trash
+    ],
+    actionOptions
+  )
+}
+
 const PublicFolderView = ({ sharedDocumentId }) => {
   const base = useFolderViewBase()
   const { navigate, pathname } = base
@@ -83,7 +126,7 @@ const PublicFolderView = ({ sharedDocumentId }) => {
   const currentFolderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
   const { hasWritePermissions } = usePublicWritePermissions()
-  const { refresh, isOwner, byDocId } = useSharingContext()
+  const { refresh } = useSharingContext()
   const sharingInfos = useSharingInfos()
   const isOnSharedFolder =
     !sharingInfos.loading &&
@@ -102,6 +145,22 @@ const PublicFolderView = ({ sharedDocumentId }) => {
     sharingRefresh: refresh
   })
 
+  useEffect(() => {
+    if (state?.refresh === true) {
+      refreshFolderContent()
+      // Clear the state to prevent repeated refreshes
+      navigate(pathname, { replace: true, state: null })
+    }
+  }, [state, refreshFolderContent, navigate, pathname])
+
+  const actions = usePublicFolderActions({
+    base,
+    refreshAfterChange,
+    hasWritePermissions,
+    files: filesResult.data,
+    displayedFolder
+  })
+
   useKeyboardShortcuts({
     onPaste: refreshAfterChange,
     canPaste: hasWritePermissions && hasClipboardData,
@@ -114,50 +173,9 @@ const PublicFolderView = ({ sharedDocumentId }) => {
     isPublic: true,
     pushModal: base.pushModal,
     popModal: base.popModal,
-    refresh: refreshAfterChange
-  })
-
-  useEffect(() => {
-    if (state?.refresh === true) {
-      refreshFolderContent()
-      // Clear the state to prevent repeated refreshes
-      navigate(pathname, { replace: true, state: null })
-    }
-  }, [state, refreshFolderContent, navigate, pathname])
-
-  const actionOptions = {
-    ...base,
     refresh: refreshAfterChange,
-    hasWriteAccess: hasWritePermissions,
-    canMove: hasWritePermissions,
-    canDuplicate: hasWritePermissions,
-    isPublic: true,
-    isOwner,
-    byDocId,
-    selectAll: () => base.toggleSelectAllItems(filesResult.data),
-    displayedFolder,
-    onClose: () => {
-      refreshAfterChange()
-    }
-  }
-  const actions = makeActions(
-    [
-      selectAllItems,
-      download,
-      hr,
-      summariseByAI,
-      hr,
-      moveTo,
-      duplicateTo,
-      hr,
-      rename,
-      personalizeFolder,
-      versions,
-      hr,
-      trash
-    ],
-    actionOptions
-  )
+    actions
+  })
 
   const rootBreadcrumbPath = {
     id: ROOT_DIR_ID,

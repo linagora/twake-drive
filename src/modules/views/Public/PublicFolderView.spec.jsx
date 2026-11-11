@@ -9,6 +9,8 @@ import usePublicFilesQuery from './usePublicFilesQuery'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+
 jest.mock('cozy-client/dist/hooks/useCapabilities', () =>
   jest.fn().mockReturnValue({ capabilities: {} })
 )
@@ -78,6 +80,10 @@ jest.mock('./usePublicFilesQuery', () => {
   return jest.fn()
 })
 jest.mock('./usePublicWritePermissions', () => jest.fn().mockReturnValue(false))
+jest.mock('@/hooks/useKeyboardShortcuts', () => {
+  const actual = jest.requireActual('@/hooks/useKeyboardShortcuts')
+  return { useKeyboardShortcuts: jest.fn(actual.useKeyboardShortcuts) }
+})
 jest.mock('components/pushClient', () => ({
   isMacOS: jest.fn(() => false),
   isIOS: jest.fn(() => false),
@@ -138,6 +144,18 @@ describe('Public View', () => {
         return acc
       }, {})
     })
+  })
+
+  it('lets F2 follow the Rename rule of its menu on a read-only link', () => {
+    jest.spyOn(console, 'warn').mockImplementation()
+    jest.spyOn(console, 'error').mockImplementation()
+    setup()
+
+    const { actions } = useKeyboardShortcuts.mock.calls.at(-1)[0]
+    const { rename } = actions.find(action => 'rename' in action)
+    expect(
+      rename.displayCondition([{ _id: 'file-1', type: 'file' }])
+    ).toBeFalsy()
   })
 
   it('renders the public view', async () => {

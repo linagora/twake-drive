@@ -34,16 +34,6 @@ const NextcloudFolderBody = ({ path, queryResults }) => {
       return acc
     }, []) || []
 
-  useKeyboardShortcuts({
-    onPaste: () => {},
-    canPaste: hasClipboardData,
-    client,
-    items: allItems,
-    sharingContext: null,
-    allowCopy: true,
-    isNextCloudFolder: true
-  })
-
   const fileActions = makeActions(
     [
       shareNextcloudFile,
@@ -64,6 +54,17 @@ const NextcloudFolderBody = ({ path, queryResults }) => {
       search: searchParams.toString()
     }
   )
+
+  useKeyboardShortcuts({
+    onPaste: () => {},
+    canPaste: hasClipboardData,
+    client,
+    items: allItems,
+    sharingContext: null,
+    allowCopy: true,
+    isNextCloudFolder: true,
+    actions: fileActions
+  })
 
   return (
     <FolderBody
