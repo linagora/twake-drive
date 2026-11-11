@@ -46,5 +46,8 @@ test.describe('Upload over the disk quota', () => {
       path: `/${folder}/${name}`
     })
     expect(uploaded.status).toBe(404)
+
+    await alicePage.reload()
+    await aliceDrive.waitForEmptyState()
   })
 })
