@@ -7872,22 +7872,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-client@npm:^61.0.1":
-  version: 61.0.1
-  resolution: "cozy-client@npm:61.0.1"
+"cozy-client@npm:^62.1.0":
+  version: 62.1.0
+  resolution: "cozy-client@npm:62.1.0"
   dependencies:
     "@cozy/minilog": "npm:1.0.0"
     "@fastify/deepmerge": "npm:^2.0.2"
     "@types/jest": "npm:^26.0.20"
     "@types/lodash": "npm:^4.14.170"
     btoa: "npm:^1.2.1"
-    cozy-stack-client: "npm:^61.0.0"
+    cozy-stack-client: "npm:^62.0.1"
     date-fns: "npm:^2.30.0"
     fast-deep-equal: "npm:^3.1.3"
     json-stable-stringify: "npm:^1.0.1"
-    lodash: "npm:^4.17.13"
+    lodash: "npm:^4.18.1"
     microee: "npm:^0.0.6"
-    node-fetch: "npm:^2.6.1"
+    node-fetch: "npm:^2.6.7"
     node-polyglot: "npm:2.4.2"
     open: "npm:7.4.2"
     prop-types: "npm:^15.6.2"
@@ -7907,7 +7907,16 @@ __metadata:
     react-native-google-play-integrity: ^1.1.0
     react-native-inappbrowser-reborn: ^3.5.1
     react-native-ios11-devicecheck: ^0.0.3
-  checksum: 10/a6df64bfea408de13ed3806f9c0b779625afe1f703a5dfa0644a84ad195ff8546568cf58c029b7a2aae67139102b472f8579e226d7f0a3b5e62399e8116e2b33
+  peerDependenciesMeta:
+    react-native:
+      optional: true
+    react-native-google-play-integrity:
+      optional: true
+    react-native-inappbrowser-reborn:
+      optional: true
+    react-native-ios11-devicecheck:
+      optional: true
+  checksum: 10/75aaaa20a3b4c0214209eb9fd62d957a2fe4566868a13300cbab7c4ad72d4b9033e883b7569876cc2d26c094dd40c1cc80c325fad8ca08caf6a52b6332a1996b
   languageName: node
   linkType: hard
 
@@ -7992,7 +8001,7 @@ __metadata:
     core-js: "npm:^3.50.0"
     cozy-app-publish: "npm:^0.44.3"
     cozy-bar: "npm:^37.0.0"
-    cozy-client: "npm:^61.0.1"
+    cozy-client: "npm:^62.1.0"
     cozy-dataproxy-lib: "npm:^4.15.6"
     cozy-device-helper: "npm:^4.0.3"
     cozy-devtools: "npm:^4.0.0"
@@ -8001,11 +8010,11 @@ __metadata:
     cozy-interapp: "npm:^0.21.0"
     cozy-logger: "npm:^1.18.1"
     cozy-minilog: "npm:^3.10.1"
-    cozy-pouch-link: "npm:^61.0.1"
+    cozy-pouch-link: "npm:^62.1.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^3.0.0"
     cozy-sharing: "npm:^45.1.4"
-    cozy-stack-client: "npm:^61.0.0"
+    cozy-stack-client: "npm:^62.0.1"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^146.5.1"
     cozy-ui-plus: "npm:^15.0.0"
@@ -8110,18 +8119,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-pouch-link@npm:^61.0.1":
-  version: 61.0.1
-  resolution: "cozy-pouch-link@npm:61.0.1"
+"cozy-pouch-link@npm:^62.1.0":
+  version: 62.1.0
+  resolution: "cozy-pouch-link@npm:62.1.0"
   dependencies:
-    cozy-client: "npm:^61.0.1"
-    pouchdb-browser: "npm:^7.2.2"
-    pouchdb-find: "npm:^7.2.2"
+    cozy-client: "npm:^62.1.0"
+    pouchdb-browser: "npm:^7.3.1"
+    pouchdb-find: "npm:^7.3.1"
   peerDependencies:
     "@cozy/minilog": 1.0.0
-    "@op-engineering/op-sqlite": "*"
     cozy-device-helper: ">=2.1.0"
-  checksum: 10/c7fe8fdea0b6ecad0986661586f0ad520aba4035a74145016437a950f8206b801629db6fa7eec9d1daeb72e991d379fbd6096862e05595df1b38c54faec996ff
+  checksum: 10/890fb499671cd9db05daa26d5784d0f825ffe000a7572251f96271cc4490b383f60c82f0972a93f4d36b9ae20617bc920ec6f8a519eb33c79c5241ac696af853
   languageName: node
   linkType: hard
 
@@ -8196,16 +8204,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-stack-client@npm:^61.0.0":
-  version: 61.0.0
-  resolution: "cozy-stack-client@npm:61.0.0"
+"cozy-stack-client@npm:^62.0.1":
+  version: 62.0.1
+  resolution: "cozy-stack-client@npm:62.0.1"
   dependencies:
     detect-node: "npm:^2.0.4"
+    lodash: "npm:^4.18.1"
     mime: "npm:^2.4.0"
-    qs: "npm:^6.7.0"
+    qs: "npm:^6.16.1"
   peerDependencies:
     cozy-flags: ">2.8.6"
-  checksum: 10/170fc83a89c7510cdc9379ce21443b0f82dedeec1b2c21751ec3e6018a795ee9b2529f7b6204af17ca3b5d0396bad29b5e3502f44cbde9b4b9fdad42546a9423
+  checksum: 10/e7694fec78637a5fe0f7648be9adb5288aa4536017cfbb7416e16a07417c92eb099028899cdaaf52712aa3c861fba4b4f7e25af2ce2ea107609de3005a4aae5d
   languageName: node
   linkType: hard
 
@@ -12550,7 +12559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.18.1, lodash@npm:^4, lodash@npm:^4.17.13, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.21, lodash@npm:^4.2.1":
+"lodash@npm:4.18.1, lodash@npm:^4, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.21, lodash@npm:^4.18.1, lodash@npm:^4.2.1":
   version: 4.18.1
   resolution: "lodash@npm:4.18.1"
   checksum: 10/306fea53dfd39dad1f03d45ba654a2405aebd35797b673077f401edb7df2543623dc44b9effbb98f69b32152295fff725a4cec99c684098947430600c6af0c3f
@@ -13376,7 +13385,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:2.6.7, node-fetch@npm:^2.6.1":
+"node-fetch@npm:2.6.7":
   version: 2.6.7
   resolution: "node-fetch@npm:2.6.7"
   dependencies:
@@ -13387,6 +13396,20 @@ __metadata:
     encoding:
       optional: true
   checksum: 10/4bc9245383db92c35601a798c9a992fdf38d99920ceac11e0e6512ef3014d188b3807ccb060bc6c4bdb57a145030c73f5b5fd6730f665979f9264bc43ca3afea
+  languageName: node
+  linkType: hard
+
+"node-fetch@npm:^2.6.7":
+  version: 2.7.0
+  resolution: "node-fetch@npm:2.7.0"
+  dependencies:
+    whatwg-url: "npm:^5.0.0"
+  peerDependencies:
+    encoding: ^0.1.0
+  peerDependenciesMeta:
+    encoding:
+      optional: true
+  checksum: 10/b24f8a3dc937f388192e59bcf9d0857d7b6940a2496f328381641cb616efccc9866e89ec43f2ec956bbd6c3d3ee05524ce77fe7b29ccd34692b3a16f237d6676
   languageName: node
   linkType: hard
 
@@ -14272,7 +14295,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pouchdb-browser@npm:^7.2.2":
+"pouchdb-browser@npm:^7.3.1":
   version: 7.3.1
   resolution: "pouchdb-browser@npm:7.3.1"
   dependencies:
@@ -14320,7 +14343,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pouchdb-find@npm:^7.2.2":
+"pouchdb-find@npm:^7.3.1":
   version: 7.3.1
   resolution: "pouchdb-find@npm:7.3.1"
   dependencies:
@@ -14586,13 +14609,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:^6.12.3, qs@npm:^6.7.0":
+"qs@npm:^6.12.3":
   version: 6.16.0
   resolution: "qs@npm:6.16.0"
   dependencies:
     es-define-property: "npm:^1.0.1"
     side-channel: "npm:^1.1.1"
   checksum: 10/7fbf9c2eb9c9bbd8997700caecc4b057ac259635873deefd5027fb26d06d79426cf468da55da87ffd147a24e93d3641352d8ac6664bd84688ad5b2f0b8d04828
+  languageName: node
+  linkType: hard
+
+"qs@npm:^6.16.1":
+  version: 6.17.1
+  resolution: "qs@npm:6.17.1"
+  dependencies:
+    es-define-property: "npm:^1.0.1"
+    side-channel: "npm:^1.1.1"
+  checksum: 10/032a642c783fa93277c703591643734519c1e96ed2a9ea83a371fda4187dd9d6c2e5b66a69378a77e5a824bf8c4d1d0654295c069a9ff6c55509c0112c459a28
   languageName: node
   linkType: hard
 
