@@ -28,10 +28,12 @@ export class OnlyOfficePage {
                 id: string,
                 config: { events?: Record<string, unknown> }
               ): object {
+                const ownHandler = config.events?.onDocumentReady
                 config.events = {
                   ...config.events,
-                  onDocumentReady: () => {
+                  onDocumentReady: (...args: unknown[]) => {
                     marked.__officeDocumentReady = true
+                    if (typeof ownHandler === 'function') ownHandler(...args)
                   }
                 }
                 return new Original(id, config)
