@@ -42,18 +42,7 @@ export class FileViewerPage {
   }
 
   async openMoveTo(): Promise<MoveToPage> {
-    const toolbar = this.page.getByTestId('viewer-toolbar')
-    await toolbar
-      .getByRole('button')
-      .filter({ hasNotText: /\S/ })
-      .last()
-      .click()
-    await this.page
-      .getByRole('menu')
-      .getByRole('menuitem', {
-        name: t('SelectionBar.moveto')
-      })
-      .click()
+    await this.chooseFromMenu(t('SelectionBar.moveto'))
 
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
@@ -80,27 +69,16 @@ export class FileViewerPage {
     return modal
   }
 
-  /** new-file-viewer-ui is off in the e2e stack, so the viewer's Share entry
-   * lives in the actions (dots) menu. That trigger is icon-only; the Download
-   * button carries a text label, so restricting to text-less buttons keeps the
-   * target stable if cozy-viewer appends a labelled toolbar button. The
-   * returned modal is not awaited, so a caller can assert the route first. */
+  /** The returned modal is not awaited, so a caller can assert the route
+   * first. */
   async openShareFromMenu(): Promise<ShareModalPage> {
-    await this.page
-      .getByTestId('viewer-toolbar')
-      .getByRole('button')
-      .filter({ hasNotText: /\S/ })
-      .last()
-      .click()
-    await this.page
-      .getByRole('menu')
-      .getByRole('menuitem', {
-        name: new RegExp(`^${escapeRegExp(t('Files.share.cta'))}$`, 'i')
-      })
-      .click()
+    await this.chooseFromMenu(t('Files.share.cta'))
     return new ShareModalPage(this.page)
   }
 
+  /** The actions (dots) menu has an icon-only trigger; the Download button
+   * carries a text label, so restricting to text-less buttons keeps the
+   * target stable if cozy-viewer appends a labelled toolbar button. */
   private async chooseFromMenu(label: string): Promise<void> {
     await this.page
       .getByTestId('viewer-toolbar')
