@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Download, Locator, Page } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
@@ -79,6 +79,55 @@ export class FileViewerPage {
       })
       .click()
     return new ShareModalPage(this.page)
+  }
+
+  private async chooseFromMenu(label: string): Promise<void> {
+    await this.page
+      .getByTestId('viewer-toolbar')
+      .getByRole('button')
+      .filter({ hasNotText: /\S/ })
+      .last()
+      .click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(label)}$`, 'i')
+      })
+      .click()
+  }
+
+  async downloadFromMenu(): Promise<Download> {
+    const download = this.page.waitForEvent('download')
+    await this.chooseFromMenu(t('SelectionBar.download'))
+    return download
+  }
+
+  async duplicateFromMenu(): Promise<void> {
+    await this.chooseFromMenu(t('actions.duplicateTo.label'))
+    // The viewer is a dialog too: wait for the picker only
+    const confirm = this.page.getByRole('button', {
+      name: t('DuplicateModal.confirmLabel')
+    })
+    await confirm.click()
+    await confirm.waitFor({ state: 'hidden' })
+  }
+
+  async addToFavoritesFromMenu(): Promise<void> {
+    await this.chooseFromMenu(t('favorites.label.add'))
+  }
+
+  async openHistoryFromMenu(): Promise<Locator> {
+    await this.chooseFromMenu(t('SelectionBar.history'))
+    return this.page.getByTestId('history-row-download')
+  }
+
+  async trashFromMenu(): Promise<void> {
+    await this.chooseFromMenu(t('SelectionBar.trash'))
+    const confirm = this.page.getByRole('button', {
+      name: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i')
+    })
+    await confirm.click()
+    await confirm.waitFor({ state: 'hidden' })
   }
 
   /** Closes the viewer by navigating back, then waits for the file route to drop. */
