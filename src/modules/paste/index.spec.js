@@ -285,6 +285,44 @@ describe('handlePasteOperation', () => {
         }
       ])
     })
+
+    it('takes the shared drive instance from its sharing when the root has no createdOn', async () => {
+      const sharedDriveRoot = {
+        _id: 'shared-drive-root',
+        driveId: 'drive-1',
+        name: 'Shared drive',
+        path: '/Shared drive'
+      }
+      mockClient.fetchQueryAndGetFromState = jest.fn().mockResolvedValue({
+        data: {
+          members: [
+            { status: 'owner', instance: 'https://alice.mycozy.cloud' },
+            { status: 'ready', instance: 'https://bob.mycozy.cloud' }
+          ]
+        }
+      })
+      resolveNameConflictsForCut.mockResolvedValue([mockFiles[0]])
+
+      await handlePasteOperation(
+        mockClient,
+        [mockFiles[0]],
+        'cut',
+        mockSourceDirectory,
+        sharedDriveRoot,
+        mockOptions
+      )
+
+      expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+        mockClient,
+        { instance: '', file_id: 'file1', dir_id: '', sharing_id: undefined },
+        {
+          instance: 'https://alice.mycozy.cloud',
+          sharing_id: 'drive-1',
+          dir_id: 'shared-drive-root'
+        },
+        false
+      )
+    })
   })
 
   describe('Sharing Context', () => {

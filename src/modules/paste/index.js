@@ -13,6 +13,7 @@ import logger from '@/lib/logger'
 import { joinPath } from '@/lib/path'
 import { hasOneOfEntriesShared } from '@/modules/move/helpers'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
+import { buildSharedDriveIdQuery } from '@/queries'
 
 /**
  * Executes move or copy operations for shared drive files/folders.
@@ -33,23 +34,40 @@ const executeSharedDriveMoveOrCopy = async (
   return await moveRelateToSharedDrive(
     client,
     {
-      // The hosting instance is read from the entry itself: a shared-drive
-      // folder (e.g. the drive root used as source directory) does not always
-      // carry cozyMetadata.createdOn, while the moved file/folder always does.
-      instance: entry.driveId ? entry.cozyMetadata?.createdOn : '',
+      instance: await getDriveInstance(client, entry),
       file_id: isFile(entry) ? entry._id : '',
       dir_id: !isFile(entry) ? entry._id : '',
       sharing_id: entry.driveId
     },
     {
-      instance: destDirectory.driveId
-        ? destDirectory.cozyMetadata?.createdOn
-        : '',
+      instance: await getDriveInstance(client, destDirectory),
       sharing_id: destDirectory.driveId,
       dir_id: destDirectory._id
     },
     operation === 'copy'
   )
+}
+
+/**
+ * Returns the URL of the instance hosting the shared drive of a file or folder,
+ * or an empty string for the personal drive.
+ * The root folder of a shared drive does not always carry
+ * cozyMetadata.createdOn, so the owner of the sharing is used instead.
+ *
+ * @param {CozyClient} client - The cozy client instance
+ * @param {import('@/components/FolderPicker/types').File} doc - The file or folder
+ * @returns {Promise<string>} The hosting instance URL
+ */
+const getDriveInstance = async (client, doc) => {
+  if (!doc.driveId) return ''
+  if (doc.cozyMetadata?.createdOn) return doc.cozyMetadata.createdOn
+
+  const query = buildSharedDriveIdQuery({ driveId: doc.driveId })
+  const { data } = await client.fetchQueryAndGetFromState({
+    definition: query.definition(),
+    options: query.options
+  })
+  return data?.members?.find(member => member.status === 'owner')?.instance
 }
 
 /**
