@@ -8,6 +8,58 @@ import { t } from '../helpers/i18n'
 export class OnlyOfficePage {
   constructor(private readonly page: Page) {}
 
+  /** Drive only listens to onAppReady, which the editor sends before the
+   * Document Server has fetched the file: wrap the editor of the page so its
+   * onDocumentReady leaves a mark. Call it before the page opens the editor. */
+  async watchDocumentReady(): Promise<void> {
+    await this.page.addInitScript(() => {
+      const marked = window as unknown as Record<string, unknown>
+      let api: Record<string, unknown> | undefined
+      Object.defineProperty(window, 'DocsAPI', {
+        configurable: true,
+        get: () => api,
+        set: (value: Record<string, unknown>) => {
+          let editor: unknown
+          Object.defineProperty(value, 'DocEditor', {
+            configurable: true,
+            get: () => editor,
+            set: (Original: new (id: string, config: object) => object) => {
+              const Wrapped = function (
+                id: string,
+                config: { events?: Record<string, unknown> }
+              ): object {
+                config.events = {
+                  ...config.events,
+                  onDocumentReady: () => {
+                    marked.__officeDocumentReady = true
+                  }
+                }
+                return new Original(id, config)
+              }
+              editor = Object.assign(Wrapped, Original)
+            }
+          })
+          api = value
+        }
+      })
+    })
+  }
+
+  /** Waits for the document itself, once watchDocumentReady is set. */
+  async waitForDocumentReady(): Promise<void> {
+    await expect
+      .poll(
+        () =>
+          this.page.evaluate(
+            () =>
+              (window as unknown as Record<string, unknown>)
+                .__officeDocumentReady === true
+          ),
+        { timeout: 90_000 }
+      )
+      .toBe(true)
+  }
+
   /** The Share button of the toolbar of Drive above the editor. */
   async openShareModal(): Promise<ShareModalPage> {
     await this.page
