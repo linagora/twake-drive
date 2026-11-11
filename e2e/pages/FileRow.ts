@@ -205,7 +205,7 @@ export class FileRow {
       new RegExp(escapeRegExp(t('actions.duplicateTo.label')), 'i'),
       {
         button: new RegExp(escapeRegExp(t('DuplicateModal.confirmLabel')), 'i'),
-        wait: 'optional'
+        wait: 'required'
       }
     )
   }
