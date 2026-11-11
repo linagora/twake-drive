@@ -60,6 +60,26 @@ export class FileViewerPage {
     return moveTo
   }
 
+  /** The Share button of the toolbar, shown with drive.new-file-viewer-ui. */
+  async openShareFromButton(): Promise<ShareModalPage> {
+    await this.page
+      .getByTestId('viewer-toolbar')
+      .getByRole('button', {
+        name: t('cozy-viewer:Viewer.share_btn'),
+        exact: true
+      })
+      .click()
+    // The viewer is a full-screen dialog of its own
+    const modal = new ShareModalPage(
+      this.page,
+      this.page
+        .getByRole('dialog')
+        .filter({ hasNot: this.page.getByTestId('viewer-toolbar') })
+    )
+    await modal.waitForOpen()
+    return modal
+  }
+
   /** new-file-viewer-ui is off in the e2e stack, so the viewer's Share entry
    * lives in the actions (dots) menu. That trigger is icon-only; the Download
    * button carries a text label, so restricting to text-less buttons keeps the
