@@ -45,6 +45,10 @@ export class OnlyOfficePage {
     })
   }
 
+  async expectEditorOpen(): Promise<void> {
+    await expect(this.page.locator('iframe[name="frameEditor"]')).toBeVisible()
+  }
+
   /** Waits for the document itself, once watchDocumentReady is set. */
   async waitForDocumentReady(): Promise<void> {
     await expect
@@ -62,12 +66,7 @@ export class OnlyOfficePage {
 
   /** The Share button of the toolbar of Drive above the editor. */
   async openShareModal(): Promise<ShareModalPage> {
-    await this.page
-      .getByRole('button', {
-        name: t('cozy-sharing:Files.share.cta'),
-        exact: true
-      })
-      .click()
+    await this.page.getByTestId('onlyoffice-sharing-button').click()
     // The editor is a full-screen dialog of its own
     const modal = new ShareModalPage(
       this.page,

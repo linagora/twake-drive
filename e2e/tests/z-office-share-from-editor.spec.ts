@@ -40,5 +40,6 @@ test('shares an Office document from its editor', async ({
   await expect(alicePage).toHaveURL(
     new RegExp(`/onlyoffice/${escapeRegExp(fileId)}`)
   )
+  await office.expectEditorOpen()
   await waitForSharingRow(bobPage, USERS.bob, bobDrive, name)
 })
