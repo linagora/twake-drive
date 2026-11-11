@@ -79,6 +79,15 @@ export class FileRow {
     await this.rowEl.getByRole('checkbox').click()
   }
 
+  async menuItems(): Promise<string[]> {
+    const menu = await this.openMenu()
+    await menu.getByRole('menuitem').first().waitFor()
+    const items = await menu.getByRole('menuitem').allInnerTexts()
+    await this.page.keyboard.press('Escape')
+    await menu.waitFor({ state: 'hidden' })
+    return items.map(item => item.trim())
+  }
+
   /** cozy-drive desktop semantics: single-click selects, double-click
    * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
