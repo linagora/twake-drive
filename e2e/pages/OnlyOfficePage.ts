@@ -108,6 +108,11 @@ export class OnlyOfficePage {
     ).toBeVisible({ timeout: 90_000 })
   }
 
+  /** Shown when the file changes on the stack while it is being edited. */
+  get divergedNotice(): Locator {
+    return this.page.getByText(t('FileDivergedModal.title'), { exact: true })
+  }
+
   private get editor(): FrameLocator {
     return this.page.frameLocator('iframe[name="frameEditor"]')
   }
