@@ -13,11 +13,7 @@ test.describe('Share button of the new viewer', () => {
     })
   })
   test.afterAll(() => {
-    // Setting flags merges them: the flag has to be turned off by name
-    setFlags(USERS.alice.instance, {
-      ...DEFAULT_FLAGS,
-      'drive.new-file-viewer-ui.enabled': false
-    })
+    setFlags(USERS.alice.instance, DEFAULT_FLAGS)
   })
 
   test('shares the viewed file with Bob', async ({
