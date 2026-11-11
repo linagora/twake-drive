@@ -12,10 +12,12 @@ export async function getDiskQuota(instance: string): Promise<number | null> {
       `Read instance ${instance} failed (${res.status}): ${await res.text()}`
     )
   }
+  // The stack serializes the quota as a string
   const body = (await res.json()) as {
-    data: { attributes: { disk_quota?: number } }
+    data: { attributes: { disk_quota?: string } }
   }
-  return body.data.attributes.disk_quota ?? null
+  const quota = body.data.attributes.disk_quota
+  return quota === undefined ? null : Number(quota)
 }
 
 /** Set the disk quota of an instance, or remove it with null. */

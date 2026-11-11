@@ -7,13 +7,16 @@ import { QuotaPaywallPage } from '../pages/QuotaPaywallPage'
 const ALICE = USERS.alice
 
 test.describe('Upload over the disk quota', () => {
-  let previousQuota: number | null = null
+  // Left undefined when it could not be read, so it is not overwritten
+  let previousQuota: number | null | undefined
 
   test.beforeAll(async () => {
     previousQuota = await getDiskQuota(ALICE.instance)
   })
   test.afterAll(async () => {
-    await setDiskQuota(ALICE.instance, previousQuota)
+    if (previousQuota !== undefined) {
+      await setDiskQuota(ALICE.instance, previousQuota)
+    }
   })
 
   test('refuses the file and shows the storage dialog', async ({
