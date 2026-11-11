@@ -70,6 +70,35 @@ export class DrivePage {
     return this.page.locator('main').getByRole('navigation').first()
   }
 
+  /** With drive.virtualization.enabled, a row of the virtualized table. */
+  virtualRow(name: string): Locator {
+    return this.page
+      .getByTestId('virtuoso-scroller')
+      .locator('tr')
+      .filter({ has: this.page.getByTitle(name, { exact: true }) })
+  }
+
+  /** With drive.virtualization.enabled, scrolls the list down until the row
+   * of `name` is mounted. */
+  async scrollVirtualizedListTo(name: string): Promise<void> {
+    const scroller = this.page.getByTestId('virtuoso-scroller')
+    const row = this.virtualRow(name)
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await row.count()
+          if (count === 0) {
+            await scroller.evaluate((element: HTMLElement) => {
+              element.scrollTop += element.clientHeight
+            })
+          }
+          return count
+        },
+        { intervals: [100], timeout: 30_000 }
+      )
+      .toBeGreaterThan(0)
+  }
+
   async selectRows(names: string[]): Promise<void> {
     if (names.length === 0) throw new Error('At least one row is required')
     for (const name of names) {
