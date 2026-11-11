@@ -14,8 +14,8 @@ export class QuotaPaywallPage {
         escapeRegExp(t(`cozy-ui-plus-paywall:quotaPaywall.${type}.title`))
       )
       .join('|')
-    this.dialog = page
-      .getByRole('dialog')
-      .filter({ hasText: new RegExp(titles) })
+    this.dialog = page.getByRole('dialog').filter({
+      has: page.getByText(new RegExp(`^(${titles})$`))
+    })
   }
 }
