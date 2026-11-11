@@ -281,6 +281,30 @@ export class MoveToPage {
     ).toBeVisible()
   }
 
+  /** Click Cancel in the success alert of the move of `name` into
+   * `destination`, then wait for the alert that it went back. */
+  async undoFromSuccessNotification(
+    name: string,
+    destination: string
+  ): Promise<void> {
+    await this.page
+      .getByRole('alert')
+      .filter({
+        hasText: t('Move.success', {
+          smart_count: 1,
+          subject: name,
+          target: destination
+        })
+      })
+      .getByRole('button', { name: t('Move.cancel'), exact: true })
+      .click()
+    await expect(
+      this.page.getByRole('alert').filter({
+        hasText: t('Move.cancelled', { smart_count: 1, subject: name })
+      })
+    ).toBeVisible()
+  }
+
   async confirm(): Promise<void> {
     await this.clickMove()
     await expect(this.dialog).toBeHidden()
