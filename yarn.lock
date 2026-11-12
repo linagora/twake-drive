@@ -8007,7 +8007,7 @@ __metadata:
     cozy-devtools: "npm:^4.0.0"
     cozy-flags: "npm:^4.9.1"
     cozy-intent: "npm:^2.31.1"
-    cozy-interapp: "npm:^0.21.0"
+    cozy-interapp: "npm:^0.24.1"
     cozy-logger: "npm:^1.18.1"
     cozy-minilog: "npm:^3.10.1"
     cozy-pouch-link: "npm:^62.1.0"
@@ -8091,12 +8091,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-interapp@npm:^0.21.0":
-  version: 0.21.0
-  resolution: "cozy-interapp@npm:0.21.0"
+"cozy-interapp@npm:^0.24.1":
+  version: 0.24.1
+  resolution: "cozy-interapp@npm:0.24.1"
   peerDependencies:
     "@babel/runtime": ">=7.12.5"
-  checksum: 10/a4330a108dfe36a8d62c1f0d089d1d33bc3d872dccdd5aacd86d0945bb214f961e52b4eb59d7d246fd5884c294337cacae7b3f65ae5ac313e0ef44e353d96f5d
+  checksum: 10/d56de974492e08646b141de243994eeebae28be9b274166be1bfba898d0d3d0898f62abe2175ad7e1afb74580f90223ddfb556d639d96be15de0e1c494d982a2
   languageName: node
   linkType: hard
 
