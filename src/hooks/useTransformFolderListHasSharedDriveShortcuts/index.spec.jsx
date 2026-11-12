@@ -412,6 +412,19 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
   })
 
   describe('nonSharedDriveList', () => {
+    it('keeps folders with a trash-like name and excludes Bin folders', () => {
+      const folders = [
+        { _id: 'live', path: '/.cozy_trash_backup' },
+        { _id: 'trash', path: '/.cozy_trash' },
+        { _id: 'trashed', path: '/.cozy_trash/Projects' }
+      ]
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts(folders)
+      )
+
+      expect(result.current.nonSharedDriveList).toEqual([folders[0]])
+    })
+
     it('keeps ordinary files inside the legacy drives folder', () => {
       const mockFolderList = [
         {
