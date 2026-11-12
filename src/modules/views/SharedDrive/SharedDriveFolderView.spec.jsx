@@ -7,6 +7,7 @@ import { createMockClient, useQuery } from 'cozy-client'
 import { SharedDriveFolderView } from './SharedDriveFolderView'
 import AppLike from 'test/components/AppLike'
 
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 
 jest.mock('react-router-dom', () => ({
@@ -137,6 +138,30 @@ describe('SharedDriveFolderView', () => {
     render(<SharedDriveFolderView />, { wrapper: WriterWrapper })
 
     expect(screen.getAllByRole('button', { name: 'Upload' })).toHaveLength(1)
+  })
+
+  it('lets F2 follow the Rename rule of its menu for a reader', () => {
+    const ReaderWrapper = ({ children }) => (
+      <AppLike
+        client={createMockClient({})}
+        sharingContextValue={{
+          hasWriteAccess: () => false,
+          getRecipients: () => [],
+          isOwner: () => false,
+          refresh: jest.fn(),
+          allLoaded: true
+        }}
+      >
+        {children}
+      </AppLike>
+    )
+    render(<SharedDriveFolderView />, { wrapper: ReaderWrapper })
+
+    const { actions } = useKeyboardShortcuts.mock.calls.at(-1)[0]
+    const { rename } = actions.find(action => 'rename' in action)
+    expect(
+      rename.displayCondition([{ _id: 'file-1', type: 'file' }])
+    ).toBeFalsy()
   })
 
   it('does not show the root share button in a subfolder', () => {

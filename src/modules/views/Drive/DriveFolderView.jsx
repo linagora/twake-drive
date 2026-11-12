@@ -53,6 +53,56 @@ import { filterOutReceivedShares } from '@/modules/views/Folder/syncHelpers'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import { useResumeUploadFromFlagship } from '@/modules/views/Upload/useResumeFromFlagship'
 
+const useDriveFolderActions = ({
+  base,
+  sharingContext,
+  canWriteToCurrentFolder,
+  allResults,
+  displayedFolder
+}) => {
+  const { allLoaded, refresh, isOwner, byDocId } = sharingContext
+  const nativeSharing = useNativeFileSharing()
+  const actionsOptions = {
+    ...base,
+    ...nativeSharing,
+    refresh,
+    hasWriteAccess: canWriteToCurrentFolder,
+    canMove: true,
+    isPublic: false,
+    allLoaded,
+    isOwner,
+    byDocId,
+    selectAll: () =>
+      base.toggleSelectAllItems(allResults.flatMap(query => query.data || [])),
+    displayedFolder
+  }
+  return makeActions(
+    [
+      selectAllItems,
+      share,
+      shareNative,
+      download,
+      hr,
+      summariseByAI,
+      signWithEuDss,
+      verifyWithEuDss,
+      hr,
+      rename,
+      moveTo,
+      duplicateTo,
+      addToFavorites,
+      removeFromFavorites,
+      personalizeFolder,
+      infos,
+      hr,
+      versions,
+      hr,
+      trash
+    ],
+    actionsOptions
+  )
+}
+
 const DriveFolderView = () => {
   const base = useFolderViewBase()
   const { t } = base
@@ -61,9 +111,7 @@ const DriveFolderView = () => {
   useHead()
   const { isBigThumbnail, toggleThumbnailSize } = useThumbnailSizeContext()
   const sharingContext = useSharingContext()
-  const { allLoaded, hasWriteAccess, refresh, isOwner, byDocId } =
-    sharingContext
-  const nativeSharing = useNativeFileSharing()
+  const { allLoaded, hasWriteAccess, refresh, isOwner } = sharingContext
   const { hasClipboardData } = useClipboardContext()
 
   const { displayedFolder, isNotFound } = useDisplayedFolder()
@@ -92,6 +140,14 @@ const DriveFolderView = () => {
   const [foldersResult, filesResult] = allResults
   const canWriteToCurrentFolder = hasWriteAccess(currentFolderId)
 
+  const actions = useDriveFolderActions({
+    base,
+    sharingContext,
+    canWriteToCurrentFolder,
+    allResults,
+    displayedFolder
+  })
+
   useKeyboardShortcuts({
     canPaste: hasClipboardData && canWriteToCurrentFolder,
     client: base.client,
@@ -99,48 +155,9 @@ const DriveFolderView = () => {
     sharingContext,
     pushModal: base.pushModal,
     popModal: base.popModal,
-    refresh
-  })
-
-  const actionsOptions = {
-    ...base,
-    ...nativeSharing,
     refresh,
-    hasWriteAccess: canWriteToCurrentFolder,
-    canMove: true,
-    isPublic: false,
-    allLoaded,
-    isOwner,
-    byDocId,
-    selectAll: () =>
-      base.toggleSelectAllItems(allResults.flatMap(query => query.data || [])),
-    displayedFolder
-  }
-  const actions = makeActions(
-    [
-      selectAllItems,
-      share,
-      shareNative,
-      download,
-      hr,
-      summariseByAI,
-      signWithEuDss,
-      verifyWithEuDss,
-      hr,
-      rename,
-      moveTo,
-      duplicateTo,
-      addToFavorites,
-      removeFromFavorites,
-      personalizeFolder,
-      infos,
-      hr,
-      versions,
-      hr,
-      trash
-    ],
-    actionsOptions
-  )
+    actions
+  })
 
   const rootBreadcrumbPath = useMemo(
     () => ({

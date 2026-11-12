@@ -152,63 +152,17 @@ function SharedDriveFab() {
   )
 }
 
-function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
+function useSharedDriveFolderActions({ driveId, canWriteToCurrentFolder }) {
   const client = useClient()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { isMobile } = useBreakpoints()
-  const sharingContext = useSharingContext()
-  const { isOwner, byDocId, hasWriteAccess, refresh, allLoaded } =
-    sharingContext
-  const { displayedFolder } = useDisplayedFolder()
+  const { isOwner, byDocId, refresh, allLoaded } = useSharingContext()
   const { pushModal, popModal } = useModalContext()
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const dispatch = useDispatch()
-  const isInRootOfSharedDrive = getFolderIdFromSharing(sharing) === folderId
-  const { setIsFabDisplayed } = useContext(FabContext)
 
-  const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
-    useSharedDriveFolder({ driveId, folderId })
-  useReportSpaceFiles(driveId, getFolderIdFromSharing(sharing), lastUpdate)
-
-  const files = sharedDriveResult.included ?? []
-  const queryResults = [
-    {
-      fetchStatus,
-      lastUpdate,
-      data: files,
-      hasMore,
-      fetchMore
-    }
-  ]
-
-  const canWriteToCurrentFolder =
-    fetchStatus !== 'failed' && hasWriteAccess(folderId, driveId)
-
-  const { hasClipboardData } = useClipboardContext()
-
-  useEffect(() => {
-    setIsFabDisplayed(canWriteToCurrentFolder && isMobile)
-    return () => {
-      setIsFabDisplayed(false)
-    }
-  }, [setIsFabDisplayed, isMobile, canWriteToCurrentFolder])
-
-  const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort(folderId)
-
-  useKeyboardShortcuts({
-    canPaste: hasClipboardData && canWriteToCurrentFolder,
-    client,
-    items: files,
-    sharingContext,
-    allowCut: canWriteToCurrentFolder,
-    allowCopy: false,
-    allowDelete: canWriteToCurrentFolder,
-    pushModal,
-    popModal,
-    refresh
-  })
   const actionsOptions = useMemo(
     () => ({
       client,
@@ -248,7 +202,7 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
     ]
   )
 
-  const actions = useMemo(
+  return useMemo(
     () =>
       makeActions(
         [
@@ -269,6 +223,64 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
       ),
     [actionsOptions]
   )
+}
+
+function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
+  const client = useClient()
+  const { isMobile } = useBreakpoints()
+  const sharingContext = useSharingContext()
+  const { hasWriteAccess, refresh } = sharingContext
+  const { displayedFolder } = useDisplayedFolder()
+  const { pushModal, popModal } = useModalContext()
+  const isInRootOfSharedDrive = getFolderIdFromSharing(sharing) === folderId
+  const { setIsFabDisplayed } = useContext(FabContext)
+
+  const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
+    useSharedDriveFolder({ driveId, folderId })
+  useReportSpaceFiles(driveId, getFolderIdFromSharing(sharing), lastUpdate)
+
+  const files = sharedDriveResult.included ?? []
+  const queryResults = [
+    {
+      fetchStatus,
+      lastUpdate,
+      data: files,
+      hasMore,
+      fetchMore
+    }
+  ]
+
+  const canWriteToCurrentFolder =
+    fetchStatus !== 'failed' && hasWriteAccess(folderId, driveId)
+
+  const { hasClipboardData } = useClipboardContext()
+
+  useEffect(() => {
+    setIsFabDisplayed(canWriteToCurrentFolder && isMobile)
+    return () => {
+      setIsFabDisplayed(false)
+    }
+  }, [setIsFabDisplayed, isMobile, canWriteToCurrentFolder])
+
+  const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort(folderId)
+  const actions = useSharedDriveFolderActions({
+    driveId,
+    canWriteToCurrentFolder
+  })
+
+  useKeyboardShortcuts({
+    canPaste: hasClipboardData && canWriteToCurrentFolder,
+    client,
+    items: files,
+    sharingContext,
+    allowCut: canWriteToCurrentFolder,
+    allowCopy: false,
+    allowDelete: canWriteToCurrentFolder,
+    pushModal,
+    popModal,
+    refresh,
+    actions
+  })
 
   const isVirtualized = flag('drive.virtualization.enabled') && !isMobile
   const DropzoneComp = isVirtualized ? DropzoneDnD : Dropzone

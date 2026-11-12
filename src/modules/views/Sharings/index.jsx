@@ -95,11 +95,23 @@ function useCanonicalizeUnavailableDrivesTab({
   }, [setTab, sharedDrivesLoaded, showDrives, tab])
 }
 
+const useSharingsActions = ({ base, sharingContext, filteredResult }) => {
+  const nativeSharing = useNativeFileSharing()
+  return makeActions(
+    SHARINGS_ACTIONS,
+    buildSharingsActionsOptions({
+      base,
+      nativeSharing,
+      sharingContext,
+      filteredResult
+    })
+  )
+}
+
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const base = useFolderViewBase()
   const sharingContext = useSharingContext()
   const { allLoaded, refresh } = sharingContext
-  const nativeSharing = useNativeFileSharing()
   useHead({ title: base.t('breadcrumb.title_sharings') })
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(SHARINGS_VIEW_ID)
@@ -138,6 +150,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     tab
   })
 
+  const actions = useSharingsActions({ base, sharingContext, filteredResult })
+
   useKeyboardShortcuts({
     onPaste: () => refresh(),
     client: base.client,
@@ -146,17 +160,9 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     allowCopy: false,
     pushModal: base.pushModal,
     popModal: base.popModal,
-    refresh
+    refresh,
+    actions
   })
-
-  const actionsOptions = buildSharingsActionsOptions({
-    base,
-    nativeSharing,
-    sharingContext,
-    filteredResult
-  })
-
-  const actions = makeActions(SHARINGS_ACTIONS, actionsOptions)
 
   return (
     <FolderView>
