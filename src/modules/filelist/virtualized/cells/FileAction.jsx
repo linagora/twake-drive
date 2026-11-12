@@ -5,7 +5,7 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import { useI18n } from 'twake-i18n'
 
-const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
+const FileAction = forwardRef(({ onClick, disabled }, ref) => {
   const { t } = useI18n()
   return (
     <ListItemIcon>
@@ -20,5 +20,7 @@ const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
     </ListItemIcon>
   )
 })
+
+FileAction.displayName = 'FileAction'
 
 export default FileAction
