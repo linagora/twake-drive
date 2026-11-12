@@ -7,6 +7,7 @@ import { useI18n } from 'twake-i18n'
 import styles from './styles.styl'
 
 import { useAssistant } from '@/modules/views/Drive/Assistant/AssistantProvider'
+import { makeTools } from '@/modules/views/Drive/Assistant/tools'
 
 export const KEYBOARD_SAFE_HEIGHT = '--assistant-keyboard-safe-height'
 
@@ -42,13 +43,14 @@ const useKeyboardSafeHeight = (ref, isOpen) => {
 export const AssistantPanel = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { isOpen, close } = useAssistant()
+  const { isOpen, close, applyResult } = useAssistant()
   const panelRef = useRef(null)
   useKeyboardSafeHeight(panelRef, isOpen)
 
   if (!isOpen) return null
 
   const data = {
+    tools: makeTools({ t }),
     // Lets the assistant answer from the files of the user
     documents: true,
     theme: { type: themeType }
@@ -65,6 +67,7 @@ export const AssistantPanel = () => {
         action="OPEN"
         type="io.cozy.ai.chat.conversations"
         data={data}
+        onResult={applyResult}
         onCancel={close}
         onTerminate={close}
       />
