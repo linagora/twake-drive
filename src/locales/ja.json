@@ -101,6 +101,7 @@
     "more": "さらに"
   },
   "toolbar": {
+    "menu_upload_folder": "フォルダをアップロード",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "さらに",
     "menu_select": "アイテムを選択",
@@ -335,6 +336,7 @@
   "upload": {
     "label": "アップロード",
     "alert": {
+      "no_files": "このフォルダにはファイルがないため、何もアップロードされませんでした。",
       "network": "現在オフラインです。 接続したらもう一度やり直してください。"
     }
   },

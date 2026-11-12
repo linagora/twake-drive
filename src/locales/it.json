@@ -74,6 +74,7 @@
     "menu_manage_access": "Gestisci l'accesso",
     "menu_leave_shared_drive": "Abbandona la condivisione",
     "menu_upload": "Carica files",
+    "menu_upload_folder": "Carica cartella",
     "item_more": "Altro",
     "menu_new_folder": "Cartella",
     "menu_select": "Seleziona oggetti",
@@ -403,6 +404,7 @@
       "element": "elemento"
     },
     "alert": {
+      "no_files": "Questa cartella non contiene file, quindi non è stato caricato nulla.",
       "success": "%{smart_count} %{type} caricato correttamente. |||| %{smart_count} %{type} caricati correttamente.",
       "success_conflicts": "%{smart_count} %{type} caricato con %{conflictNumber} conflitto/i. |||| %{smart_count} %{type} caricati con %{conflictNumber} conflitto/i.",
       "success_updated": "%{smart_count} %{type} caricato e %{updatedCount} aggiornato/i. |||| %{smart_count} %{type} caricati e %{updatedCount} aggiornato/i.",

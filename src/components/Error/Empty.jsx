@@ -14,6 +14,7 @@ import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { isSpacePath } from '@/modules/routeUtils'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import { UploadButton } from '@/modules/upload/UploadButton'
@@ -30,6 +31,7 @@ const EmptyCanvas = ({
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
   const folderId = useCurrentFolderId()
+  const canWriteToCurrentFolder = useCurrentFolderWriteAccess()
   const { displayedFolder } = useDisplayedFolder()
   const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
   const displayedSharedFolder = sharedDriveResult?.data
@@ -80,6 +82,22 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
+                // No folder in the route: keep the root document, null would redirect.
+                folderId={folderId ?? undefined}
+                driveId={driveId}
+                displayedFolder={displayedSharedFolder || displayedFolder}
+                onUploaded={onUploaded}
+              />
+              <UploadButton
+                isDirectory
+                disabled={!folderId || !canWriteToCurrentFolder}
+                className="u-ml-half"
+                componentsProps={{
+                  button: { variant: 'secondary' }
+                }}
+                label={t('toolbar.menu_upload_folder')}
+                folderId={folderId}
+                driveId={driveId}
                 displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
               />

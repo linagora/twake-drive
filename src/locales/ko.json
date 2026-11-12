@@ -50,6 +50,7 @@
     "more": "더보기"
   },
   "toolbar": {
+    "menu_upload_folder": "폴더 업로드",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "더보기",
     "menu_new_folder": "폴더",
@@ -225,6 +226,11 @@
   "Viewer": {
     "loading": {
       "retry": "다시 시도"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "이 폴더에 파일이 없어 업로드된 항목이 없습니다."
     }
   },
   "FilePicker": {

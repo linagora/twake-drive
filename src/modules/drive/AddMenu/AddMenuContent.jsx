@@ -83,6 +83,13 @@ const AddMenuContent = forwardRef(
               onClick={onClick}
               isReadOnly={isReadOnly}
             />
+            <UploadItem
+              isDirectory
+              onUploaded={refreshFolderContent}
+              displayedFolder={displayedFolder}
+              onClick={onClick}
+              isReadOnly={isReadOnly}
+            />
           </NewItemHighlightProvider>
         )}
         {hasScanner && <ScannerMenuItem onClick={createActionOnClick} />}

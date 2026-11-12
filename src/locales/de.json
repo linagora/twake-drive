@@ -74,6 +74,7 @@
     "menu_manage_access": "Zugriff verwalten",
     "menu_leave_shared_drive": "Freigabe verlassen",
     "menu_upload": "Dateien hochladen",
+    "menu_upload_folder": "Ordner hochladen",
     "item_more": "Mehr",
     "menu_new_folder": "Ordner",
     "menu_select": "Elemente auswählen",
@@ -403,6 +404,7 @@
       "element": "Element"
     },
     "alert": {
+      "no_files": "Dieser Ordner enthält keine Dateien, daher wurde nichts hochgeladen.",
       "success": "%{smart_count} %{type} erfolgreich hochgeladen. |||| %{smart_count} %{type} erfolgreich hochgeladen.",
       "success_conflicts": "%{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen. |||| %{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen.",
       "success_updated": "%{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert. |||| %{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert.",
