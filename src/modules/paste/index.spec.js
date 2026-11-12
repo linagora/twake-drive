@@ -106,12 +106,14 @@ describe('handlePasteOperation', () => {
       expect(copy).toHaveBeenCalledWith(
         mockClient,
         mockFiles[0],
-        mockTargetFolder
+        mockTargetFolder,
+        { driveId: undefined }
       )
       expect(copy).toHaveBeenCalledWith(
         mockClient,
         mockFiles[1],
-        mockTargetFolder
+        mockTargetFolder,
+        { driveId: undefined }
       )
 
       expect(result).toEqual([
@@ -139,6 +141,37 @@ describe('handlePasteOperation', () => {
       )
 
       expect(resolveNameConflictsForCut).not.toHaveBeenCalled()
+    })
+
+    it('should copy a personal file into a shared drive through the shared drive API', async () => {
+      const sharedDriveFolder = {
+        _id: 'shared-drive-folder',
+        name: 'Shared Drive Folder',
+        driveId: 'drive-1',
+        cozyMetadata: { createdOn: 'https://alice.cozy.example/' }
+      }
+
+      const result = await handlePasteOperation(
+        mockClient,
+        [mockFiles[0]],
+        'copy',
+        null, // sourceDirectory
+        sharedDriveFolder,
+        mockOptions
+      )
+
+      expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+        mockClient,
+        { instance: '', file_id: 'file1', dir_id: '', sharing_id: undefined },
+        {
+          instance: 'https://alice.cozy.example/',
+          sharing_id: 'drive-1',
+          dir_id: 'shared-drive-folder'
+        },
+        true
+      )
+      expect(copy).not.toHaveBeenCalled()
+      expect(result[0].success).toBe(true)
     })
   })
 
@@ -356,7 +389,8 @@ describe('handlePasteOperation', () => {
       expect(copy).toHaveBeenCalledWith(
         mockClient,
         nextcloudFiles[0],
-        mockTargetFolder
+        mockTargetFolder,
+        { driveId: undefined }
       )
     })
   })
@@ -424,7 +458,7 @@ describe('handlePasteOperation', () => {
       expect(result[1].success).toBe(false)
       expect(result[0].error).toBeInstanceOf(Error)
       expect(result[1].error).toBeInstanceOf(Error)
-      expect(copy).toHaveBeenCalledTimes(2)
+      expect(copy).not.toHaveBeenCalled()
     })
 
     it('should handle missing options', async () => {
