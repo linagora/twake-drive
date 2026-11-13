@@ -46,6 +46,36 @@ const attachIfAny = async (
   })
 }
 
+const BADGE_COLORS: Record<UserLabel, string> = {
+  alice: '#1565c0',
+  bob: '#e65100',
+  charlie: '#2e7d32'
+}
+
+/** Runs in the page of a recorded run: pins the acting user's name in the
+ * top-left corner, so a video tells whose browser it shows. The name is drawn
+ * by a pseudo-element, which text locators never match. */
+const showUserBadge = ({
+  label,
+  color
+}: {
+  label: string
+  color: string
+}): void => {
+  if (window !== window.top) return
+  const mount = (): void => {
+    const style = document.createElement('style')
+    style.textContent = `#e2e-user-badge{position:fixed;top:8px;left:8px;z-index:2147483647;pointer-events:none;padding:6px 18px;border-radius:18px;background:${color};color:#fff;font:bold 20px sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.35)}#e2e-user-badge::after{content:'${label}'}`
+    const badge = document.createElement('div')
+    badge.id = 'e2e-user-badge'
+    badge.setAttribute('aria-hidden', 'true')
+    document.head.append(style)
+    document.body.append(badge)
+  }
+  if (document.body) mount()
+  else document.addEventListener('DOMContentLoaded', mount)
+}
+
 const userPageFixture =
   (user: UserLabel) =>
   async (
@@ -54,10 +84,18 @@ const userPageFixture =
     testInfo: TestInfo
   ): Promise<void> => {
     const ctx = await browser.newContext(contextOptions)
+    const recording = Boolean(process.env.E2E_VIDEO)
+    if (recording) {
+      await ctx.addInitScript(showUserBadge, {
+        label: user.charAt(0).toUpperCase() + user.slice(1),
+        color: BADGE_COLORS[user]
+      })
+    }
     const consoleErrors: string[] = []
     const pageErrors: string[] = []
+    let page: Page | null = null
     try {
-      const page = await ctx.newPage()
+      page = await ctx.newPage()
       page.on('console', msg => {
         if (msg.type() !== 'error') return
         const text = msg.text()
@@ -78,6 +116,12 @@ const userPageFixture =
         await attachIfAny(testInfo, `${user}-page-errors.log`, pageErrors)
       }
       await ctx.close()
+      // Named after the user, so each test's videos tell who acts in them.
+      const video = recording ? page?.video() : null
+      if (video) {
+        await video.saveAs(testInfo.outputPath(`${user}.webm`))
+        await video.delete()
+      }
     }
   }
 
@@ -130,4 +174,3 @@ export const expectRowDisabled = async (row: Locator): Promise<void> => {
   await expect(row).toBeVisible()
   await expect(row).toHaveAttribute('aria-disabled', 'true')
 }
-

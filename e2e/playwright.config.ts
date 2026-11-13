@@ -13,13 +13,23 @@ export default defineConfig({
   use: {
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    // E2E_VIDEO=1 records the run, E2E_SLOWMO=<ms> slows it down to watch it.
+    // E2E_VIDEO=1 records the run at a watchable pace (E2E_SLOWMO=<ms> tunes
+    // it), with each user's name pinned on their pages.
     // The fixtures open their own contexts, which the `video` option does not
     // reach, so recording goes through the context options they pass on.
     contextOptions: process.env.E2E_VIDEO
-      ? { recordVideo: { dir: 'test-results/videos' } }
+      ? {
+          recordVideo: {
+            dir: 'test-results/videos',
+            size: { width: 1280, height: 720 }
+          }
+        }
       : {},
-    launchOptions: { slowMo: Number(process.env.E2E_SLOWMO || 0) },
+    launchOptions: {
+      slowMo: Number(
+        process.env.E2E_SLOWMO || (process.env.E2E_VIDEO ? 1000 : 0)
+      )
+    },
     actionTimeout: 10_000
   },
   // Some shared-drive tests chain two cross-instance propagation waits
