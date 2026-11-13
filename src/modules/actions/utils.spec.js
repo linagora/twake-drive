@@ -63,6 +63,30 @@ describe('trashFiles', () => {
     const updatedFile = state2.cozy.documents['io.cozy.files'][file._id]
     expect(updatedFile.dir_id).toEqual('io.cozy.files.trash-dir')
   })
+
+  it('trashes each file through its own drive', async () => {
+    const { client, file } = setup()
+    const mockedDestroy = jest.fn().mockResolvedValue({ data: file })
+    client.collection = jest.fn(() => ({
+      destroy: mockedDestroy,
+      revokeSharingLink: jest.fn()
+    }))
+    const driveFile = { ...file, driveId: 'drive-1' }
+    const localFile = generateFile({ i: 1 })
+
+    await trashFiles(client, [driveFile, localFile], {
+      showAlert,
+      t,
+      driveId: 'drive-2'
+    })
+
+    expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
+      driveId: 'drive-1'
+    })
+    expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
+      driveId: 'drive-2'
+    })
+  })
 })
 
 describe('downloadFiles', () => {

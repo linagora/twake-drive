@@ -179,6 +179,37 @@ const sharedDriveRoutes = () => (
   </>
 )
 
+const recentRoute = () => (
+  <Route path="recent" element={<RecentView />}>
+    <Route
+      path="file/:fileId"
+      element={<OutletWrapper Component={FilesViewerRecent} />}
+    >
+      <Route path="v/revision" element={<FileHistory />} />
+      <Route path="v/share" element={<ShareFileView />} />
+      <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
+      <Route path="v/duplicate" element={<FolderDuplicateView />} />
+    </Route>
+    <Route path="file/:fileId/revision" element={<FileHistory />} />
+    <Route path="file/:fileId/share" element={<ShareFileView />} />
+    <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
+    <Route path="share" element={<ShareDisplayedFolderView />} />
+    <Route path="move" element={<MoveFilesView />} />
+    <Route
+      path="shareddrive/:driveId/file/:fileId/share"
+      element={<ShareFileView />}
+    />
+    <Route
+      path="shareddrive/:driveId/file/:fileId/revision"
+      element={<FileHistory />}
+    />
+    <Route
+      path="shareddrive/:driveId/:folderId/move"
+      element={<MoveSharedDriveFilesView />}
+    />
+  </Route>
+)
+
 const getEditorRoutes = () => (
   <>
     {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
@@ -261,22 +292,7 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
 
       {sharedDrivesEnabled ? sharedDriveRoutes() : null}
 
-      <Route path="recent" element={<RecentView />}>
-        <Route
-          path="file/:fileId"
-          element={<OutletWrapper Component={FilesViewerRecent} />}
-        >
-          <Route path="v/revision" element={<FileHistory />} />
-          <Route path="v/share" element={<ShareFileView />} />
-          <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
-          <Route path="v/duplicate" element={<FolderDuplicateView />} />
-        </Route>
-        <Route path="file/:fileId/revision" element={<FileHistory />} />
-        <Route path="file/:fileId/share" element={<ShareFileView />} />
-        <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-        <Route path="share" element={<ShareDisplayedFolderView />} />
-        <Route path="move" element={<MoveFilesView />} />
-      </Route>
+      {recentRoute()}
 
       <Route
         path="trash"
