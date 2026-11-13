@@ -17,7 +17,8 @@ const share = ({
   navigate,
   pathname,
   search,
-  allLoaded
+  allLoaded,
+  withDriveIdInModalPath
 }) => {
   const label = t('Files.share.cta')
   const icon = Share
@@ -42,7 +43,14 @@ const share = ({
       )
     },
     action: files =>
-      navigateToModal({ navigate, pathname, search, files, path: 'share' }),
+      navigateToModal({
+        navigate,
+        pathname,
+        search,
+        files,
+        path: 'share',
+        withDriveIdInModalPath
+      }),
     Component: forwardRef(function ShareMenuItemInMenu(props, ref) {
       const { isMobile } = useBreakpoints()
 

@@ -80,6 +80,7 @@ const RecentViewContent = ({
     allLoaded,
     isOwner,
     byDocId,
+    withDriveIdInModalPath: true,
     selectAll: () => base.toggleSelectAllItems(recentsResult?.data || [])
   }
 
