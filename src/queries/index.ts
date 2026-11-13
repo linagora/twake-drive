@@ -266,6 +266,22 @@ export const buildSharedDriveFileOrFolderByIdQuery: QueryBuilder<
   }
 })
 
+// A member gets no realtime update of drive files in the store, so the
+// history refetches the versions of a drive file almost every time it opens.
+const FILE_HISTORY_CACHE_TIMEOUT = 30 * 1000
+
+export const buildSharedDriveFileWithVersionsQuery: QueryBuilder<
+  BuildSharedDriveFileOrFolderByIdQuery
+> = ({ fileId, driveId }) => ({
+  definition: () => Q('io.cozy.files').getById(fileId).sharingById(driveId),
+  options: {
+    as: `io.cozy.files/${driveId}/${fileId}/versions`,
+    fetchPolicy: CozyClient.fetchPolicies.olderThan(FILE_HISTORY_CACHE_TIMEOUT),
+    singleDocData: true,
+    enabled: !!fileId && !!driveId
+  }
+})
+
 // this query should use `getById` instead of `where` as `buildFileOrFolderByIdQuery` does.
 // But in this case, due to a stack limitation, the `file.path` is not returned.
 // As we need the `file.path` we do this trick until the stack is updated
