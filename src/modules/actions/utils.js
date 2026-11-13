@@ -72,7 +72,7 @@ export const trashFiles = async (client, files, { showAlert, t, driveId }) => {
       // only do client.destroy(), I do not know what it did not update the internal
       // store correctly when I tried
       const { data: updatedFile } = await client
-        .collection(DOCTYPE_FILES, { driveId })
+        .collection(DOCTYPE_FILES, { driveId: file.driveId ?? driveId })
         .destroy(file)
       client.store.dispatch(
         receiveQueryResult(null, {

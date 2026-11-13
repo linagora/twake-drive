@@ -15,7 +15,8 @@ const moveTo = ({
   navigate,
   isMobile,
   search,
-  shouldHideIfSharedDriveRecipient
+  shouldHideIfSharedDriveRecipient,
+  withDriveIdInModalPath
 }) => {
   const icon = Moveto
   const label = isMobile
@@ -32,7 +33,21 @@ const moveTo = ({
       const isAllowedForSharedDrive = shouldHideIfSharedDriveRecipient
         ? docs.every(doc => !isSharedDriveDoc(doc))
         : true
-      return docs.length > 0 && canMove && isAllowedForSharedDrive
+      // The move modal of shared drive items opens in their drive folder, so
+      // they must all come from the same folder of the same drive.
+      const isFromSameFolder =
+        !withDriveIdInModalPath ||
+        docs.every(
+          doc =>
+            doc.driveId === docs[0].driveId &&
+            (!isSharedDriveDoc(doc) || doc.dir_id === docs[0].dir_id)
+        )
+      return (
+        docs.length > 0 &&
+        canMove &&
+        isAllowedForSharedDrive &&
+        isFromSameFolder
+      )
     },
     action: async files => {
       navigateToModalWithMultipleFile({
@@ -40,7 +55,8 @@ const moveTo = ({
         pathname,
         navigate,
         path: 'move',
-        search
+        search,
+        withDriveIdInModalPath
       })
     },
     Component: forwardRef(function MoveTo(props, ref) {

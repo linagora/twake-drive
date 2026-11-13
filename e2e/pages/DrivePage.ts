@@ -42,6 +42,12 @@ export class DrivePage {
     return this.page.getByText(t('error.open_folder'))
   }
 
+  get trashSuccessAlert(): Locator {
+    return this.page
+      .getByRole('alert')
+      .filter({ hasText: t('alert.trash_file_success') })
+  }
+
   get emptyState(): Locator {
     return this.page.getByText(t('empty.text'))
   }

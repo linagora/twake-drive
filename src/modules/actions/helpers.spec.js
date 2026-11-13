@@ -65,6 +65,45 @@ describe('actions helpers', () => {
         search: '?f.contact=person%3Aalice%40example.com&f.type=document'
       })
     })
+
+    it('opens the modal of a shared drive item under its drive', () => {
+      navigateToModal({
+        navigate: mockNavigate,
+        pathname: '/recent',
+        files: [{ id: 'file-1', driveId: 'drive-1' }],
+        path: 'share',
+        withDriveIdInModalPath: true
+      })
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/recent/shareddrive/drive-1/file/file-1/share'
+      )
+    })
+
+    it('keeps the usual path for a local item', () => {
+      navigateToModal({
+        navigate: mockNavigate,
+        pathname: '/recent',
+        files: [{ id: 'file-1' }],
+        path: 'share',
+        withDriveIdInModalPath: true
+      })
+
+      expect(mockNavigate).toHaveBeenCalledWith('/recent/file/file-1/share')
+    })
+
+    it('keeps the usual path when the view routes carry the drive', () => {
+      navigateToModal({
+        navigate: mockNavigate,
+        pathname: '/shareddrive/drive-1/folder-1',
+        files: [{ id: 'file-1', driveId: 'drive-1' }],
+        path: 'share'
+      })
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/shareddrive/drive-1/folder-1/file/file-1/share'
+      )
+    })
   })
 
   describe('navigateToModalWithMultipleFile', () => {
@@ -124,6 +163,29 @@ describe('actions helpers', () => {
         },
         {
           state: { fileIds: ['file-a', 'file-b'] }
+        }
+      )
+    })
+
+    it('opens the modal of shared drive items in their drive folder', () => {
+      navigateToModalWithMultipleFile({
+        navigate: mockNavigate,
+        pathname: '/recent',
+        files: [
+          { id: 'file-1', driveId: 'drive-1', dir_id: 'folder-1' },
+          { id: 'file-2', driveId: 'drive-1', dir_id: 'folder-1' }
+        ],
+        path: 'move',
+        withDriveIdInModalPath: true
+      })
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        {
+          pathname: '/recent/shareddrive/drive-1/folder-1/move',
+          search: ''
+        },
+        {
+          state: { fileIds: ['file-1', 'file-2'] }
         }
       )
     })
