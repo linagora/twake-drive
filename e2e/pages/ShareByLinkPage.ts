@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Page, Locator, Response } from '@playwright/test'
 
 import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
@@ -89,6 +89,39 @@ export class ShareByLinkPage {
       .filter({ hasText: new RegExp(`^(${roles})$`) })
   }
 
+  /** The cog of the "Public access" block. */
+  private get settingsButton(): Locator {
+    return this.page.getByRole('button', {
+      name: t('cozy-sharing:Share.publicAccess.settings')
+    })
+  }
+
+  /** The restriction modal is still open, e.g. after a refused update. */
+  async expectRestrictionsOpen(): Promise<void> {
+    await expect(this.restrictionModal).toBeVisible()
+  }
+
+  /** The link offers its management: its role menu and the cog of the
+   * "Public access" block. */
+  async expectManageable(): Promise<void> {
+    await expect(this.linkRoleButton).toBeVisible()
+    await expect(this.settingsButton).toBeVisible()
+  }
+
+  /** Pick "Deactivate" in the role menu of the link and return the status of
+   * the stack's answer, without expecting the link to go away. */
+  async requestDeactivation(): Promise<number> {
+    await this.linkRoleButton.click()
+    const response = this.waitForPermissionMutation('DELETE')
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: t('cozy-sharing:Share.permissionLink.deactivate')
+      })
+      .click()
+    return (await response).status()
+  }
+
   async deactivate(): Promise<void> {
     await this.linkRoleButton.click()
     await this.page
@@ -102,11 +135,7 @@ export class ShareByLinkPage {
 
   /** Open the restriction modal from the cog of the "Public access" block. */
   async openRestrictions(): Promise<void> {
-    await this.page
-      .getByRole('button', {
-        name: t('cozy-sharing:Share.publicAccess.settings')
-      })
-      .click()
+    await this.settingsButton.click()
     await this.restrictionModal.waitFor({ state: 'visible' })
   }
 
@@ -154,6 +183,18 @@ export class ShareByLinkPage {
     await expect(roleButton).toHaveText(editor)
   }
 
+  /** Confirm the restriction modal and return the status of the stack's
+   * answer, without expecting the modal to close. */
+  async submitRestrictions(): Promise<number> {
+    const response = this.waitForPermissionMutation('PATCH')
+    await this.restrictionModal
+      .getByRole('button', {
+        name: t('cozy-sharing:ShareRestrictionModal.action.confirm')
+      })
+      .click()
+    return (await response).status()
+  }
+
   /** Confirm the restriction modal and wait for it to close. */
   async confirm(): Promise<void> {
     await this.restrictionModal
@@ -162,5 +203,15 @@ export class ShareByLinkPage {
       })
       .click()
     await this.restrictionModal.waitFor({ state: 'hidden', timeout: 15_000 })
+  }
+
+  private waitForPermissionMutation(
+    method: 'PATCH' | 'DELETE'
+  ): Promise<Response> {
+    return this.page.waitForResponse(
+      response =>
+        response.request().method() === method &&
+        /\/permissions\//.test(new URL(response.url()).pathname)
+    )
   }
 }

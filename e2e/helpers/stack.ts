@@ -19,6 +19,7 @@ import { stackExec } from './config'
 
 interface PermissionDoc {
   id: string
+  meta?: { rev?: string }
   attributes: {
     expires_at?: string
     permissions?: Record<string, { values?: string[]; verbs?: string[] }>
