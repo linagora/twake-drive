@@ -341,5 +341,17 @@
   "RecentNoAccess": {
     "file_title": "您已無法存取此檔案",
     "folder_title": "您已無法存取此資料夾"
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "已暫停",
+      "offline": "正在等待網路",
+      "retrying": "伺服器錯誤，正在重試",
+      "gone": "上傳已過期",
+      "pause": "暫停",
+      "resume": "繼續",
+      "send_again": "重新傳送",
+      "cancel": "取消上傳"
+    }
   }
 }

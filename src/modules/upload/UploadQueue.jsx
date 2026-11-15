@@ -5,11 +5,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import {
   Icon,
   CheckCircle,
+  Cross,
   CrossCircle,
   Spinner,
   Warning
 } from '@linagora/twake-icons'
 import Button from 'cozy-ui/transpiled/react/Buttons'
+import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
 import List from 'cozy-ui/transpiled/react/List'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
@@ -20,13 +22,23 @@ import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
-import { getUploadQueue, purgeUploadQueue, status as uploadStatus } from '.'
+import {
+  getUploadQueue,
+  purgeUploadQueue,
+  resumeUpload,
+  status as uploadStatus
+} from '.'
 
 import { DEFAULT_UPLOAD_PROGRESS_HIDE_DELAY } from '@/constants/config'
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
+import {
+  findResumableUpload,
+  resumableStatus as resumable
+} from '@/modules/upload/resumable'
 
 const {
   LOADING,
+  PAUSED,
   PENDING,
   RESOLVING,
   CANCEL,
@@ -37,20 +49,26 @@ const {
   DONE_STATUSES
 } = uploadStatus
 
-const IN_PROGRESS = new Set([PENDING, RESOLVING, CONFLICT])
+const IN_PROGRESS = new Set([PENDING, RESOLVING, CONFLICT, PAUSED])
+
+const RESUMABLE_LABELS = {
+  [resumable.PAUSED]: 'UploadQueue.item.paused',
+  [resumable.OFFLINE]: 'UploadQueue.item.offline',
+  [resumable.RETRYING]: 'UploadQueue.item.retrying',
+  [resumable.GONE]: 'UploadQueue.item.gone'
+}
 
 // For the determinate progress bar, weight each row by how far it's
-// progressed: PENDING/RESOLVING contribute 0, LOADING contributes its
-// loaded/total byte fraction, terminal statuses (success/error/cancel)
-// contribute 1. Counts only matter as integers for the close-button
-// gating; the bar uses the fractional total.
+// progressed: rows in progress contribute their loaded/total byte fraction
+// (0 before they start, and a paused upload keeps its bytes), terminal
+// statuses (success/error/cancel) contribute 1. Counts only matter as
+// integers for the close-button gating; the bar uses the fractional total.
 const summarise = queue => {
   let done = 0
   let success = 0
   let progressTotal = 0
   for (const item of queue) {
-    if (IN_PROGRESS.has(item.status)) continue
-    if (item.status === LOADING) {
+    if (IN_PROGRESS.has(item.status) || item.status === LOADING) {
       progressTotal += item.progress?.total
         ? item.progress.loaded / item.progress.total
         : 0
@@ -107,6 +125,37 @@ const FileUploadProgress = ({ progress }) => {
   )
 }
 
+const ResumableActions = ({ item, t }) => {
+  const dispatch = useDispatch()
+  const upload = findResumableUpload(item.fileId)
+  if (!upload) return null
+  const resume = () => dispatch(resumeUpload(item.fileId))
+  let action = { label: t('UploadQueue.item.pause'), onClick: upload.pause }
+  if (item.resumableStatus === resumable.PAUSED) {
+    action = { label: t('UploadQueue.item.resume'), onClick: resume }
+  } else if (item.resumableStatus === resumable.GONE) {
+    action = { label: t('UploadQueue.item.send_again'), onClick: resume }
+  }
+  return (
+    <>
+      <Button
+        variant="text"
+        size="small"
+        className="u-mv-0 u-flex-shrink-0"
+        label={action.label}
+        onClick={action.onClick}
+      />
+      <IconButton
+        size="small"
+        aria-label={t('UploadQueue.item.cancel')}
+        onClick={upload.cancel}
+      >
+        <Icon icon={Cross} />
+      </IconButton>
+    </>
+  )
+}
+
 const UploadItem = ({ item, t }) => {
   const { file, status, isDirectory, relativePath } = item
   const displayName = relativePath || item.finalName || file?.name || ''
@@ -139,6 +188,8 @@ const UploadItem = ({ item, t }) => {
   if (isResolving) label = t('UploadQueue.item.preparing')
   else if (isPending) label = t('UploadQueue.item.pending')
   else if (isConflict) label = t('UploadQueue.item.conflict')
+  else if (RESUMABLE_LABELS[item.resumableStatus])
+    label = t(RESUMABLE_LABELS[item.resumableStatus])
 
   return (
     <ListItem
@@ -196,6 +247,9 @@ const UploadItem = ({ item, t }) => {
         >
           {label}
         </Typography>
+      )}
+      {(isLoading || status === PAUSED) && item.resumableStatus && (
+        <ResumableActions item={item} t={t} />
       )}
     </ListItem>
   )

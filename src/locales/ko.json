@@ -254,5 +254,17 @@
   "RecentNoAccess": {
     "file_title": "더 이상 이 파일에 액세스할 수 없습니다",
     "folder_title": "더 이상 이 폴더에 액세스할 수 없습니다"
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "일시 중지됨",
+      "offline": "네트워크 대기 중",
+      "retrying": "서버 오류, 다시 시도 중",
+      "gone": "업로드가 만료됨",
+      "pause": "일시 중지",
+      "resume": "다시 시작",
+      "send_again": "다시 보내기",
+      "cancel": "업로드 취소"
+    }
   }
 }
