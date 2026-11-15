@@ -1,6 +1,11 @@
+import { applyMiddleware, combineReducers, createStore } from 'redux'
+import thunkMiddleware from 'redux-thunk'
+
 import { getFullpath } from 'cozy-client/dist/models/file'
 
-import {
+import uploadReducer, {
+  ADD_TO_UPLOAD_QUEUE,
+  resumeUpload,
   processNextFile,
   selectors,
   queue,
@@ -15,6 +20,7 @@ import {
   retryUploadConflicts,
   uploadConflictStrategies
 } from './index'
+import * as resumableModule from './resumable'
 
 import logger from '@/lib/logger'
 
@@ -1954,5 +1960,67 @@ describe('onQueueEmpty', () => {
         createdItems: [{ _id: 'a' }]
       })
     )
+  })
+})
+
+describe('a paused resumable upload', () => {
+  const flushPromises = () => new Promise(resolve => setTimeout(resolve, 0))
+
+  afterEach(() => jest.restoreAllMocks())
+
+  it('lets the next files go on, and takes its turn again once resumed', async () => {
+    const store = createStore(
+      combineReducers({ upload: uploadReducer }),
+      applyMiddleware(thunkMiddleware)
+    )
+    const statusOf = fileId =>
+      store.getState().upload.queue.find(i => i.fileId === fileId).status
+    let setResumableStatus
+    let finishBigUpload
+    const controller = {
+      resume: jest.fn(() => setResumableStatus('uploading'))
+    }
+    jest
+      .spyOn(resumableModule, 'createFile')
+      .mockImplementation(async (client, file, options) => {
+        if (file.name !== 'big.bin') return { data: { id: file.name } }
+        setResumableStatus = options.onResumableStatus
+        setResumableStatus('uploading')
+        return new Promise(resolve => {
+          finishBigUpload = resolve
+        })
+      })
+    jest
+      .spyOn(resumableModule, 'findResumableUpload')
+      .mockReturnValue(controller)
+    const queueCompleted = jest.fn()
+    store.dispatch({
+      type: ADD_TO_UPLOAD_QUEUE,
+      files: [
+        { fileId: 'big', file: new File(['big'], 'big.bin') },
+        { fileId: 'small', file: new File(['small'], 'small.txt') }
+      ]
+    })
+    store.dispatch(
+      processNextFile(jest.fn(), queueCompleted, 'dir', {}, { client: {} })
+    )
+    await flushPromises()
+    expect(statusOf('small')).toBe('pending')
+
+    setResumableStatus('paused')
+    await flushPromises()
+    expect(statusOf('big')).toBe('paused')
+    expect(statusOf('small')).toBe('created')
+    expect(queueCompleted).not.toHaveBeenCalled()
+
+    store.dispatch(resumeUpload('big'))
+    await flushPromises()
+    expect(controller.resume).toHaveBeenCalled()
+    expect(statusOf('big')).toBe('loading')
+
+    finishBigUpload({ data: { id: 'big' } })
+    await flushPromises()
+    expect(statusOf('big')).toBe('created')
+    expect(queueCompleted).toHaveBeenCalledTimes(1)
   })
 })
