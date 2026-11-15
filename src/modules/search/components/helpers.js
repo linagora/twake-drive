@@ -115,3 +115,85 @@ export const indexFiles = async (client, officeEnabled = false) => {
 
   return new FuzzyPathSearch(normalizedFiles)
 }
+
+// Set once the stack has answered that it cannot search
+let stackSearchUnavailable = false
+
+export const isStackSearchUnavailable = () => stackSearchUnavailable
+
+// For the tests
+export const resetStackSearchAvailability = () => {
+  stackSearchUnavailable = false
+}
+
+/**
+ * Normalize a hit of the stack search (POST /files/search) like
+ * makeNormalizedFile does for the local index.
+ *
+ * shortcut: the hits have no metadata, so notes, shortcuts and Nextcloud
+ * entries open in the viewer like other files; add the fields to the hits if
+ * they need their own route.
+ *
+ * @param {object} file - a hit of FileCollection.search
+ * @param {boolean} officeEnabled - whether OnlyOffice is enabled
+ * @returns {object} the normalized file
+ */
+export const makeNormalizedStackHit = (file, officeEnabled = false) => {
+  const isDir = file.type === TYPE_DIRECTORY
+  const driveId = file.drive_id
+  const folderUrl = id =>
+    driveId ? `/shareddrive/${driveId}/${id}` : `/folder/${id}`
+  const dirUrl = folderUrl(isDir ? file._id : file.dir_id)
+
+  let url = dirUrl
+  if (!isDir) {
+    url = shouldOpenWithOnlyOffice(file, officeEnabled)
+      ? makeOnlyOfficeFileRoute(file._id, { driveId, fromPathname: dirUrl })
+      : `${dirUrl}/file/${file._id}`
+  }
+
+  return {
+    id: file._id,
+    type: file.type,
+    name: file.name,
+    mime: file.mime,
+    class: file.class,
+    path: file.path,
+    url,
+    parentUrl: isDir ? dirUrl : folderUrl(file.dir_id),
+    openOn: 'drive'
+  }
+}
+
+/**
+ * Searches the files with the stack.
+ *
+ * @param {CozyClient} client - cozy client instance
+ * @param {string} query - the searched text
+ * @param {object} options - limit, cursor and officeEnabled
+ * @returns {Promise<{files: Array<object>, cursor: string|null}|null>} a page of normalized files, or null when the stack cannot search
+ */
+export const searchFilesOnStack = async (
+  client,
+  query,
+  { limit, cursor, officeEnabled = false } = {}
+) => {
+  const collection = client.collection('io.cozy.files')
+  if (stackSearchUnavailable || typeof collection.search !== 'function') {
+    return null
+  }
+  try {
+    const resp = await collection.search(query, { limit, cursor })
+    return {
+      files: resp.data.map(file => makeNormalizedStackHit(file, officeEnabled)),
+      cursor: resp.cursor
+    }
+  } catch (err) {
+    // 404: the stack has no search route, 503: search is not configured
+    if (err?.status === 404 || err?.status === 503) {
+      stackSearchUnavailable = true
+      return null
+    }
+    throw err
+  }
+}
