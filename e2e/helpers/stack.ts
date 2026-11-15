@@ -118,6 +118,28 @@ interface FileRef {
   fileId: string
 }
 
+/** Whether the stack announces a capability in `/settings/capabilities`. */
+export async function hasCapability(
+  instance: string,
+  name: string
+): Promise<boolean> {
+  const res = await fetch(`http://${instance}/settings/capabilities`, {
+    headers: {
+      Authorization: `Bearer ${makeFilesToken(instance)}`,
+      Accept: 'application/vnd.api+json'
+    }
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Get capabilities on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as {
+    data: { attributes: Record<string, unknown> }
+  }
+  return body.data.attributes[name] === true
+}
+
 export function makeCozyClient(instance: string, token: string): CozyClient {
   return new CozyClient({
     uri: `http://${instance}`,
