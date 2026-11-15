@@ -22,7 +22,8 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'drive.onlyoffice.pdf-editing.enabled': false,
   'drive.public_link_events.enabled': false,
   'drive.recents.enabled': false,
-  'drive.virtualization.enabled': false
+  'drive.virtualization.enabled': false,
+  'drive.resumable-upload.enabled': false
 }
 
 export function setFlags(
