@@ -453,7 +453,15 @@
     "item": {
       "pending": "Ausstehend",
       "preparing": "Wird vorbereitet",
-      "conflict": "Wartet auf Auswahl"
+      "conflict": "Wartet auf Auswahl",
+      "paused": "Pausiert",
+      "offline": "Warten auf Netzwerk",
+      "retrying": "Serverfehler, neuer Versuch",
+      "gone": "Upload abgelaufen",
+      "pause": "Pausieren",
+      "resume": "Fortsetzen",
+      "send_again": "Erneut senden",
+      "cancel": "Upload abbrechen"
     }
   },
   "Viewer": {

@@ -355,7 +355,15 @@
     "header_done": "%{done} / %{total} を正常にアップロードしました",
     "close": "閉じる",
     "item": {
-      "pending": "保留"
+      "pending": "保留",
+      "paused": "一時停止中",
+      "offline": "ネットワークを待っています",
+      "retrying": "サーバーエラー、再試行中",
+      "gone": "アップロードの期限切れ",
+      "pause": "一時停止",
+      "resume": "再開",
+      "send_again": "再送信",
+      "cancel": "アップロードをキャンセル"
     }
   },
   "Viewer": {

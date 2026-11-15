@@ -240,5 +240,17 @@
       "DOCUMENTS_FAILED": "无法获取所选文档及其路径。",
       "DESTINATION_UNAVAILABLE": "无法加载目标文件夹。"
     }
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "已暂停",
+      "offline": "正在等待网络",
+      "retrying": "服务器错误，正在重试",
+      "gone": "上传已过期",
+      "pause": "暂停",
+      "resume": "继续",
+      "send_again": "重新发送",
+      "cancel": "取消上传"
+    }
   }
 }

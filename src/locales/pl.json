@@ -237,5 +237,17 @@
       "DOCUMENTS_FAILED": "Nie udało się pobrać wybranych dokumentów i ich ścieżek.",
       "DESTINATION_UNAVAILABLE": "Nie udało się wczytać folderu docelowego."
     }
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "Wstrzymano",
+      "offline": "Oczekiwanie na sieć",
+      "retrying": "Błąd serwera, ponawianie",
+      "gone": "Przesyłanie wygasło",
+      "pause": "Wstrzymaj",
+      "resume": "Wznów",
+      "send_again": "Wyślij ponownie",
+      "cancel": "Anuluj przesyłanie"
+    }
   }
 }

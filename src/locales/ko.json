@@ -239,5 +239,17 @@
       "DOCUMENTS_FAILED": "선택한 문서와 경로를 가져올 수 없습니다.",
       "DESTINATION_UNAVAILABLE": "이동할 폴더를 불러올 수 없습니다."
     }
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "일시 중지됨",
+      "offline": "네트워크 대기 중",
+      "retrying": "서버 오류, 다시 시도 중",
+      "gone": "업로드가 만료됨",
+      "pause": "일시 중지",
+      "resume": "다시 시작",
+      "send_again": "다시 보내기",
+      "cancel": "업로드 취소"
+    }
   }
 }
