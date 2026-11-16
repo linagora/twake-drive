@@ -94,6 +94,7 @@ const LayoutContent = () => {
       <NewItemHighlightProvider>
         <BarComponent
           searchOptions={{ enabled: !isMobile }}
+          componentsProps={{ BarSearch: { disabledAssistantButton: true } }}
           disableInternalStore
           appIcon={Drive}
           appTextIcon={DriveText}
