@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { format } from 'date-fns'
 import React from 'react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
@@ -61,13 +61,20 @@ const findRowTexts = () =>
     .getAllByTestId('history-row-download')
     .map(button => button.closest('li').textContent)
 
-const renderFileHistory = ({ path, fileResponse }) => {
+const renderFileHistory = ({
+  path,
+  fileResponse,
+  deleteVersion = async () => null
+}) => {
   const client = new CozyClient({ schema, useCustomStore: true })
   client.getStackClient().setUri('http://test.cloud')
   setupStore({ client })
   const fetchJSON = jest
     .spyOn(client.getStackClient(), 'fetchJSON')
     .mockImplementation(async (method, url) => {
+      if (method === 'DELETE') {
+        return deleteVersion(url)
+      }
       if (
         url === '/files/file-id' ||
         url === '/sharings/drives/drive-id/file-id'
@@ -163,6 +170,89 @@ describe('FileHistory', () => {
       expect(screen.getAllByTestId('history-row-download')).toHaveLength(2)
     })
     expect(hasRequestedVersionsDoctype(fetchJSON)).toBe(false)
+  })
+
+  describe('when deleting a version of a shared drive file', () => {
+    const deleteVersionAt = async index => {
+      fireEvent.click(screen.getAllByTestId('history-row-delete')[index])
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+    }
+
+    beforeEach(() => {
+      useSharingContext.mockReturnValue({ hasWriteAccess: () => true })
+    })
+
+    it('removes the deleted version from the history', async () => {
+      const { fetchJSON } = renderFileHistory({
+        path: '/drive/drive-id/file/file-id',
+        fileResponse: makeFileResponse({
+          versions: [
+            makeVersion('file-id/1-older', OLDER_VERSION_DATE),
+            makeVersion('file-id/2-newer', NEWER_VERSION_DATE)
+          ]
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getAllByTestId('history-row-delete')).toHaveLength(2)
+      })
+
+      await deleteVersionAt(0)
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('history-row-download')).toHaveLength(2)
+      })
+      expect(fetchJSON).toHaveBeenCalledWith(
+        'DELETE',
+        '/sharings/drives/drive-id/file-id/2-newer'
+      )
+      const [, remainingVersionRow] = findRowTexts()
+      expect(remainingVersionRow).toContain(
+        formatHistoryDate(OLDER_VERSION_DATE)
+      )
+    })
+
+    it('shows only the current version once the last version is deleted', async () => {
+      renderFileHistory({
+        path: '/drive/drive-id/file/file-id',
+        fileResponse: makeFileResponse({
+          versions: [makeVersion('file-id/1-older', OLDER_VERSION_DATE)]
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getAllByTestId('history-row-delete')).toHaveLength(1)
+      })
+
+      await deleteVersionAt(0)
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('history-row-download')).toHaveLength(1)
+      })
+    })
+
+    it('keeps the version listed when it could not be deleted', async () => {
+      renderFileHistory({
+        path: '/drive/drive-id/file/file-id',
+        fileResponse: makeFileResponse({
+          versions: [
+            makeVersion('file-id/1-older', OLDER_VERSION_DATE),
+            makeVersion('file-id/2-newer', NEWER_VERSION_DATE)
+          ]
+        }),
+        deleteVersion: async () => {
+          throw new Error('nope')
+        }
+      })
+      await waitFor(() => {
+        expect(screen.getAllByTestId('history-row-delete')).toHaveLength(2)
+      })
+
+      await deleteVersionAt(0)
+
+      expect(
+        await screen.findByText('This version could not be deleted.')
+      ).toBeInTheDocument()
+      expect(screen.getAllByTestId('history-row-download')).toHaveLength(3)
+    })
   })
 
   it('keeps reading the versions of a personal file from the instance', async () => {
