@@ -249,16 +249,6 @@
       "type": "io.cozy.oauth.clients",
       "verbs": ["GET"]
     },
-    "accounts": {
-      "description": "Required by the AI Assistant to access providers",
-      "type": "io.cozy.accounts",
-      "verbs": ["ALL"]
-    },
-    "triggers": {
-      "description": "Required by the AI Assistant to index its knowledge bases",
-      "type": "io.cozy.triggers",
-      "verbs": ["GET", "POST", "DELETE"]
-    },
     "dacc": {
       "type": "cc.cozycloud.dacc_v2",
       "verbs": ["POST"],
@@ -270,19 +260,14 @@
       "description": "Remote-doctype required to send anonymized measures to the DACC shared among mycozy.eu's Cozy."
     },
     "chatConversations": {
-      "description": "Required by the AI Assistant to show conversations",
+      "description": "Required to summarise a file with the AI",
       "type": "io.cozy.ai.chat.conversations",
-      "verbs": ["ALL"]
+      "verbs": ["POST"]
     },
     "assistants": {
       "type": "io.cozy.ai.chat.assistants",
-      "verbs": ["ALL"],
-      "description": "Required to fetch, create and update AI assistants"
-    },
-    "chatEvents": {
-      "description": "Required by the AI Assistant to receive realtime events",
-      "type": "io.cozy.ai.chat.events",
-      "verbs": ["GET"]
+      "verbs": ["GET"],
+      "description": "Required to know the folders an AI assistant answers from"
     },
     "driveSettings": {
       "description": "Required to access the drive settings",
