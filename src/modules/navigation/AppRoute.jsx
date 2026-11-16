@@ -1,12 +1,9 @@
 import React from 'react'
 import { Route, useParams, Outlet, Navigate } from 'react-router-dom'
 
-import { BarRoutes } from 'cozy-bar'
 import flag from 'cozy-flags'
-import { AssistantView } from 'cozy-search'
 
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
-import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
@@ -69,12 +66,6 @@ import {
 } from '@/modules/views/Space/SpaceLayout'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
-
-// Avoid conflict with legacy Bar routes
-export const ASSISTANT_ROUTE_PATH = 'assistant/:conversationId'
-const filteredBarRoutes = BarRoutes.filter(
-  r => r.props?.path !== ASSISTANT_ROUTE_PATH
-)
 
 const FilesRedirect = () => {
   const { folderId } = useParams()
@@ -200,10 +191,6 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
       </Route>
     ) : null}
 
-    <Route element={<AssistantLayout />}>
-      <Route path={ASSISTANT_ROUTE_PATH} element={<AssistantView />} />
-    </Route>
-
     <Route element={<Layout />}>
       <Route path="upload" element={<UploaderComponent />} />
       {flag('drive.file-picker-demo.enabled') && (
@@ -313,8 +300,6 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
         <Route path="share" element={<ShareDisplayedFolderView />} />
         <Route path="move" element={<MoveFilesView />} />
       </Route>
-
-      {filteredBarRoutes}
     </Route>
   </SentryRoutes>
 )
