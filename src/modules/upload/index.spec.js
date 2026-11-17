@@ -1,5 +1,6 @@
 import { getFullpath } from 'cozy-client/dist/models/file'
 import { isFlagshipApp, isMobile } from 'cozy-device-helper'
+import flag from 'cozy-flags'
 
 import {
   processNextFile,
@@ -1357,15 +1358,27 @@ describe('isDirectoryPickerAvailable', () => {
     isFlagshipApp.mockReturnValue(false)
     isMobile.mockReturnValue(false)
     setPlatform('Linux x86_64', 0)
+    flag.mockImplementation(name => name === 'drive.upload-folder.enabled')
   })
 
   afterEach(() => {
+    flag.mockImplementation(() => false)
     delete HTMLInputElement.prototype.webkitdirectory
     jest.restoreAllMocks()
   })
 
   it('is available on a desktop browser', () => {
     expect(isDirectoryPickerAvailable()).toBe(true)
+  })
+
+  it('is not available while drive.upload-folder.enabled is off', () => {
+    flag.mockImplementation(() => false)
+    expect(isDirectoryPickerAvailable()).toBe(false)
+  })
+
+  it('is not available while drive.upload-folder.enabled is unset', () => {
+    flag.mockImplementation(() => null)
+    expect(isDirectoryPickerAvailable()).toBe(false)
   })
 
   it('is not available in the mobile app webview', () => {

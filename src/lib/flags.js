@@ -40,4 +40,5 @@ const flagsList = () => {
   flag('drive.file-picker-demo.enabled')
   flag('drive.move-intent-demo.enabled')
   flag('drive.move-to-picker.enabled')
+  flag('drive.upload-folder.enabled')
 }

@@ -1,6 +1,7 @@
 import { combineReducers } from 'redux'
 
 import { isFlagshipApp, isMobile } from 'cozy-device-helper'
+import flag from 'cozy-flags'
 
 import { MAX_PAYLOAD_SIZE } from '@/constants/config'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
@@ -1212,6 +1213,7 @@ export const isDirectoryPickerAvailable = () => {
     window.navigator.platform === 'MacIntel' &&
     window.navigator.maxTouchPoints > 1
   return (
+    flag('drive.upload-folder.enabled') === true &&
     'webkitdirectory' in HTMLInputElement.prototype &&
     !isFlagshipApp() &&
     !isMobile() &&
