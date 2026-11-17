@@ -8016,7 +8016,7 @@ __metadata:
     cozy-sharing: "npm:^45.1.10"
     cozy-stack-client: "npm:^62.0.1"
     cozy-tsconfig: "npm:^1.8.1"
-    cozy-ui: "npm:^146.5.1"
+    cozy-ui: "npm:^146.7.0"
     cozy-ui-plus: "npm:^15.0.0"
     cozy-viewer: "npm:^33.0.0"
     css-mediaquery: "npm:0.1.2"
@@ -8261,9 +8261,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-ui@npm:^146.5.1":
-  version: 146.5.1
-  resolution: "cozy-ui@npm:146.5.1"
+"cozy-ui@npm:^146.7.0":
+  version: 146.7.0
+  resolution: "cozy-ui@npm:146.7.0"
   dependencies:
     "@babel/runtime": "npm:^7.3.4"
     "@date-io/date-fns": "npm:1"
@@ -8301,7 +8301,7 @@ __metadata:
     twake-i18n: ">=0.3.0"
   bin:
     rsg-screenshots: scripts/screenshots.js
-  checksum: 10/ac528de39591b7dc69b35b2b2447fd2ed683920d11fb3333dae3b790e152cfe3498d3d4a4135457ea3d8ebf40812761b1f524e52cc48064b51f86f46f64ca6b5
+  checksum: 10/6d229dbebf41d5c559cf856077622012f3913cd7c640d518eb95003343a92d2f02edf8fb88f061498e5cff8a81e3dd79e4edf11cc76e5ec0073d6ed47720893c
   languageName: node
   linkType: hard
 
