@@ -6,6 +6,8 @@ import { useClient } from 'cozy-client'
 import * as helpers from './helpers'
 import { useRedirectLink } from './useRedirectLink'
 
+import logger from '@/lib/logger'
+
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
   useClient: jest.fn()
@@ -60,6 +62,30 @@ describe('useRedirectLink', () => {
     expect(render.result.current.redirectLink).toBe('drive#/folder/id123')
     expect(render.result.current.canRedirect).toBe(true)
   })
+
+  it.each([
+    ['evil.example#/folder'],
+    ['drive#/\\evil.example'],
+    ['drive#/..//evil.example']
+  ])(
+    'should not redirect with the invalid redirect link %s',
+    async redirectLink => {
+      const warn = jest.spyOn(logger, 'warn').mockImplementation(() => {})
+      useSearchParams.mockReturnValue([new URLSearchParams({ redirectLink })])
+      let render
+      await act(async () => {
+        render = renderHook(() => useRedirectLink())
+      })
+
+      render.result.current.redirectBack()
+
+      expect(mockNavigate).not.toHaveBeenCalled()
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('Cannot redirect: ')
+      )
+      warn.mockRestore()
+    }
+  )
 
   it('should redirect with navigate when is from a public folder', async () => {
     useSearchParams.mockReturnValue([

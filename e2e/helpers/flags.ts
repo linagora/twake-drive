@@ -1,8 +1,9 @@
 import { stackExec } from './config'
 
 /** Flags applied to every instance at provisioning time (global-setup).
- * Specs overriding flags via setFlags should spread over this map so each
- * call re-asserts a full, deterministic state. */
+ * Setting flags merges them into those of the instance, so a flag a spec turns
+ * on is listed here as false: spreading this map then turns it off again, also
+ * on a runtime kept with E2E_PERSIST. */
 export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'cozy.hide-sharing-cozy-to-cozy': true,
   'drive.shared-drive.enabled': true,
@@ -15,7 +16,11 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'drive.move-to-picker.enabled': true,
   'drive.default-updated-at-sort.enabled': true,
   'drive.office.enabled': true,
-  'drive.office.write': true
+  'drive.office.write': true,
+  'cozy.assistant.enabled': false,
+  'drive.new-file-viewer-ui.enabled': false,
+  'drive.onlyoffice.pdf-editing.enabled': false,
+  'drive.virtualization.enabled': false
 }
 
 export function setFlags(

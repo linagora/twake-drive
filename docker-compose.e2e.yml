@@ -1,6 +1,11 @@
 services:
   couchdb:
     image: couchdb:3
+    # Every Cozy instance opens tens of databases (shards and indexes): with the
+    # default soft limit of 1024 open files, CouchDB fails (emfile, then
+    # no_couch on every request) past a few dozen instances
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
     environment:
       COUCHDB_USER: admin
       COUCHDB_PASSWORD: password

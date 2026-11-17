@@ -66,7 +66,15 @@
     }
   },
   "Assistant": {
-    "open": "助理"
+    "open": "助理",
+    "createFolder": "建立資料夾",
+    "createDocument": "建立文件",
+    "folderCreated": "資料夾已建立",
+    "folderError": "無法建立資料夾，請再試一次。",
+    "documentCreated": "文件已建立",
+    "documentError": "無法建立文件，請再試一次。",
+    "readOnly": "此資料夾為唯讀，無法在其中建立任何內容。",
+    "toolError": "助理要求了 Drive 無法執行的操作。"
   },
   "Nav": {
     "item_drive": "硬碟",
@@ -231,8 +239,8 @@
     "items_cut": "%{count}個項目已剪下",
     "item_moved": "1個項目已移動",
     "items_moved": "%{count}個項目已移動",
-    "item_pasted": "1個項目已移動",
-    "items_pasted": "%{count}個項目已移動",
+    "item_pasted": "1個項目已貼上",
+    "items_pasted": "%{count}個項目已貼上",
     "copy_files_only": "無法複製資料夾",
     "copy_not_allowed": "此檢視中不允許複製操作。",
     "cut_not_allowed": "此檢視中不允許剪下操作。",

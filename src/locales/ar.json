@@ -66,7 +66,15 @@
     }
   },
   "Assistant": {
-    "open": "المساعد"
+    "open": "المساعد",
+    "createFolder": "إنشاء المجلد",
+    "createDocument": "إنشاء المستند",
+    "folderCreated": "تم إنشاء المجلد",
+    "folderError": "تعذّر إنشاء المجلد، يرجى المحاولة مرة أخرى.",
+    "documentCreated": "تم إنشاء المستند",
+    "documentError": "تعذّر إنشاء المستند، يرجى المحاولة مرة أخرى.",
+    "readOnly": "هذا المجلد للقراءة فقط، لا يمكن إنشاء أي شيء فيه.",
+    "toolError": "طلب المساعد شيئًا لا يستطيع Drive القيام به."
   },
   "Nav": {
     "item_sharings": "المشاركات",
@@ -184,8 +192,8 @@
     "items_cut": "تم قص %{count} عنصر",
     "item_moved": "تم نقل عنصر واحد",
     "items_moved": "تم نقل %{count} عنصر",
-    "item_pasted": "تم نقل عنصر واحد",
-    "items_pasted": "تم نقل %{count} عنصر",
+    "item_pasted": "تم لصق عنصر واحد",
+    "items_pasted": "تم لصق %{count} عنصر",
     "copy_files_only": "لا يمكن نسخ المجلدات",
     "copy_not_allowed": "عملية النسخ غير مسموحة في هذا العرض.",
     "cut_not_allowed": "عملية القص غير مسموحة في هذا العرض.",

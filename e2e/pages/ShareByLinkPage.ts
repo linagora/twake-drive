@@ -70,9 +70,55 @@ export class ShareByLinkPage {
     return text
   }
 
+  /** Copy the link that already exists via "Copy link" and return the copied
+   * URL. A failed copy leaves the clipboard untouched, so it is emptied first:
+   * otherwise the previous copy of the same URL would pass for this one. The
+   * caller's browser context must have clipboard permissions granted. */
+  async copyLink(): Promise<string> {
+    await this.page.evaluate(() => navigator.clipboard.writeText(''))
+    await this.page
+      .getByRole('button', {
+        name: t('cozy-sharing:Files.share.shareByLink.copy')
+      })
+      .click()
+    let text = ''
+    await expect(async (): Promise<void> => {
+      text = await this.page.evaluate(() =>
+        navigator.clipboard.readText().catch(() => '')
+      )
+      expect(text).toMatch(/^https?:\/\//)
+    }).toPass({ intervals: [100], timeout: 15_000 })
+    return text
+  }
+
   /** Wait for the "Public access" row to tell a link exists (after a modal reopen). */
   async waitForLinkRow(): Promise<void> {
     await this.linkRow.waitFor({ state: 'visible' })
+  }
+
+  /** The role menu button ("Editor"/"Viewer") of the link's row. */
+  private get linkRoleButton(): Locator {
+    const roles = ['two-way', 'one-way']
+      .map(type => escapeRegExp(t(`cozy-sharing:Share.type.${type}`)))
+      .join('|')
+    return this.page
+      .getByRole('dialog')
+      .filter({ has: this.linkRow })
+      .getByRole('listitem')
+      .filter({ has: this.linkRow })
+      .getByRole('button')
+      .filter({ hasText: new RegExp(`^(${roles})$`) })
+  }
+
+  async deactivate(): Promise<void> {
+    await this.linkRoleButton.click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: t('cozy-sharing:Share.permissionLink.deactivate')
+      })
+      .click()
+    await expect(this.linkRow).toHaveCount(0)
   }
 
   /** Open the restriction modal from the cog of the "Public access" block. */

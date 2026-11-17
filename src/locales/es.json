@@ -383,8 +383,8 @@
     "items_cut": "%{count} elementos cortados",
     "item_moved": "1 elemento ha sido movido",
     "items_moved": "%{count} elementos han sido movidos",
-    "item_pasted": "1 elemento ha sido movido",
-    "items_pasted": "%{count} elementos han sido movidos",
+    "item_pasted": "1 elemento ha sido pegado",
+    "items_pasted": "%{count} elementos han sido pegados",
     "copy_files_only": "No se pueden copiar carpetas",
     "copy_not_allowed": "La operación de copia no está permitida en esta vista.",
     "cut_not_allowed": "La operación de corte no está permitida en esta vista.",
@@ -689,7 +689,15 @@
     }
   },
   "Assistant": {
-    "open": "Asistente"
+    "open": "Asistente",
+    "createFolder": "Crear la carpeta",
+    "createDocument": "Crear el documento",
+    "folderCreated": "Carpeta creada",
+    "folderError": "No se ha podido crear la carpeta. Inténtelo de nuevo.",
+    "documentCreated": "Documento creado",
+    "documentError": "No se ha podido crear el documento. Inténtelo de nuevo.",
+    "readOnly": "Esta carpeta es de solo lectura, no se puede crear nada en ella.",
+    "toolError": "El asistente pidió algo que Drive no puede hacer."
   },
   "Migration": {
     "title": "Actualizar Twake Drive",

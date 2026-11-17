@@ -21,9 +21,11 @@ export class ShareModalPage {
   /** The modal dialog — exposed so tests can assert its inner elements. */
   readonly dialog: Locator
 
-  constructor(page: Page) {
+  /** `dialog` narrows the modal down when another dialog stays open around
+   * it, such as the editor of OnlyOffice. */
+  constructor(page: Page, dialog: Locator = page.getByRole('dialog')) {
     this.page = page
-    this.dialog = page.getByRole('dialog')
+    this.dialog = dialog
   }
 
   /** Send button of the invite field. */
@@ -67,6 +69,13 @@ export class ShareModalPage {
     )
   }
 
+  /** Shown instead of the member list once nobody but the owner is left. */
+  get noMemberNotice(): Locator {
+    return this.dialog.getByText(
+      t('cozy-ui-member-list:MemberList.empty.title')
+    )
+  }
+
   get copyLinkButton(): Locator {
     return this.dialog.getByRole('button', {
       name: new RegExp(
@@ -74,6 +83,21 @@ export class ShareModalPage {
         'i'
       )
     })
+  }
+
+  get hasSharedParentNotice(): Locator {
+    return this.dialog.getByText(
+      new RegExp(
+        escapeRegExp(
+          t('cozy-sharing:Files.share.shareByEmail.hasSharedParent')
+        ),
+        'i'
+      )
+    )
+  }
+
+  get contactInput(): Locator {
+    return this.dialog.getByRole('textbox').first()
   }
 
   get contactCombobox(): Locator {
@@ -92,10 +116,9 @@ export class ShareModalPage {
    * when one is suggested, whose suggestion may show its instance rather than
    * its email, so the suggestion itself is not clicked. */
   async addMember(email: string): Promise<void> {
-    const contactInput = this.dialog.getByRole('textbox').first()
-    await contactInput.fill(email)
-    await contactInput.press('Enter')
-    await expect(contactInput).toHaveValue('')
+    await this.contactInput.fill(email)
+    await this.contactInput.press('Enter')
+    await expect(this.contactInput).toHaveValue('')
   }
 
   /** Pick the role granted to the members being added. The selector is the
@@ -232,11 +255,9 @@ export class ShareModalPage {
    * anchored so it can't also match "Copy link" or "Send link". */
   async share(): Promise<void> {
     await this.shareButton.click()
-    await expect(this.dialog.getByRole('textbox').first()).toHaveAttribute(
-      'placeholder',
-      /.+/,
-      { timeout: 15_000 }
-    )
+    await expect(this.contactInput).toHaveAttribute('placeholder', /.+/, {
+      timeout: 15_000
+    })
     await this.close()
   }
 

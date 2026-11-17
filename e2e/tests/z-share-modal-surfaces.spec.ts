@@ -67,7 +67,7 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     await expect(alicePage).toHaveURL(
       /\/sharings\/by-me\/share\/shareddrive\/[^/]+\/[^/]+/
     )
-    await expect(alicePage.getByTestId('fil-content-body')).toBeVisible()
+    await expect(aliceDrive.fileList).toBeVisible()
 
     await modal.close()
     // Closing the modal returns to the tab it was opened from.

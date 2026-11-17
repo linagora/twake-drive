@@ -44,6 +44,24 @@ describe('EditorToolbar Sharing', () => {
     })
   })
 
+  it.each([['evil.example%23%2Fsharings%2Fby-me'], ['drive']])(
+    'falls back to with-me with the redirect link %s',
+    redirectLink => {
+      mockUseLocation.mockReturnValue({
+        search: `?redirectLink=${redirectLink}`
+      })
+
+      render(<Sharing file={{ _id: 'file-id', name: 'Document' }} />)
+
+      fireEvent.click(screen.getByText('Share'))
+      fireEvent.click(screen.getByText('Revoke self'))
+
+      expect(mockNavigate).toHaveBeenCalledWith('/sharings/with-me', {
+        replace: true
+      })
+    }
+  )
+
   it('falls back to with-me without a sharings return route', () => {
     render(<Sharing file={{ _id: 'file-id', name: 'Document' }} />)
 

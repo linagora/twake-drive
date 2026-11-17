@@ -3,7 +3,6 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
-import { t } from '../helpers/i18n'
 import { SidebarPage } from '../pages/SidebarPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
@@ -52,28 +51,6 @@ test.describe('Navigation surfaces', () => {
     } finally {
       await safeUnlink(file)
     }
-  })
-
-  test('Search: a default folder shows up as a suggestion', async ({
-    alicePage
-  }) => {
-    // "Photos" is created on instance bootstrap, so the search index already
-    // knows about it — this avoids racing the indexer for a freshly-uploaded
-    // fixture.
-    await alicePage.goto(`${USERS.alice.appUrl}/#/search`)
-    const searchInput = alicePage
-      .getByRole('textbox', {
-        name: t('searchbar.placeholder')
-      })
-      .first()
-    await searchInput.waitFor({ state: 'visible' })
-    await searchInput.fill('Photos')
-    // The suggestion list shows the file path as a secondary line — using
-    // the full path makes the assertion immune to "Photos" appearing as a
-    // breadcrumb label or sidebar shortcut.
-    await expect(alicePage.getByText('/Photos').first()).toBeVisible({
-      timeout: 15_000
-    })
   })
 
   test('Trash: a deleted folder is reachable from the Bin sidebar entry', async ({

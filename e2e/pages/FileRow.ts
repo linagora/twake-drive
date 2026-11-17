@@ -1,8 +1,8 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 interface ConfirmDialog {
@@ -11,6 +11,8 @@ interface ConfirmDialog {
    * a dialog appears within a short grace window (some actions skip the
    * dialog when there's nothing to warn about). */
   wait: 'required' | 'optional'
+  /** Text the dialog must show before it is confirmed. */
+  title?: string
 }
 
 const OPTIONAL_DIALOG_TIMEOUT = 2_000
@@ -77,6 +79,15 @@ export class FileRow {
     await this.rowEl.getByRole('checkbox').click()
   }
 
+  async menuItems(): Promise<string[]> {
+    const menu = await this.openMenu()
+    await menu.getByRole('menuitem').first().waitFor()
+    const items = await menu.getByRole('menuitem').allInnerTexts()
+    await this.page.keyboard.press('Escape')
+    await menu.waitFor({ state: 'hidden' })
+    return items.map(item => item.trim())
+  }
+
   /** cozy-drive desktop semantics: single-click selects, double-click
    * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
@@ -91,11 +102,33 @@ export class FileRow {
     return this.page.getByRole('menu')
   }
 
+  async openContextMenu(): Promise<Locator> {
+    await this.cell.click({ button: 'right' })
+    const menu = this.page.getByRole('menu')
+    await menu.waitFor({ state: 'visible' })
+    return menu
+  }
+
+  /** Right-clicks the row and sends it to the Bin from that menu. Returns
+   * the entries the menu offered. */
+  async sendToTrashFromContextMenu(): Promise<string[]> {
+    let items: string[] = []
+    await this.sendToTrash(async () => {
+      const menu = await this.openContextMenu()
+      items = (await menu.getByRole('menuitem').allInnerTexts()).map(item =>
+        item.trim()
+      )
+      return menu
+    })
+    return items
+  }
+
   private async runAction(
     menuItem: RegExp,
-    confirm?: ConfirmDialog
+    confirm?: ConfirmDialog,
+    open: () => Promise<Locator> = () => this.openMenu()
   ): Promise<void> {
-    const menu = await this.openMenu()
+    const menu = await open()
     await menu.getByRole('menuitem', { name: menuItem }).click()
     if (!confirm) return
 
@@ -116,6 +149,7 @@ export class FileRow {
         })
       if (!appeared) return
     }
+    if (confirm.title) await expect(dialog).toContainText(confirm.title)
     await dialog.getByRole('button', { name: confirm.button }).click()
     await dialog.waitFor({ state: 'hidden' })
   }
@@ -171,20 +205,37 @@ export class FileRow {
       new RegExp(escapeRegExp(t('actions.duplicateTo.label')), 'i'),
       {
         button: new RegExp(escapeRegExp(t('DuplicateModal.confirmLabel')), 'i'),
-        wait: 'optional'
+        wait: 'required'
       }
     )
   }
 
-  async sendToTrash(): Promise<void> {
+  /** The confirmation names the file, so it acts on this row alone. */
+  async sendToTrash(open?: () => Promise<Locator>): Promise<void> {
     await this.runAction(
       new RegExp(`^${escapeRegExp(t('SelectionBar.trash'))}$`, 'i'),
       {
         button: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i'),
-        wait: 'required'
-      }
+        wait: 'required',
+        title: t('DeleteConfirm.title', {
+          filename: this.name.replace(/\.[^.]+$/, ''),
+          smart_count: 1
+        })
+      },
+      open
     )
     await this.waitHidden()
+  }
+
+  async download(): Promise<Download> {
+    const menu = await this.openMenu()
+    const download = this.page.waitForEvent('download')
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.download'))}$`, 'i')
+      })
+      .click()
+    return await download
   }
 
   async addToFavorites(): Promise<void> {
@@ -223,6 +274,21 @@ export class FileRow {
   async restore(): Promise<void> {
     await this.runAction(
       new RegExp(`^${escapeRegExp(t('SelectionBar.restore'))}$`, 'i')
+    )
+    await this.waitHidden()
+  }
+
+  /** Bin only. */
+  async deletePermanently(): Promise<void> {
+    await this.runAction(
+      new RegExp(`^${escapeRegExp(t('SelectionBar.destroy'))}$`, 'i'),
+      {
+        button: new RegExp(
+          `^${escapeRegExp(t('DestroyConfirm.delete'))}$`,
+          'i'
+        ),
+        wait: 'required'
+      }
     )
     await this.waitHidden()
   }

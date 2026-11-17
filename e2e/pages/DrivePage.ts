@@ -1,9 +1,9 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
 
 /**
@@ -15,7 +15,7 @@ import { t } from '../helpers/i18n'
  */
 export class DrivePage {
   private readonly page: Page
-  private readonly fileList: Locator
+  readonly fileList: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -66,8 +66,59 @@ export class DrivePage {
     })
   }
 
+  get sharingsFilters(): Locator {
+    return this.page.getByTestId('sharings-filters')
+  }
+
   get breadcrumb(): Locator {
     return this.page.locator('main').getByRole('navigation').first()
+  }
+
+  /** The tail of a long name is truncated, so `prefix` may be partial. */
+  async openBreadcrumbItem(prefix: string): Promise<void> {
+    await this.breadcrumb.getByText(prefix, { exact: false }).first().click()
+  }
+
+  /** Leaves a mark on the document that a full page load would wipe. */
+  async markDocument(marker: string): Promise<void> {
+    await this.page.locator('html').evaluate((root, value) => {
+      root.dataset.e2eDocumentMarker = value
+    }, marker)
+  }
+
+  markedDocument(marker: string): Locator {
+    return this.page.locator(
+      `html[data-e2e-document-marker="${marker.replace(/["\\]/g, '\\$&')}"]`
+    )
+  }
+
+  /** With drive.virtualization.enabled, a row of the virtualized table. */
+  virtualRow(name: string): Locator {
+    return this.page
+      .getByTestId('virtuoso-scroller')
+      .locator('tr')
+      .filter({ has: this.page.getByTitle(name, { exact: true }) })
+  }
+
+  /** With drive.virtualization.enabled, scrolls the list down until the row
+   * of `name` is mounted. */
+  async scrollVirtualizedListTo(name: string): Promise<void> {
+    const scroller = this.page.getByTestId('virtuoso-scroller')
+    const row = this.virtualRow(name)
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await row.count()
+          if (count === 0) {
+            await scroller.evaluate((element: HTMLElement) => {
+              element.scrollTop += element.clientHeight
+            })
+          }
+          return count
+        },
+        { intervals: [100], timeout: 30_000 }
+      )
+      .toBeGreaterThan(0)
   }
 
   async selectRows(names: string[]): Promise<void> {
@@ -75,6 +126,67 @@ export class DrivePage {
     for (const name of names) {
       await this.row(name).select()
     }
+  }
+
+  /** The toolbar menu stays open after the click, so it is closed here. */
+  async downloadCurrentFolder(): Promise<Download> {
+    const menu = await this.openToolbarMenu()
+    const download = this.page.waitForEvent('download')
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(
+          `^${escapeRegExp(t('toolbar.menu_download_folder'))}$`,
+          'i'
+        )
+      })
+      .click()
+    const result = await download
+    await this.page.keyboard.press('Escape')
+    return result
+  }
+
+  /** Sends the folder on display to the Bin from the menu of the toolbar. */
+  async trashCurrentFolder(): Promise<void> {
+    const menu = await this.openToolbarMenu()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(`^${escapeRegExp(t('toolbar.trash'))}$`, 'i')
+      })
+      .click()
+    await this.confirmTrash()
+  }
+
+  async downloadSelection(): Promise<Download> {
+    const download = this.page.waitForEvent('download')
+    await this.page
+      .getByRole('button', {
+        name: new RegExp(`^${escapeRegExp(t('SelectionBar.download'))}$`, 'i')
+      })
+      .click()
+    return await download
+  }
+
+  async trashSelectionWithDeleteKey(): Promise<void> {
+    await this.page.keyboard.press('Delete')
+    await this.confirmTrash()
+  }
+
+  private async openToolbarMenu(): Promise<Locator> {
+    await this.page
+      .getByTestId('fil-toolbar-files')
+      .getByRole('button', { name: t('Toolbar.more') })
+      .click()
+    return this.page.getByRole('menu')
+  }
+
+  private async confirmTrash(): Promise<void> {
+    const dialog = this.page.getByRole('dialog')
+    await dialog
+      .getByRole('button', {
+        name: new RegExp(`^${escapeRegExp(t('DeleteConfirm.delete'))}$`, 'i')
+      })
+      .click()
+    await dialog.waitFor({ state: 'hidden' })
   }
 
   // Click the recipients avatars in the folder toolbar
@@ -130,6 +242,20 @@ export class DrivePage {
     await desktopBreadcrumb.or(mobileHeading).waitFor({ state: 'attached' })
   }
 
+  async cutSelection(): Promise<void> {
+    await this.page.keyboard.press('ControlOrMeta+x')
+    await expect(
+      this.page.getByRole('alert').filter({ hasText: t('alert.item_cut') })
+    ).toBeVisible()
+  }
+
+  async paste(): Promise<void> {
+    await this.page.keyboard.press('ControlOrMeta+v')
+    await expect(
+      this.page.getByRole('alert').filter({ hasText: t('alert.item_pasted') })
+    ).toBeVisible()
+  }
+
   /** Locator for the file list cell whose filename contains the substring —
    *  use for "the original and its (1) copy" style multi-row assertions. */
   matching(stem: string): Locator {
@@ -150,13 +276,36 @@ export class DrivePage {
     await this.row(name).waitVisible()
   }
 
+  /** Returns the id of the created file, which opens in OnlyOffice. */
+  async createOfficeDocument(
+    kind: 'text' | 'spreadsheet' | 'slide'
+  ): Promise<string> {
+    await this.createButton.click()
+    await this.page
+      .getByRole('menu')
+      .getByRole('menuitem', {
+        name: new RegExp(
+          `^${escapeRegExp(t(`toolbar.menu_onlyOffice.${kind}`))}$`
+        )
+      })
+      .click()
+    await this.page.waitForURL(/#\/onlyoffice\/[^/?]+\?fromCreate=true/, {
+      timeout: 30_000
+    })
+    const fileId = this.page.url().match(/onlyoffice\/([^/?]+)/)?.[1]
+    if (!fileId) throw new Error(`No file id in ${this.page.url()}`)
+    return fileId
+  }
+
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
-  async uploadFiles(filePaths: string | string[]): Promise<void> {
+  async uploadFiles(
+    files: Parameters<Locator['setInputFiles']>[0]
+  ): Promise<void> {
     await this.page
       .locator('input[data-testid="upload-btn"]')
       .first()
-      .setInputFiles(filePaths)
+      .setInputFiles(files)
   }
 
   /** Right-click the empty file-list area to open RightClickAddMenu (menu id

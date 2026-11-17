@@ -383,8 +383,8 @@
     "items_cut": "%{count} éléments coupés",
     "item_moved": "1 élément a été déplacé",
     "items_moved": "%{count} éléments ont été déplacés",
-    "item_pasted": "1 élément a été déplacé",
-    "items_pasted": "%{count} éléments ont été déplacés",
+    "item_pasted": "1 élément a été collé",
+    "items_pasted": "%{count} éléments ont été collés",
     "copy_files_only": "Impossible de copier les dossiers",
     "copy_not_allowed": "L'opération de copie n'est pas autorisée dans cette vue.",
     "cut_not_allowed": "L'opération de coupe n'est pas autorisée dans cette vue.",
@@ -689,7 +689,15 @@
     }
   },
   "Assistant": {
-    "open": "Assistant"
+    "open": "Assistant",
+    "createFolder": "Créer le dossier",
+    "createDocument": "Créer le document",
+    "folderCreated": "Dossier créé",
+    "folderError": "Le dossier n'a pas pu être créé, merci de réessayer.",
+    "documentCreated": "Document créé",
+    "documentError": "Le document n'a pas pu être créé, merci de réessayer.",
+    "readOnly": "Ce dossier est en lecture seule, rien ne peut y être créé.",
+    "toolError": "L'assistant a demandé une action que Drive ne sait pas faire."
   },
   "Migration": {
     "title": "Mettre à jour Twake Drive",

@@ -21,7 +21,7 @@ const file = {
   driveId: 'drive-1'
 }
 
-const setup = async ({ hasWriteAccess }) => {
+const setup = async ({ hasWriteAccess, viewedFile = file }) => {
   const client = createMockClient({})
   const hasWriteAccessMock = jest.fn().mockReturnValue(hasWriteAccess)
   const sharingContextValue = {
@@ -38,7 +38,9 @@ const setup = async ({ hasWriteAccess }) => {
     </AppLike>
   )
 
-  const rendered = renderHook(() => useMoreMenuActions(file), { wrapper })
+  const rendered = renderHook(() => useMoreMenuActions(viewedFile), {
+    wrapper
+  })
   // Flush the print-availability effect so its state update stays inside act.
   await act(async () => {})
   return { ...rendered, hasWriteAccessMock }
@@ -46,6 +48,8 @@ const setup = async ({ hasWriteAccess }) => {
 
 const findAction = (actions, name) =>
   actions.find(action => action[name])?.[name]
+
+const namesOf = actions => actions.map(action => Object.keys(action)[0])
 
 describe('useMoreMenuActions', () => {
   it('does not display duplicateTo without write access to the folder', async () => {
@@ -65,5 +69,25 @@ describe('useMoreMenuActions', () => {
 
     const duplicateTo = findAction(result.current, 'duplicateTo')
     expect(duplicateTo.displayCondition([file])).toBe(true)
+  })
+
+  it('leaves only the Bin for an infected file', async () => {
+    const { result } = await setup({
+      hasWriteAccess: true,
+      viewedFile: { ...file, antivirus_scan: { status: 'infected' } }
+    })
+
+    expect(namesOf(result.current)).toEqual(['trash'])
+  })
+
+  it('keeps more than the Bin for a clean file', async () => {
+    const { result } = await setup({
+      hasWriteAccess: true,
+      viewedFile: { ...file, antivirus_scan: { status: 'clean' } }
+    })
+
+    expect(namesOf(result.current)).toEqual(
+      expect.arrayContaining(['download', 'moveTo', 'duplicateTo', 'trash'])
+    )
   })
 })

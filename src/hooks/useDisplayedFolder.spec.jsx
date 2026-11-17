@@ -137,6 +137,55 @@ describe('useDisplayedFolder', () => {
     }
   )
 
+  // A parent view sees the driveId of its child route, such as the share modal
+  // of a drive file, while the route holds no folder of that drive.
+  it('displays no folder on a drive route without folder', () => {
+    useQuery.mockReturnValue({ data: null, fetchStatus: 'pending' })
+    useCurrentFolderId.mockReturnValue(null)
+    useParams.mockReturnValue({ driveId: 'received-drive' })
+
+    const result = useDisplayedFolder()
+
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ enabled: false })
+    )
+    expect(result).toEqual({
+      displayedFolder: null,
+      isLoading: false,
+      isNotFound: false,
+      initialDirId: null
+    })
+  })
+
+  it('requests nothing through the drive on a drive route without folder', async () => {
+    const stackClient = new CozyStackClient({
+      uri: 'https://recipient.example'
+    })
+    const client = new CozyClient({ stackClient })
+    const fetchJSON = jest.spyOn(stackClient, 'fetchJSON').mockResolvedValue({
+      data: {
+        id: ROOT_DIR_ID,
+        type: 'io.cozy.files',
+        attributes: { type: 'directory', name: '' }
+      }
+    })
+    useCurrentFolderId.mockReturnValue(null)
+    useParams.mockReturnValue({ driveId: 'received-drive' })
+    useQuery.mockImplementation(jest.requireActual('cozy-client').useQuery)
+
+    const { result } = renderHook(() => useDisplayedFolder(), {
+      wrapper: ({ children }) => (
+        <CozyProvider client={client}>{children}</CozyProvider>
+      )
+    })
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    expect(result.current.displayedFolder).toBe(null)
+    expect(fetchJSON).not.toHaveBeenCalled()
+    useQuery.mockReset()
+  })
+
   it('still queries the root directory on the authenticated route', () => {
     useQuery.mockReturnValue({ data: null, fetchStatus: 'pending' })
     useCurrentFolderId.mockReturnValue(null) // falls back to ROOT_DIR_ID

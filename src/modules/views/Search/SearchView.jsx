@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import { BarLeft, BarSearch } from 'cozy-bar'
-import { models, useClient } from 'cozy-client'
+import { isInAppPath, models, useClient } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
 import { useWebviewIntent } from 'cozy-intent'
 import { Main } from 'cozy-ui/transpiled/react/Layout'
@@ -54,7 +54,7 @@ const SearchView = () => {
   const navigateBack = useCallback(() => {
     const params = new URLSearchParams(search)
     const returnPath = params.get('returnPath')
-    navigate(returnPath ? returnPath : '/')
+    navigate(isInAppPath(returnPath) ? returnPath : '/')
   }, [navigate, search])
 
   const openSuggestion = useCallback(

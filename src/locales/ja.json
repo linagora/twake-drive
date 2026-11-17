@@ -66,7 +66,15 @@
     }
   },
   "Assistant": {
-    "open": "アシスタント"
+    "open": "アシスタント",
+    "createFolder": "フォルダを作成",
+    "createDocument": "ドキュメントを作成",
+    "folderCreated": "フォルダを作成しました",
+    "folderError": "フォルダを作成できませんでした。もう一度お試しください。",
+    "documentCreated": "ドキュメントを作成しました",
+    "documentError": "ドキュメントを作成できませんでした。もう一度お試しください。",
+    "readOnly": "このフォルダーは読み取り専用のため、中に作成できません。",
+    "toolError": "アシスタントが Drive にできない操作を求めました。"
   },
   "Nav": {
     "item_drive": "ドライブ",
@@ -321,8 +329,8 @@
     "items_cut": "%{count}個のアイテムを切り取りました",
     "item_moved": "1個のアイテムが移動されました",
     "items_moved": "%{count}個のアイテムが移動されました",
-    "item_pasted": "1個のアイテムが移動されました",
-    "items_pasted": "%{count}個のアイテムが移動されました",
+    "item_pasted": "1個のアイテムが貼り付けられました",
+    "items_pasted": "%{count}個のアイテムが貼り付けられました",
     "copy_files_only": "フォルダーはコピーできません",
     "copy_not_allowed": "このビューではコピー操作は許可されていません。",
     "cut_not_allowed": "このビューでは切り取り操作は許可されていません。",

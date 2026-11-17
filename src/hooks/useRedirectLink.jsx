@@ -72,7 +72,13 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
       return logger.warn('Cannot find a redirect link')
     }
 
-    const { slug, pathname, hash } = deconstructRedirectLink(redirectLink)
+    let link
+    try {
+      link = deconstructRedirectLink(redirectLink)
+    } catch (e) {
+      return logger.warn(`Cannot redirect: ${e}`)
+    }
+    const { slug, pathname, hash } = link
 
     // As we navigate in the same instance, we can use the react-router-dom navigate
     if (!isPublic || isFromPublicFolder) {

@@ -383,8 +383,8 @@
     "items_cut": "%{count} mục đã được cắt",
     "item_moved": "1 mục đã được di chuyển",
     "items_moved": "%{count} mục đã được di chuyển",
-    "item_pasted": "1 mục đã được di chuyển",
-    "items_pasted": "%{count} mục đã được di chuyển",
+    "item_pasted": "1 mục đã được dán",
+    "items_pasted": "%{count} mục đã được dán",
     "copy_files_only": "Không thể sao chép thư mục",
     "copy_not_allowed": "Thao tác sao chép không được phép trong chế độ xem này.",
     "cut_not_allowed": "Thao tác cắt không được phép trong chế độ xem này.",
@@ -689,7 +689,15 @@
     }
   },
   "Assistant": {
-    "open": "Trợ lý"
+    "open": "Trợ lý",
+    "createFolder": "Tạo thư mục",
+    "createDocument": "Tạo tài liệu",
+    "folderCreated": "Đã tạo thư mục",
+    "folderError": "Không thể tạo thư mục, vui lòng thử lại.",
+    "documentCreated": "Đã tạo tài liệu",
+    "documentError": "Không thể tạo tài liệu, vui lòng thử lại.",
+    "readOnly": "Thư mục này chỉ đọc, không thể tạo gì trong đó.",
+    "toolError": "Trợ lý đã yêu cầu một việc mà Drive không thể làm."
   },
   "Migration": {
     "title": "Cập nhật Twake Drive",

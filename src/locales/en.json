@@ -383,8 +383,8 @@
     "items_cut": "%{count} items cut",
     "item_moved": "1 item was moved",
     "items_moved": "%{count} items were moved",
-    "item_pasted": "1 item was moved",
-    "items_pasted": "%{count} items were moved",
+    "item_pasted": "1 item was pasted",
+    "items_pasted": "%{count} items were pasted",
     "copy_files_only": "Cannot copy folders",
     "copy_not_allowed": "Copy operation is not allowed in this view.",
     "cut_not_allowed": "Cut operation is not allowed in this view.",
@@ -689,7 +689,15 @@
     }
   },
   "Assistant": {
-    "open": "Assistant"
+    "open": "Assistant",
+    "createFolder": "Create the folder",
+    "createDocument": "Create the document",
+    "folderCreated": "Folder created",
+    "folderError": "The folder could not be created, please try again.",
+    "documentCreated": "Document created",
+    "documentError": "The document could not be created, please try again.",
+    "readOnly": "This folder is read-only, nothing can be created in it.",
+    "toolError": "The assistant asked for something Drive cannot do."
   },
   "Migration": {
     "title": "Update Twake Drive",

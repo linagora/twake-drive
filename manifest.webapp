@@ -211,11 +211,6 @@
         "PUT"
       ]
     },
-    "files": {
-      "description": "Required to access the files",
-      "type": "io.cozy.files",
-      "verbs": ["ALL"]
-    },
     "allFiles": {
       "description": "Required to access the files",
       "type": "io.cozy.files.*",
@@ -232,9 +227,9 @@
       "verbs": ["GET"]
     },
     "albums": {
-      "description": "Required to manage photos albums",
+      "description": "Required to warn before deleting a file that belongs to a photos album",
       "type": "io.cozy.photos.albums",
-      "verbs": ["PUT", "GET"]
+      "verbs": ["GET"]
     },
     "contacts": {
       "type": "io.cozy.contacts",
@@ -254,32 +249,6 @@
       "type": "io.cozy.oauth.clients",
       "verbs": ["GET"]
     },
-    "errorsreporting": {
-      "description": "Allow to report unexpected errors to the support team",
-      "type": "cc.cozycloud.errors",
-      "verbs": ["POST"]
-    },
-    "mail": {
-      "description": "Send feedback emails to the support team",
-      "type": "io.cozy.jobs",
-      "verbs": ["POST"],
-      "selector": "worker",
-      "values": ["sendmail"]
-    },
-    "accounts": {
-      "description": "Required by the AI Assistant to access providers",
-      "type": "io.cozy.accounts",
-      "verbs": ["ALL"]
-    },
-    "jobs": {
-      "type": "io.cozy.jobs",
-      "verbs": ["ALL"]
-    },
-    "triggers": {
-      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
-      "type": "io.cozy.triggers",
-      "verbs": ["ALL"]
-    },
     "dacc": {
       "type": "cc.cozycloud.dacc_v2",
       "verbs": ["POST"],
@@ -291,19 +260,14 @@
       "description": "Remote-doctype required to send anonymized measures to the DACC shared among mycozy.eu's Cozy."
     },
     "chatConversations": {
-      "description": "Required by the AI Assistant to show conversations",
+      "description": "Required to summarise a file with the AI",
       "type": "io.cozy.ai.chat.conversations",
-      "verbs": ["ALL"]
+      "verbs": ["POST"]
     },
     "assistants": {
       "type": "io.cozy.ai.chat.assistants",
-      "verbs": ["ALL"],
-      "description": "Required to fetch, create and update AI assistants"
-    },
-    "chatEvents": {
-      "description": "Required by the AI Assistant to receive realtime events",
-      "type": "io.cozy.ai.chat.events",
-      "verbs": ["GET"]
+      "verbs": ["GET"],
+      "description": "Required to know the folders an AI assistant answers from"
     },
     "driveSettings": {
       "description": "Required to access the drive settings",

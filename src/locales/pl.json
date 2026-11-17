@@ -66,7 +66,15 @@
     }
   },
   "Assistant": {
-    "open": "Asystent"
+    "open": "Asystent",
+    "createFolder": "Utwórz folder",
+    "createDocument": "Utwórz dokument",
+    "folderCreated": "Folder utworzony",
+    "folderError": "Nie udało się utworzyć folderu, spróbuj ponownie.",
+    "documentCreated": "Dokument utworzony",
+    "documentError": "Nie udało się utworzyć dokumentu, spróbuj ponownie.",
+    "readOnly": "Ten folder jest tylko do odczytu, nie można w nim nic utworzyć.",
+    "toolError": "Asystent poprosił o coś, czego Drive nie potrafi zrobić."
   },
   "Nav": {
     "item_sharings": "Udostępnione",
@@ -142,8 +150,8 @@
     "items_cut": "%{count} elementów wyciętych",
     "item_moved": "1 element został przeniesiony",
     "items_moved": "%{count} elementów zostało przeniesionych",
-    "item_pasted": "1 element został przeniesiony",
-    "items_pasted": "%{count} elementów zostało przeniesionych",
+    "item_pasted": "1 element został wklejony",
+    "items_pasted": "%{count} elementów zostało wklejonych",
     "copy_files_only": "Nie można kopiować folderów",
     "copy_not_allowed": "Operacja kopiowania nie jest dozwolona w tym widoku.",
     "cut_not_allowed": "Operacja wycinania nie jest dozwolona w tym widoku.",

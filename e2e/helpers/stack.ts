@@ -91,10 +91,8 @@ export async function setLinkExpiry(
 }
 
 /**
- * Version-history helpers. The Drive UI renames a same-name upload rather than
- * overwriting it, so the only way to build a version history for a test is to
- * PUT new content onto an existing file, which is what the stack records as a
- * version.
+ * Version-history helpers. Overwriting a file, which the stack records as a
+ * version, is quicker over HTTP than through the upload conflict dialog.
  */
 
 const ROOT_DIR_ID = 'io.cozy.files.root-dir'
