@@ -31,7 +31,7 @@ const RightClickFileMenu = ({
   )
 
   if (!children) return null
-  if (disabled || !isDesktop)
+  if (disabled || !isDesktop || contextMenuActions.length === 0)
     return React.Children.map(children, child =>
       React.isValidElement(child)
         ? React.cloneElement(child, {

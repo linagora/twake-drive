@@ -17,7 +17,7 @@ const MenuCell = ({ row, actions }) => {
   )
   const isInSyncFromSharing = useIsInSyncFromSharing(row)
 
-  if (!actions || !canInteractWithRow(row)) return null
+  if (!actions?.length || !canInteractWithRow(row)) return null
 
   const contextMenuActions = getContextMenuActions(
     filterActionsByPolicy(actions, [row])
