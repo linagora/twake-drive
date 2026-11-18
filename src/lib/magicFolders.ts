@@ -18,6 +18,11 @@ const APP_FOLDER_ICONS: Record<AppFolderId, string> = {
   'io.cozy.apps/meetings': 'Videos'
 }
 
+export const UPLOAD_MAGIC_FOLDER_IDS: string[] = [
+  'io.cozy.apps/notes',
+  ...APP_FOLDER_IDS
+]
+
 const isAppFolderId = (id: string): id is AppFolderId =>
   APP_FOLDER_IDS.some(appFolderId => appFolderId === id)
 
