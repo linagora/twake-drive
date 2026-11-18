@@ -1,0 +1,36 @@
+# From ldap-rest, test/fixtures/twake-schema.ldif
+
+dn: cn=twake,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: twake
+olcObjectIdentifier: {0}TwakeOID 1.3.6.1.4.1.10943.1.50
+olcObjectIdentifier: {1}TwakeAttributType TwakeOID:1
+olcObjectIdentifier: {2}TwakeObjectClass TwakeOID:2
+olcAttributeTypes: {0}( 2.16.840.1.101.2.2.1.133 NAME 'rank' DESC 'Grade du personnel' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {1}( TwakeAttributType:0 NAME 'twakeOtherMailbox' DESC 'Recovery mailaddress for the same user' EQUALITY caseIgnoreIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 SINGLE-VALUE)
+olcAttributeTypes: {2}  ( TwakeAttributType:1   NAME 'twakeDepartmentLink' DESC 'Department Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {3}  ( TwakeAttributType:2   NAME 'twakeDepartmentPath' DESC 'Department Path (of the object)' SUP name )
+olcAttributeTypes: {4}  ( TwakeAttributType:3   NAME 'twakeDomainLink' DESC 'Domain Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {5}  ( TwakeAttributType:4   NAME 'twakeBALFLink' DESC 'BALF Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {6}  ( TwakeAttributType:5   NAME 'twakeGroupLink' DESC 'Group Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {7}  ( TwakeAttributType:6   NAME 'twakeManagerLink' DESC 'Manager Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {8}  ( TwakeAttributType:7   NAME 'twakeLocalAdminLink' DESC 'Local Administrator Link (of the object)' SUP distinguishedName )
+olcAttributeTypes: {9}  ( TwakeAttributType:8   NAME 'twakeAccountStatus' DESC 'Status of Twake account' SUP distinguishedName )
+olcAttributeTypes: {10} ( TwakeAttributType:9   NAME 'twakeDeliveryMode' DESC 'Delivery mode for Twake account' SUP distinguishedName )
+olcAttributeTypes: {11} ( TwakeAttributType:10  NAME 'twakeListType' DESC 'Type of Twake list' SUP distinguishedName )
+olcAttributeTypes: {12} ( TwakeAttributType:11  NAME 'twakeSynchroStatus' DESC 'Error code for Twake LDAP Sync Engine' EQUALITY caseIgnoreMatch SUBSTR caseIgnoreSubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {13} ( TwakeAttributType:12   NAME 'twakeDeletionDate' DESC 'Date for complete account deletion: account and data' EQUALITY generalizedTimeMatch ORDERING generalizedTimeOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 SINGLE-VALUE )
+olcAttributeTypes: {14} ( TwakeAttributType:13   NAME 'twakeDelegatedUsers' DESC 'Email addresses of users authorized to act on behalf of this user' EQUALITY caseIgnoreIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 )
+olcAttributeTypes: {15} ( TwakeAttributType:14 NAME 'twakeMailboxType' DESC 'Type of mailbox for groups' SUP distinguishedName SINGLE-VALUE )
+olcAttributeTypes: {16} ( TwakeAttributType:15 NAME 'twakeCozyDomain' DESC 'Cozy instance domain for the user (e.g., user.mycozy.cloud)' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+olcAttributeTypes: {17} ( TwakeAttributType:16 NAME 'twakeDriveQuota' DESC 'Twake Drive disk quota in bytes' EQUALITY integerMatch ORDERING integerOrderingMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )
+olcObjectClasses: {0}( TwakeObjectClass:0 NAME 'twakeAccount' DESC 'ObjectClass for Twake account' SUP top STRUCTURAL MUST uid MAY ( employeeNumber $ userpassword $ mail $ mailHost $ mailAlternateAddress $ mailHost $ mailQuotaSize $ twakeDeliveryMode $ mailForwardingAddress $ mailReplyText $ twakeAccountStatus $ twakeOtherMailbox $ twakeDeletionDate $ twakeSynchroStatus $ description $ twakeDelegatedUsers $ twakeCozyDomain $ twakeDriveQuota ) )
+olcObjectClasses: {1}( TwakeObjectClass:1 NAME 'twakeWhitePages' DESC 'ObjectClass for Twake account' SUP top AUXILIARY MAY ( sn $ givenname $ cn $ displayName $ personalTitle $ title $ rank $ postalAddress $ postalCode $ l $ mobile $ telephoneNumber $ facsimileTelephoneNumber $ departmentNumber $ twakeDepartmentLink $ TwakeDepartmentPath $ twakeCozyDomain $ twakeDriveQuota ) )
+olcObjectClasses: {2}( TwakeObjectClass:2 NAME 'twakeApplication' DESC 'Twake: application' SUP organizationalUnit STRUCTURAL MAY ( owner $ twakeDepartmentLink $ twakeDepartmentPath ) )
+olcObjectClasses: {3}( TwakeObjectClass:3 NAME 'twakeRole' DESC 'Twake: role' SUP groupOfNames STRUCTURAL )
+olcObjectClasses: {4}( TwakeObjectClass:4 NAME 'twakeDepartment' DESC 'ObjectClass for Twake Department' SUP top AUXILIARY MAY ( twakeManagerLink $ twakeDomainLink $ twakeBALFLink $ twakeGroupLink $ twakeLocalAdminLink $ twakeDepartmentPath ) )
+olcObjectClasses: {5}( TwakeObjectClass:5 NAME 'twakeGroup' DESC 'Twake group extensions (AUXILIARY)' SUP top AUXILIARY MAY ( mail $ twakeMailboxType $ twakeDepartmentLink $ twakeDepartmentPath $ twakeListType ) )
+olcObjectClasses: {6}( TwakeObjectClass:6 NAME 'twakeStaticGroup' DESC 'Twake: static group' SUP groupOfNames STRUCTURAL MAY ( twakeDepartmentLink $ twakeDepartmentPath $ twakeListType $ mail $ twakeMailboxType ) )
+olcObjectClasses: {7}( TwakeObjectClass:7 NAME 'twakePosition' DESC 'ObjectClass for Twake account position' SUP top STRUCTURAL MUST cn )
+#olcObjectClasses: {7}( TwakeObjectClass:7 NAME 'twakeBALF' DESC 'Twake: functional mailbox' SUP account STRUCTURAL MAY ( userPassword $ mail $ twakeDepartmentLink $ twakeDepartmentPath $ owner ) )
+

@@ -1,0 +1,26 @@
+# What twake-chaos acts on: each component of claims.yaml and the compose services that are its nodes, the application.
+# `healthy`: a command (run on the host, common.sh sourced) that succeeds once the component has recovered by itself
+# (its cluster whole again), before the next scenario starts.
+project: drive-chaos
+app:
+  services: [stack]
+  healthcheck: "curl -sf -o /dev/null http://127.0.0.1:$CHAOS_STACK_PORT/version"
+components:
+  couchdb:
+    services: [couchdb1, couchdb2, couchdb3]
+    # each node sees the 3 connected, and the load balancer has the 3 back in rotation
+    healthy: "couchdb_healthy"
+  redis:
+    services: [redis1, redis2, redis3]
+    # the 3 sentinels agree on an up master and see each other, the master has its 2 replicas online
+    healthy: "redis_healthy"
+  s3:
+    services: [s3]
+  onlyoffice:
+    services: [onlyoffice]
+  ldap:
+    services: [ldap]
+  smtp:
+    services: [mail]
+# not claimed, part of the stack: never faulted (couchdb-lb: the load balancer in front of couchdb1..3)
+support: [couchdb-lb, sso]
