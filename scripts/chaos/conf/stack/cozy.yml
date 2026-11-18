@@ -56,6 +56,15 @@ redis:
     realtime: 6
     log: 7
     rate_limiting: 8
+  # Resilience: go-redis's defaults (dial 5s, read / write 3s, pool 4s) made a paused node cost 6 to 21 s per request
+  # (the first chaos run). Short timeouts so that a frozen node is given up quickly, and retries so that the failover
+  # client asks the sentinels again and reaches the promoted master (a failover: down-after-milliseconds 5s, plus the
+  # election). Blocking commands (the job broker's BRPOP) get their block time added to read_timeout by go-redis.
+  dial_timeout: 1s
+  read_timeout: 2s
+  write_timeout: 2s
+  pool_timeout: 3s
+  max_retries: 3
 
 office:
   default:
