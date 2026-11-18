@@ -26,9 +26,32 @@ const otherFile = {
   path: '/notes.txt'
 }
 
+const DOWNLOADS_QUERY_ID = 'io.cozy.files/downloads'
+const downloadsReference = {
+  type: 'io.cozy.apps',
+  id: 'io.cozy.apps/downloads'
+}
+
+const downloadsFolder = {
+  _id: 'downloads-id',
+  _type: 'io.cozy.files',
+  type: 'directory',
+  name: 'Downloads',
+  dir_id: ROOT_DIR_ID,
+  path: '/Downloads',
+  referenced_by: [downloadsReference]
+}
+
 const setup = () => {
   const client = createMockClient({
     queries: {
+      [DOWNLOADS_QUERY_ID]: {
+        doctype: 'io.cozy.files',
+        definition: Q('io.cozy.files').where({
+          referenced_by: { $elemMatch: downloadsReference }
+        }),
+        data: [downloadsFolder]
+      },
       [ROOT_QUERY_ID]: {
         doctype: 'io.cozy.files',
         definition: Q('io.cozy.files').where({ dir_id: ROOT_DIR_ID }),
@@ -90,5 +113,20 @@ describe('FilesRealTimeQueries', () => {
       expect(rootQueryIds(client)).not.toContain(otherFile._id)
     })
     expect(client.query).not.toHaveBeenCalled()
+  })
+
+  it('clears the references of a folder that lost them', async () => {
+    const { client, handlers } = setup()
+    const { _type, referenced_by, ...renamedFolder } = downloadsFolder
+
+    handlers.updated({ ...renamedFolder, name: 'Old downloads' })
+
+    await waitFor(() => {
+      expect(client.getQueryFromState(DOWNLOADS_QUERY_ID).data).toEqual([])
+    })
+    expect(
+      client.getDocumentFromState('io.cozy.files', downloadsFolder._id)
+        .referenced_by
+    ).toEqual([])
   })
 })
