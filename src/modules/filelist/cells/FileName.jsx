@@ -13,10 +13,10 @@ import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import RenameInput from '@/modules/drive/RenameInput'
+import { useParentFolderPath } from '@/modules/filelist/FileParentFolderContext'
 import {
   getFileNameAndExtension,
-  makeFileMetadata,
-  makeParentFolderPath
+  makeFileMetadata
 } from '@/modules/filelist/helpers'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
@@ -43,7 +43,8 @@ const FileName = ({
   )
 
   const { title, filename, extension } = getFileNameAndExtension(attributes, t)
-  const parentFolderPath = makeParentFolderPath(attributes)
+  const getParentFolderPath = useParentFolderPath()
+  const parentFolderPath = getParentFolderPath(attributes)
 
   return (
     <TableCell className={classes}>

@@ -9,11 +9,8 @@ import styles from '@/styles/filelist.styl'
 
 import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
 import RenameInput from '@/modules/drive/RenameInput'
-import {
-  getFileNameAndExtension,
-  isInfected,
-  makeParentFolderPath
-} from '@/modules/filelist/helpers'
+import { useParentFolderPath } from '@/modules/filelist/FileParentFolderContext'
+import { getFileNameAndExtension, isInfected } from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import FileNamePath from '@/modules/filelist/virtualized/cells/FileNamePath'
 
@@ -50,7 +47,8 @@ const FileName = ({
   const { title, filename, extension } = getFileNameAndExtension(attributes, t)
   const { isMobile } = useBreakpoints()
 
-  const parentFolderPath = makeParentFolderPath(attributes)
+  const getParentFolderPath = useParentFolderPath()
+  const parentFolderPath = getParentFolderPath(attributes)
   const hidePath = withFilePath
     ? !parentFolderPath
     : isDirectory(attributes) || !isMobile
