@@ -57,7 +57,8 @@ describe('uploadFilesToDrive', () => {
         name: 'a.txt',
         dirId: 'root',
         driveId: 'd1',
-        conflictStrategy: 'rename'
+        conflictStrategy: 'rename',
+        onUploadProgress: null
       }
     )
   })
@@ -75,7 +76,8 @@ describe('uploadFilesToDrive', () => {
         name: 'a.txt',
         dirId: 'f1',
         driveId: undefined,
-        conflictStrategy: 'rename'
+        conflictStrategy: 'rename',
+        onUploadProgress: null
       }
     )
   })
@@ -254,5 +256,27 @@ describe('uploadFilesToDrive', () => {
       ).rejects.toThrow('sharingLink needs a folderId')
       expect(uploadFileWithConflictStrategy).not.toHaveBeenCalled()
     })
+  })
+
+  it('reports the upload progress of each file', async () => {
+    uploadFileWithConflictStrategy.mockImplementation(
+      async (client, file, { onUploadProgress }) => {
+        onUploadProgress({ loaded: 1, total: 2 })
+        return { data: {} }
+      }
+    )
+    const onProgress = jest.fn()
+
+    await uploadFilesToDrive(
+      fakeClient(),
+      { driveId: 'd1', files: files.slice(0, 2) },
+      signal,
+      onProgress
+    )
+
+    expect(onProgress.mock.calls).toEqual([
+      [{ index: 0, loaded: 1, total: 2 }],
+      [{ index: 1, loaded: 1, total: 2 }]
+    ])
   })
 })

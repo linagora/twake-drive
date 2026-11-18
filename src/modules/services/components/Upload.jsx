@@ -27,8 +27,18 @@ export function Upload({ service }) {
         // Let React's effect cleanup cancel a discarded mount before any I/O.
         await Promise.resolve()
         if (controller.signal.aborted) return
-        const upload = isFiles ? uploadFilesToDrive : uploadFileFromUrl
-        const document = await upload(client, data, controller.signal)
+        const onProgress =
+          data.progress === true
+            ? progress => service.sendResult(progress)
+            : null
+        const document = isFiles
+          ? await uploadFilesToDrive(
+              client,
+              data,
+              controller.signal,
+              onProgress
+            )
+          : await uploadFileFromUrl(client, data, controller.signal)
         if (!controller.signal.aborted) {
           hasTerminated = true
           service.terminate(document)
