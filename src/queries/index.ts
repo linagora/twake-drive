@@ -98,7 +98,10 @@ export const buildPersonalRecentsQuery: QueryBuilder = () => ({
   definition: () => Q(DOCTYPE_FILES_RECENTS),
   options: {
     as: DOCTYPE_FILES_RECENTS,
-    fetchPolicy: CozyClient.fetchPolicies.olderThan(RECENTS_CACHE_TIMEOUT)
+    fetchPolicy: CozyClient.fetchPolicies.olderThan(RECENTS_CACHE_TIMEOUT),
+    // The stack cursor ignores new activity: a refresh replaces the loaded
+    // pages with the first one instead of merging into them.
+    backgroundFetching: true
   }
 })
 

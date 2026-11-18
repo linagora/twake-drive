@@ -1,11 +1,12 @@
-import { renderHook } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
-import { useQuery } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 
 import { usePersonalRecents } from './usePersonalRecents'
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
+  useClient: jest.fn(),
   useQuery: jest.fn()
 }))
 
@@ -26,14 +27,16 @@ const makeRecent = (id, { file = makeFile(id), lastActivityAt } = {}) => ({
 })
 
 const mockQueryResult = result => {
-  useQuery.mockReturnValue({
+  const queryState = {
     data: [],
     fetchStatus: 'loaded',
     lastUpdate: 1,
     hasMore: false,
     fetchMore: jest.fn(),
     ...result
-  })
+  }
+  useQuery.mockReturnValue(queryState)
+  useClient.mockReturnValue({ getQueryFromState: () => queryState })
 }
 
 describe('usePersonalRecents', () => {
@@ -50,7 +53,8 @@ describe('usePersonalRecents', () => {
     expect(definition().doctype).toBe('io.cozy.files.recents')
     expect(options).toMatchObject({
       as: 'io.cozy.files.recents',
-      enabled: false
+      enabled: false,
+      backgroundFetching: true
     })
     expect(options.fetchPolicy).toEqual(expect.any(Function))
   })
@@ -131,6 +135,66 @@ describe('usePersonalRecents', () => {
 
     expect(fetchMore).not.toHaveBeenCalled()
     expect(result.current.fetchStatus).toBe('loaded')
+  })
+
+  it('loads more pages while they come back empty with a next one', async () => {
+    const fetchMore = jest
+      .fn()
+      .mockResolvedValueOnce({ data: [], next: true })
+      .mockResolvedValueOnce({ data: [], next: true })
+      .mockResolvedValueOnce({ data: [makeRecent('c')], next: true })
+    mockQueryResult({ data: [makeRecent('a')], hasMore: true, fetchMore })
+
+    const { result } = renderHook(() => usePersonalRecents())
+    await result.current.fetchMore()
+
+    expect(fetchMore).toHaveBeenCalledTimes(3)
+  })
+
+  it('stops loading more at an empty last page', async () => {
+    const fetchMore = jest.fn().mockResolvedValue({ data: [], next: false })
+    mockQueryResult({ data: [makeRecent('a')], hasMore: true, fetchMore })
+
+    const { result } = renderHook(() => usePersonalRecents())
+    await result.current.fetchMore()
+
+    expect(fetchMore).toHaveBeenCalledTimes(1)
+  })
+
+  it('loads more only once the refresh is over', async () => {
+    const fetchMore = jest
+      .fn()
+      .mockResolvedValue({ data: [makeRecent('b')], next: true })
+    mockQueryResult({
+      data: [makeRecent('a')],
+      hasMore: true,
+      isFetching: true,
+      fetchMore
+    })
+
+    const { result, rerender } = renderHook(() => usePersonalRecents())
+    await act(() => result.current.fetchMore())
+
+    expect(fetchMore).not.toHaveBeenCalled()
+
+    mockQueryResult({
+      data: [makeRecent('z')],
+      hasMore: true,
+      isFetching: false,
+      fetchMore
+    })
+    rerender()
+
+    await waitFor(() => expect(fetchMore).toHaveBeenCalledTimes(1))
+  })
+
+  it('does not load past an empty first page during a refresh', () => {
+    const fetchMore = jest.fn()
+    mockQueryResult({ data: [], hasMore: true, isFetching: true, fetchMore })
+
+    renderHook(() => usePersonalRecents())
+
+    expect(fetchMore).not.toHaveBeenCalled()
   })
 
   it('reports the error of the query', () => {

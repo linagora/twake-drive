@@ -1,4 +1,5 @@
 import {
+  act,
   configure,
   fireEvent,
   render,
@@ -18,6 +19,7 @@ import { setupStore } from 'test/setup'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { schema } from '@/lib/doctypes'
+import { buildPersonalRecentsQuery } from '@/queries'
 
 jest.mock('cozy-flags', () => ({ __esModule: true, default: jest.fn() }))
 jest.mock('components/pushClient', () => ({
@@ -136,6 +138,14 @@ const firstPage = {
   ]
 }
 
+const page = (ids, nextCursor) => ({
+  data: ids.map(id => recent(id)),
+  included: ids.map(id => file(id, { name: `${id}.txt`, path: `/${id}.txt` })),
+  ...(nextCursor
+    ? { links: { next: `/files/recents?page%5Bcursor%5D=${nextCursor}` } }
+    : {})
+})
+
 const sharedDrives = {
   data: [
     {
@@ -192,11 +202,30 @@ const setup = ({ pages = [firstPage] } = {}) => {
 
 const linkOf = name => screen.getByText(name).closest('a')
 
+const expectInOrder = names => {
+  const nodes = names.map(name => screen.getByText(name))
+  nodes.slice(1).forEach((node, index) => {
+    expect(
+      nodes[index].compareDocumentPosition(node) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+}
+
+const requestedPaths = client =>
+  client.stackClient.fetchJSON.mock.calls.map(([, path]) => path)
+
 describe('Recent view with the personal recents of the stack', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation()
     jest.spyOn(console, 'warn').mockImplementation()
     flag.mockImplementation(name => name === 'drive.recents.enabled')
+    // The "Load more" button of cozy-ui observes its own visibility.
+    window.IntersectionObserver = jest.fn(() => ({
+      observe: jest.fn(),
+      unobserve: jest.fn(),
+      disconnect: jest.fn()
+    }))
   })
 
   afterEach(() => {
@@ -207,14 +236,7 @@ describe('Recent view with the personal recents of the stack', () => {
     setup()
 
     await screen.findByText('photo')
-    const names = ['photo', 'Projects', 'spec', 'meeting']
-    const nodes = names.map(name => screen.getByText(name))
-    nodes.slice(1).forEach((node, index) => {
-      expect(
-        nodes[index].compareDocumentPosition(node) &
-          Node.DOCUMENT_POSITION_FOLLOWING
-      ).toBeTruthy()
-    })
+    expectInOrder(['photo', 'Projects', 'spec', 'meeting'])
     expect(screen.queryByText('old-photo')).toBe(null)
   })
 
@@ -323,10 +345,107 @@ describe('Recent view with the personal recents of the stack', () => {
     const { client } = setup({ pages: [emptyPage, firstPage] })
 
     await waitFor(() =>
-      expect(
-        client.stackClient.fetchJSON.mock.calls.map(([, path]) => path)
-      ).toContainEqual(expect.stringContaining('next-cursor'))
+      expect(requestedPaths(client)).toContainEqual(
+        expect.stringContaining('next-cursor')
+      )
     )
     await screen.findByText('photo')
+  })
+
+  it('appends the next page after the loaded recents', async () => {
+    const { client } = setup({
+      pages: [page(['one', 'two'], 'cursor-2'), page(['three', 'four'])]
+    })
+
+    await screen.findByText('two')
+    fireEvent.click(screen.getByText('Load More'))
+
+    await screen.findByText('four')
+    expectInOrder(['one', 'two', 'three', 'four'])
+    expect(requestedPaths(client)).toContainEqual(
+      expect.stringContaining('cursor-2')
+    )
+  })
+
+  it('loads past an empty page that has a next one', async () => {
+    const { client } = setup({
+      pages: [page(['one'], 'cursor-2'), page([], 'cursor-3'), page(['three'])]
+    })
+
+    await screen.findByText('one')
+    fireEvent.click(screen.getByText('Load More'))
+
+    await screen.findByText('three')
+    expect(requestedPaths(client)).toContainEqual(
+      expect.stringContaining('cursor-3')
+    )
+  })
+
+  it('starts again from the first page on a refresh', async () => {
+    const { client } = setup({
+      pages: [page(['one'], 'cursor-2'), page(['two']), page(['zero', 'one'])]
+    })
+
+    await screen.findByText('one')
+    fireEvent.click(screen.getByText('Load More'))
+    await screen.findByText('two')
+
+    const { definition, options } = buildPersonalRecentsQuery()
+    await act(() =>
+      client.query(definition(), { ...options, fetchPolicy: null })
+    )
+
+    await screen.findByText('zero')
+    expectInOrder(['zero', 'one'])
+    expect(screen.queryByText('two')).toBe(null)
+  })
+
+  it('loads more from the cursor of a refresh running when asked', async () => {
+    const { client } = setup({
+      pages: [
+        page(['one'], 'old-cursor'),
+        page(['zero', 'one'], 'new-cursor'),
+        page(['two'])
+      ]
+    })
+    await screen.findByText('one')
+
+    // The refresh answers only once "Load More" has been clicked.
+    const fetchJSON = client.stackClient.fetchJSON.getMockImplementation()
+    let answerRefresh
+    const refreshAnswered = new Promise(resolve => {
+      answerRefresh = resolve
+    })
+    client.stackClient.fetchJSON.mockImplementationOnce(async (...args) => {
+      const response = await fetchJSON(...args)
+      await refreshAnswered
+      return response
+    })
+
+    const { definition, options } = buildPersonalRecentsQuery()
+    let refresh
+    act(() => {
+      refresh = client.query(definition(), { ...options, fetchPolicy: null })
+    })
+    await waitFor(() =>
+      expect(
+        requestedPaths(client).filter(path => path.startsWith('/files/recents'))
+      ).toHaveLength(2)
+    )
+
+    fireEvent.click(screen.getByText('Load More'))
+    await act(async () => {
+      answerRefresh()
+      await refresh
+    })
+
+    await screen.findByText('two')
+    expectInOrder(['zero', 'one', 'two'])
+    expect(requestedPaths(client)).toContainEqual(
+      expect.stringContaining('new-cursor')
+    )
+    expect(requestedPaths(client)).not.toContainEqual(
+      expect.stringContaining('old-cursor')
+    )
   })
 })
