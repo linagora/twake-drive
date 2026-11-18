@@ -37,21 +37,29 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
 }))
 jest.mock('twake-i18n', () => ({ useI18n: () => ({ t: key => key }) }))
 let mockFolderId = 'folder-id'
+let mockDisplayedFolder = { id: 'folder-id' }
 jest.mock('@/hooks', () => ({
   useCurrentFolderId: () => mockFolderId,
-  useDisplayedFolder: () => ({ displayedFolder: null })
+  useDisplayedFolder: () => ({ displayedFolder: mockDisplayedFolder })
 }))
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
   useSharedDriveFolder: () => ({ sharedDriveResult: null })
 }))
 jest.mock('@/hooks/useCurrentFolderWriteAccess', () => jest.fn())
 jest.mock('@/modules/upload/UploadButton', () => ({
-  UploadButton: ({ isDirectory, disabled, folderId, driveId }) =>
+  UploadButton: ({
+    isDirectory,
+    disabled,
+    folderId,
+    driveId,
+    displayedFolder
+  }) =>
     isDirectory && disabled ? null : (
       <span
         data-testid={isDirectory ? 'upload-folder' : 'upload-file'}
         data-folder-id={String(folderId)}
         data-drive-id={String(driveId)}
+        data-displayed-folder-id={String(displayedFolder?.id)}
       />
     )
 }))
@@ -70,6 +78,7 @@ describe('Empty', () => {
   beforeEach(() => {
     useCurrentFolderWriteAccess.mockReturnValue(true)
     mockFolderId = 'folder-id'
+    mockDisplayedFolder = { id: 'folder-id' }
   })
 
   it('offers the folder upload with write access', () => {
@@ -103,18 +112,27 @@ describe('Empty', () => {
   })
 
   it.each(['upload-file', 'upload-folder'])(
-    'gives %s the route folder and drive before the folder document loads',
+    'targets %s at the displayed folder document',
     testId => {
+      mockDisplayedFolder = { id: 'folder-id', driveId: 'drive-id' }
       renderAt(
         '/sharings/drive-id/folder-id',
         <EmptyDrive driveId="drive-id" />
       )
       const button = screen.getByTestId(testId)
 
-      expect(button).toHaveAttribute('data-folder-id', 'folder-id')
-      expect(button).toHaveAttribute('data-drive-id', 'drive-id')
+      expect(button).toHaveAttribute('data-displayed-folder-id', 'folder-id')
+      expect(button).toHaveAttribute('data-folder-id', 'undefined')
+      expect(button).toHaveAttribute('data-drive-id', 'undefined')
     }
   )
+
+  it('does not offer the folder upload before the folder document loads', () => {
+    mockDisplayedFolder = null
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
 
   it('shows the folder illustration at 160 px in a 10 rem container in Drive', () => {
     renderAt('/folder/folder-id', <EmptyDrive />)

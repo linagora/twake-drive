@@ -82,22 +82,19 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
-                // No folder in the route: keep the root document, null would redirect.
-                folderId={folderId ?? undefined}
-                driveId={driveId}
                 displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
               />
               <UploadButton
                 isDirectory
-                disabled={!folderId || !canWriteToCurrentFolder}
+                disabled={
+                  !folderId || !displayedFolder || !canWriteToCurrentFolder
+                }
                 className="u-ml-half"
                 componentsProps={{
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload_folder')}
-                folderId={folderId}
-                driveId={driveId}
                 displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
               />
