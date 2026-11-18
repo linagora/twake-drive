@@ -142,6 +142,9 @@ const normalizeDoc = (couchDBDoc, doctype) => {
   return {
     id: couchDBDoc._id,
     _type: doctype,
+    // The stack omits the references of a document that has none left, and
+    // the store keeps the fields missing from an update.
+    referenced_by: [],
     ...couchDBDoc
   }
 }
