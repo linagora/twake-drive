@@ -117,7 +117,7 @@ describe('uploadFileFromUrl through the real CozyClient creation boundary', () =
     ).toHaveLength(1)
   })
 
-  it.each(['io.cozy.apps/mail', 'io.cozy.apps/notes'])(
+  it.each(['io.cozy.apps/mail', 'io.cozy.apps/notes', 'io.cozy.apps/calendar'])(
     'resolves %s to a concrete local id without browser folder creation',
     async folderId => {
       const { client, requests } = makeFixture()
