@@ -1,0 +1,12 @@
+# pwdReset, which the Directory Manager sets to force a new password at next login
+# and LemonLDAP reads, is an operational attribute the ppolicy overlay registers.
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: ppolicy
+
+dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy

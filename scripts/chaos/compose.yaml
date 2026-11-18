@@ -1,0 +1,207 @@
+# The chaos stack of Twake Drive: 1 cozy-stack (with the Drive of the commit), 3 CouchDB (one cluster, n=3) behind a load
+# balancer, 3 Redis (a Sentinel set), 1 S3 (MinIO), 1 OnlyOffice, 1 LemonLDAP (SSO), 1 OpenLDAP, 1 mail catcher. Each
+# container has a memory limit (the whole: ~8.6 GB). Every node of a replicated component is its own service
+# (couchdb1..3, redis1..3): twake-chaos pauses, stops and restarts them one by one (topology.yaml).
+# Published on 127.0.0.1 only: what the control scripts reach (the API of the instances, the admin API, the SSO portal,
+# CouchDB and S3 to inspect the data, OnlyOffice, the mails).
+
+x-couchdb: &couchdb
+  image: couchdb:3.4.3
+  mem_limit: 1g
+  # every instance opens tens of databases (shards and indexes), as docker-compose.e2e.yml says
+  ulimits:
+    nofile: {soft: 65536, hard: 65536}
+  environment: &couchdb-env
+    COUCHDB_USER: ${CHAOS_COUCHDB_USER:?}
+    COUCHDB_PASSWORD: ${CHAOS_COUCHDB_PASSWORD:?}
+    # the same on the 3 nodes: one cluster (Erlang cookie), session cookies valid on any node (secret)
+    COUCHDB_ERLANG_COOKIE: twake-chaos-couchdb-cookie
+    COUCHDB_SECRET: twake-chaos-couchdb-secret
+  healthcheck:
+    test: ["CMD-SHELL", "curl -sf -m 4 http://localhost:5984/_up >/dev/null"]
+    interval: 5s
+    timeout: 5s
+    retries: 60
+
+x-redis: &redis
+  image: redis:8.0.2
+  mem_limit: 256m
+  entrypoint: ["bash", "/node.sh"]
+  volumes:
+    - ./conf/redis/node.sh:/node.sh:ro
+  healthcheck:
+    test: ["CMD-SHELL", "redis-cli -p 6379 ping && redis-cli -p 26379 ping"]
+    interval: 5s
+    timeout: 5s
+    retries: 30
+
+services:
+  stack:
+    image: ${DRIVE_IMAGE:?}
+    hostname: stack
+    mem_limit: 1g
+    # --dev as the repository's e2e and QA stacks: without TLS, the instances are only http in a dev build
+    # (instance.Scheme()); the build of Drive is installed from /opt/drive by start.sh, into S3 as in production
+    command: ["cozy-stack", "serve", "--dev", "--config", "/etc/cozy/cozy.yml"]
+    environment:
+      GOMEMLIMIT: 768MiB
+      COZY_ADMIN_PASSPHRASE: ${CHAOS_ADMIN_PASSPHRASE:?}
+      # the image's entrypoint waits for CouchDB there and creates _users and _replicator
+      COUCHDB_HOST: couchdb-lb
+      COUCHDB_PORT: "5984"
+      COUCHDB_USER: ${CHAOS_COUCHDB_USER:?}
+      COUCHDB_PASSWORD: ${CHAOS_COUCHDB_PASSWORD:?}
+      # read by conf/stack/cozy.yml
+      CHAOS_COUCHDB_USER: ${CHAOS_COUCHDB_USER:?}
+      CHAOS_COUCHDB_PASSWORD: ${CHAOS_COUCHDB_PASSWORD:?}
+      CHAOS_S3_ACCESS_KEY: ${CHAOS_S3_ACCESS_KEY:?}
+      CHAOS_S3_SECRET_KEY: ${CHAOS_S3_SECRET_KEY:?}
+      CHAOS_S3_BUCKET: ${CHAOS_S3_BUCKET:?}
+      CHAOS_ROOT_DOMAIN: ${CHAOS_ROOT_DOMAIN:?}
+      CHAOS_OIDC_CLIENT: ${CHAOS_OIDC_CLIENT:?}
+      CHAOS_OIDC_SECRET: ${CHAOS_OIDC_SECRET:?}
+      CHAOS_SSO_HOST: ${CHAOS_SSO_HOST:?}
+    volumes:
+      - ./conf/stack/cozy.yml:/etc/cozy/cozy.yml:ro
+    ports:
+      - "127.0.0.1:${CHAOS_STACK_PORT:?}:8080"
+      - "127.0.0.1:${CHAOS_ADMIN_PORT:?}:6060"
+    networks:
+      default:
+        # the instances call each other (sharings) and OnlyOffice calls them back by their own URLs
+        aliases:
+          - alice.${CHAOS_ROOT_DOMAIN:?}
+          - alice-drive.${CHAOS_ROOT_DOMAIN:?}
+          - bob.${CHAOS_ROOT_DOMAIN:?}
+          - bob-drive.${CHAOS_ROOT_DOMAIN:?}
+          - oauthcallback.${CHAOS_ROOT_DOMAIN:?}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -m 5 -o /dev/null http://localhost:8080/version"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+      start_period: 20s
+
+  # The 3 nodes of one CouchDB cluster, joined by start.sh: every database with a copy on each node (n=3, enforced by
+  # couchdb-lb over the n=1 of cozy-stack --dev), quorum reads and writes (r=w=2, CouchDB's defaults)
+  couchdb1:
+    <<: *couchdb
+    hostname: couchdb1
+    environment: {<<: *couchdb-env, NODENAME: couchdb1.chaos}
+    networks: {default: {aliases: [couchdb1.chaos]}}
+  couchdb2:
+    <<: *couchdb
+    hostname: couchdb2
+    environment: {<<: *couchdb-env, NODENAME: couchdb2.chaos}
+    networks: {default: {aliases: [couchdb2.chaos]}}
+  couchdb3:
+    <<: *couchdb
+    hostname: couchdb3
+    environment: {<<: *couchdb-env, NODENAME: couchdb3.chaos}
+    networks: {default: {aliases: [couchdb3.chaos]}}
+
+  # cozy-stack takes one URL per CouchDB cluster: the load balancer in front of its 3 nodes (and the creation of the
+  # databases fixed for a cluster, conf/haproxy/haproxy.cfg). Part of the stack, never faulted.
+  couchdb-lb:
+    image: haproxy:3.0
+    hostname: couchdb-lb
+    mem_limit: 64m
+    volumes:
+      - ./conf/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "127.0.0.1:${CHAOS_COUCHDB_PORT:?}:5984"
+    depends_on: [couchdb1, couchdb2, couchdb3]
+
+  # The Sentinel set: on each node a Redis (redis1 the first master, the 2 others its replicas) and a sentinel (quorum 2)
+  redis1:
+    <<: *redis
+    hostname: redis1
+  redis2:
+    <<: *redis
+    hostname: redis2
+    depends_on: [redis1]
+  redis3:
+    <<: *redis
+    hostname: redis3
+    depends_on: [redis1]
+
+  s3:
+    image: minio/minio:RELEASE.2025-06-13T11-33-47Z
+    hostname: s3
+    mem_limit: 512m
+    command: ["server", "/data"]
+    environment:
+      MINIO_ROOT_USER: ${CHAOS_S3_ACCESS_KEY:?}
+      MINIO_ROOT_PASSWORD: ${CHAOS_S3_SECRET_KEY:?}
+      GOMEMLIMIT: 384MiB
+    ports:
+      - "127.0.0.1:${CHAOS_S3_PORT:?}:9000"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  onlyoffice:
+    # the Document Server of docker-compose.e2e.yml
+    image: onlyoffice/documentserver:9.4@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
+    hostname: onlyoffice
+    mem_limit: 2560m
+    environment:
+      # the secret of cozy-stack's office.default.onlyoffice_inbox_secret / outbox_secret (conf/stack/cozy.yml)
+      JWT_ENABLED: "true"
+      JWT_SECRET: twake-chaos-office-secret
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+      ALLOW_META_IP_ADDRESS: "false"
+    # Document Server ignores SIGTERM and would hold every stop for 10s
+    stop_grace_period: 0s
+    ports:
+      - "127.0.0.1:${CHAOS_ONLYOFFICE_PORT:?}:80"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - '! pgrep -f "[d]ocumentserver-generate-allfonts" && test -s /var/www/onlyoffice/documentserver/sdkjs/common/AllFonts.js && test "$(curl -fsS http://localhost/healthcheck)" = true'
+      interval: 5s
+      timeout: 5s
+      retries: 90
+      start_period: 30s
+
+  mail:
+    image: axllent/mailpit:v1.21.0
+    hostname: mail
+    mem_limit: 128m
+    ports:
+      - "127.0.0.1:${CHAOS_MAIL_PORT:?}:8025"
+
+  ldap:
+    image: osixia/openldap:1.5.0
+    hostname: ldap
+    mem_limit: 256m
+    # --copy-service: the bootstrap LDIFs are copied before osixia rewrites them in place
+    command: --copy-service
+    environment:
+      LDAP_ORGANISATION: Twake chaos
+      LDAP_DOMAIN: tmail.com
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_CONFIG_PASSWORD: admin
+      LDAP_RFC2307BIS_SCHEMA: "true"
+      LDAP_TLS: "false"
+    volumes:
+      - ./conf/ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+
+  sso:
+    image: yadd/lemonldap-ng-full
+    mem_limit: 384m
+    environment:
+      SSODOMAIN: example.com
+      PORTAL: http://sso.example.com
+      LOGLEVEL: info
+      LOGGER: stderr
+      USERLOGGER: stderr
+    volumes:
+      - ./conf/lemonldap/lmConf-1.json:/var/lib/lemonldap-ng/conf/lmConf-1.json:ro
+    ports:
+      - "127.0.0.1:${CHAOS_SSO_PORT:?}:80"
+    networks:
+      default:
+        aliases: [sso.example.com]

@@ -1,0 +1,67 @@
+# Seed data loaded on the first start of OpenLDAP (dc=tmail,dc=com): the seed of Twake Mail's chaos stack, reduced to
+# what LemonLDAP reads (the account statuses of its LDAPFilter) and the accounts. Every account signs in with the
+# password "secret"; its Drive instance is <uid>.chaos.localhost:8080 (cozy-stack's userinfo_instance_field:
+# preferred_username, the uid), also kept in twakeCozyDomain.
+
+# ------------------------------------------------------------------------------------- branches
+dn: ou=users,dc=tmail,dc=com
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=nomenclature,dc=tmail,dc=com
+objectClass: organizationalUnit
+ou: nomenclature
+
+# --------------------------------------------------------------------------------- nomenclatures
+dn: ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+objectClass: organizationalUnit
+ou: twakeAccountStatus
+
+dn: cn=active,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: active
+
+dn: cn=disabled,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: disabled
+
+dn: cn=noaccess,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: noaccess
+
+dn: cn=todelete,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+objectClass: top
+objectClass: applicationProcess
+cn: todelete
+
+# ------------------------------------------------------------------------------------- accounts
+dn: uid=alice,ou=users,dc=tmail,dc=com
+objectClass: top
+objectClass: twakeAccount
+objectClass: twakeWhitePages
+uid: alice
+cn: Alice Moreau
+givenName: Alice
+sn: Moreau
+displayName: Alice Moreau
+mail: alice@tmail.com
+userPassword: secret
+twakeCozyDomain: alice.chaos.localhost:8080
+twakeAccountStatus: cn=active,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
+
+dn: uid=bob,ou=users,dc=tmail,dc=com
+objectClass: top
+objectClass: twakeAccount
+objectClass: twakeWhitePages
+uid: bob
+cn: Bob Schneider
+givenName: Bob
+sn: Schneider
+displayName: Bob Schneider
+mail: bob@tmail.com
+userPassword: secret
+twakeCozyDomain: bob.chaos.localhost:8080
+twakeAccountStatus: cn=active,ou=twakeAccountStatus,ou=nomenclature,dc=tmail,dc=com
