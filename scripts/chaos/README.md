@@ -35,6 +35,15 @@ coordinators racing on it answer 500 "conflict", fatal at startup). start.sh che
 `healthy` of Redis (common.sh) also waits for no sentinel in TILT: a paused sentinel stops acting for 30s once it runs
 again, and a failover in that window would lack its quorum.
 
+## Requirements
+
+A QA lab, not a deployment: every credential is a fixture committed here (the accounts, the LDAP and admin passwords,
+the OIDC and OnlyOffice secrets), and the control scripts keep tokens and sessions in `~/.cache/twake-chaos`. The
+ports are published on 127.0.0.1 only, which keeps other machines out from Docker Engine 28 on (before, a host of the
+same network segment can reach them); the services that are not published (LDAP, Redis) are still reachable by any
+process of the host through the Docker bridge. Hence Docker Engine 28 or later, on a trusted single-user host or an
+isolated VM: never on a shared host or runner.
+
 ## Usage
 
 ```bash

@@ -81,6 +81,8 @@ stack() { compose exec -T stack cozy-stack "$@"; }
 for pair in "$CHAOS_INSTANCE:$CHAOS_EMAIL" "$CHAOS_INSTANCE2:$CHAOS_EMAIL2"; do
   inst="${pair%:*}" email="${pair##*:}"
   if ! stack instances show "$inst" >/dev/null 2>&1; then
+    # what the control scripts kept (OAuth clients, tokens, sessions, fixtures) was of the instances gone
+    rm -rf "$CHAOS_RUN/control"
     stack instances add --context-name chaos --email "$email" --locale en --passphrase "$CHAOS_PASSWORD" "$inst" >/dev/null
   fi
   stack apps ls --domain "$inst" | grep -qw drive || stack apps install drive file:///opt/drive --domain "$inst" >/dev/null
@@ -111,10 +113,11 @@ client="$(curl -sf "${host[@]}" -H 'Content-Type: application/json' -H 'Accept: 
   "http://127.0.0.1:$CHAOS_STACK_PORT/auth/register")" || { echo "cannot register an OAuth client on $CHAOS_INSTANCE" >&2; exit 1; }
 client_id="$(echo "$client" | python3 -c 'import json,sys; print(json.load(sys.stdin)["client_id"])')"
 client_secret="$(echo "$client" | python3 -c 'import json,sys; print(json.load(sys.stdin)["client_secret"])')"
-cat >> "$CHAOS_RUN/env" <<EOF
-# an OAuth client of $CHAOS_INSTANCE: POST /oidc/access_token {client_id, client_secret, scope, oidc_token: <SSO token>}
-export CHAOS_CLIENT_ID=$client_id CHAOS_CLIENT_SECRET=$client_secret
-EOF
+# quoted: the file is sourced, the values are the stack's answer
+{
+  echo "# an OAuth client of $CHAOS_INSTANCE: POST /oidc/access_token {client_id, client_secret, scope, oidc_token: <SSO token>}"
+  printf 'export CHAOS_CLIENT_ID=%q CHAOS_CLIENT_SECRET=%q\n' "$client_id" "$client_secret"
+} >> "$CHAOS_RUN/env"
 for i in $(seq 1 40); do
   sso_token="$(curl -s -H "Host: $CHAOS_SSO_HOST" -u "$CHAOS_OIDC_CLIENT:$CHAOS_OIDC_SECRET" \
     -d grant_type=password -d "username=$CHAOS_USER" -d "password=$CHAOS_PASSWORD" -d 'scope=openid email profile' \

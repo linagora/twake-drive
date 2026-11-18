@@ -26,7 +26,7 @@ contact_of_bob() {  # the id of the contact of bob in alice's contacts, with the
 
 # bob_accepts <sid>: bob finds the invitation in his Shared with me (its shortcut holds the state) and accepts it
 bob_accepts() {
-  local sid="$1" state="" cookie page csrf ccookie code host="$CHAOS_INSTANCE2" ids id
+  local sid="$1" state="" cookie page csrf ccookie code host="$CHAOS_INSTANCE2" ids id try
   while [ -z "$state" ]; do
     api "$CHAOS_USER2" GET "/files/io.cozy.files.shared-with-me-dir?page%5Blimit%5D=100" || { why "$CHAOS_USER2's Shared with me" >&2; return 1; }
     mapfile -t ids < <(jq -r '.included[]? | select(.attributes.class == "shortcut" or (.attributes.name | endswith(".url"))) | .id' <<<"$BODY")
@@ -39,9 +39,14 @@ bob_accepts() {
     [ "$(remaining)" -gt 0 ] || { echo "no invitation in $CHAOS_USER2's Shared with me" >&2; return 1; }
     sleep 1
   done
-  cookie="$(session "$CHAOS_USER2")" || return 1
-  page="$(curl -s -m "$(ct)" -D "$WORK/az.h" -H "Host: $host" -H "Cookie: $cookie" \
-    "$CHAOS_STACK_URL/auth/authorize/sharing?sharing_id=$sid&state=$state")"
+  for try in 1 2; do
+    cookie="$(session "$CHAOS_USER2")" || return 1
+    page="$(curl -s -m "$(ct)" -D "$WORK/az.h" -H "Host: $host" -H "Cookie: $cookie" \
+      "$CHAOS_STACK_URL/auth/authorize/sharing?sharing_id=$sid&state=$state")"
+    # the session held has ended (a 303 to the login page): signed in again
+    grep -qi '^location: [^ ]*/auth/login' "$WORK/az.h" && [ $try = 1 ] && { forget_session "$CHAOS_USER2"; continue; }
+    break
+  done
   csrf="$(sed -n 's/.*name="csrf_token" value="\([^"]*\)".*/\1/p' <<<"$page" | head -1)"
   ccookie="$(sed -n 's/^[Ss]et-[Cc]ookie: \(_csrf=[^;]*\).*/\1/p' "$WORK/az.h" | head -1)"
   [ -n "$csrf" ] && [ -n "$ccookie" ] || { echo "the authorize page of the sharing has no form: $(head -c 200 <<<"$page")" >&2; return 1; }

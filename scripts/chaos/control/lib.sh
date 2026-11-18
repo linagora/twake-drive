@@ -33,10 +33,17 @@ SCOPE="io.cozy.files io.cozy.contacts io.cozy.sharings io.cozy.permissions io.co
 
 # the reason on one line, the last one; what was created cleaned first
 oneline() { local s="$*"; s="${s//$'\n'/ | }"; printf '%s\n' "${s:0:400}"; }
+# cleanup <command> <args...>: run on exit. Kept as data (the count of words, then the words), never evaluated: the
+# arguments include ids returned by the API.
 CLEANUPS=()
+cleanup() { CLEANUPS+=("$#" "$@"); }
 on_exit() {
-  local c
-  for c in "${CLEANUPS[@]}"; do eval "$c" >/dev/null 2>&1 || true; done
+  local i=0 n
+  while [ $i -lt ${#CLEANUPS[@]} ]; do
+    n="${CLEANUPS[i]}"
+    "${CLEANUPS[@]:i+1:n}" >/dev/null 2>&1 || true
+    i=$((i + n + 1))
+  done
   rm -rf "$WORK"
 }
 trap on_exit EXIT
@@ -139,7 +146,7 @@ destroy() {
   api "$1" DELETE "/files/trash/$2" >/dev/null 2>&1
   return 0
 }
-cleanup_file() { CLEANUPS+=("destroy '$1' '$2'"); }
+cleanup_file() { cleanup destroy "$1" "$2"; }
 
 # work_dir <user>: the id of the folder where the probes create their files (/chaos-control, created once)
 work_dir() {
@@ -169,7 +176,7 @@ ensure_fixture() {
     if api "$CHAOS_USER" GET "/files/$id" && [ "$(jq -r '.data.attributes.trashed' <<<"$BODY")" = false ]; then
       printf '%s' "$id"; return 0
     fi
-    [ "$CODE" = 404 ] || { why "the fixture $name" >&2; return 1; }
+    [ "$CODE" = 404 ] || [ "${CODE:0:1}" = 2 ] || { why "the fixture $name" >&2; return 1; }
   fi
   dir="$(work_dir "$CHAOS_USER")" || return 1
   eval "$gen \"\$WORK/fixture.$name\"" || { echo "cannot generate the fixture $name" >&2; return 1; }
