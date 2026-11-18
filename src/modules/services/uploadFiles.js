@@ -1,5 +1,7 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
+import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
+import { makeFilePickerFileEntry } from '@/modules/services/components/FilePicker/payload'
 import { getLocalDirId } from '@/modules/services/uploadFromUrl'
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
 import { buildSharedDriveIdQuery } from '@/queries'
@@ -20,7 +22,15 @@ function getFilesConfig(data) {
   if (!isFileList(files)) {
     throw new Error('files must be a non-empty list of files')
   }
-  return { driveId, folderId, files }
+  // As in the File Picker, true or an object turns the link on
+  const sharingLink =
+    data.sharingLink === true ||
+    (typeof data.sharingLink === 'object' && data.sharingLink !== null)
+  // Links are only made for files of the user's Drive for now
+  if (sharingLink && driveId) {
+    throw new Error('sharingLink needs a folderId')
+  }
+  return { driveId, folderId, files, sharingLink }
 }
 
 function isFileList(files) {
@@ -47,8 +57,17 @@ async function getRootId(client, driveId) {
 // keeps both files. A failed file does not stop the others; the intent still
 // ends in error, carrying one result per file so the caller retries only the
 // failed ones. The error crosses postMessage, so each result stays plain data.
+async function makeResultDocument(client, document, sharingLink, signal) {
+  if (!sharingLink) return document
+  // A file cancelled once stored gets no public link
+  signal.throwIfAborted()
+  const link = await makeSharingLink(client, [document._id])
+  return makeFilePickerFileEntry(document, { sharingLink: link })
+}
+
+// A file stored before its link failed stays in Drive.
 export async function uploadFilesToDrive(client, data, signal) {
-  const { driveId, folderId, files } = getFilesConfig(data)
+  const { driveId, folderId, files, sharingLink } = getFilesConfig(data)
   signal.throwIfAborted()
   const dirId = driveId
     ? await getRootId(client, driveId)
@@ -61,9 +80,21 @@ export async function uploadFilesToDrive(client, data, signal) {
       const { data: document } = await uploadFileWithConflictStrategy(
         client,
         file,
-        { name: file.name, dirId, driveId, conflictStrategy: 'rename' }
+        {
+          name: file.name,
+          dirId,
+          driveId,
+          conflictStrategy: 'rename'
+        }
       )
-      results.push({ document })
+      results.push({
+        document: await makeResultDocument(
+          client,
+          document,
+          sharingLink,
+          signal
+        )
+      })
     } catch (error) {
       failure ??= error
       results.push({
