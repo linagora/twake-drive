@@ -1,10 +1,15 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
+import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
 import { isFilesUpload, uploadFilesToDrive } from './uploadFiles'
 
 jest.mock('cozy-client/dist/models/file', () => ({
   ...jest.requireActual('cozy-client/dist/models/file'),
   uploadFileWithConflictStrategy: jest.fn()
+}))
+jest.mock('cozy-client/dist/models/sharing', () => ({
+  ...jest.requireActual('cozy-client/dist/models/sharing'),
+  makeSharingLink: jest.fn()
 }))
 
 const sharing = { rules: [{ values: ['root'] }] }
@@ -137,5 +142,117 @@ describe('uploadFilesToDrive', () => {
     await expect(
       uploadFilesToDrive(fakeClient(null), { driveId: 'd1', files }, signal)
     ).rejects.toThrow('The destination is not a shared drive')
+  })
+
+  describe('with a public link for each file', () => {
+    const folder = { _id: 'f1', type: 'directory' }
+    const stored = file => ({
+      data: {
+        _id: `id-${file.name}`,
+        name: file.name,
+        type: 'file',
+        size: '1',
+        mime: 'text/plain'
+      }
+    })
+
+    it('returns the entries of the file picker, with a read-only link', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => `link-${id}`)
+      const client = fakeClient(folder)
+
+      const entries = await uploadFilesToDrive(
+        client,
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      )
+
+      expect(entries).toMatchObject([
+        {
+          id: 'id-a.txt',
+          name: 'a.txt',
+          size: 1,
+          mimeType: 'text/plain',
+          sharingLink: 'link-id-a.txt'
+        },
+        {
+          id: 'id-b.txt',
+          name: 'b.txt',
+          size: 1,
+          mimeType: 'text/plain',
+          sharingLink: 'link-id-b.txt'
+        }
+      ])
+      expect(makeSharingLink).toHaveBeenCalledWith(client, ['id-a.txt'])
+    })
+
+    it('fails the file whose link cannot be created, keeping the others', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => {
+        if (id === 'id-a.txt')
+          throw Object.assign(new Error('denied'), { status: 403 })
+        return `link-${id}`
+      })
+
+      const failure = await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      ).catch(error => error)
+
+      expect(failure.results).toMatchObject([
+        { error: { message: 'denied', status: 403 } },
+        { document: { id: 'id-b.txt', sharingLink: 'link-id-b.txt' } }
+      ])
+    })
+
+    it('turns the link on with an object too, as the File Picker does', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockResolvedValue('link')
+
+      const entries = await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 1), sharingLink: {} },
+        signal
+      )
+
+      expect(entries).toMatchObject([{ sharingLink: 'link' }])
+    })
+
+    it('makes no link for a file cancelled once stored', async () => {
+      const controller = new AbortController()
+      uploadFileWithConflictStrategy.mockImplementation(
+        async (client, file) => {
+          controller.abort()
+          return stored(file)
+        }
+      )
+
+      await expect(
+        uploadFilesToDrive(
+          fakeClient(folder),
+          { folderId: 'f1', files: files.slice(0, 1), sharingLink: true },
+          controller.signal
+        )
+      ).rejects.toThrow()
+      expect(makeSharingLink).not.toHaveBeenCalled()
+    })
+
+    it('refuses a shared drive', async () => {
+      await expect(
+        uploadFilesToDrive(
+          fakeClient(),
+          { driveId: 'd1', files, sharingLink: true },
+          signal
+        )
+      ).rejects.toThrow('sharingLink needs a folderId')
+      expect(uploadFileWithConflictStrategy).not.toHaveBeenCalled()
+    })
   })
 })

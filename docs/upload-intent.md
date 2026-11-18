@@ -83,6 +83,32 @@ If any file fails, the intent ends with `error`. The error is the first failure,
 
 Retry only the files whose entry has an `error`.
 
+### Public link
+
+Add `sharingLink: true` (or an object, as in the File Picker) to get a public link for each stored file, as the `sharingLink` action of the [File Picker](file-picker-intent.md) gives:
+
+```ts
+{ folderId: string, files: File[], sharingLink: true }
+```
+
+Each `document` is then the File Picker link entry instead of the `io.cozy.files` document, in the result and in `results`:
+
+```ts
+{
+  id: string
+  name: string // the stored name
+  size: number
+  mimeType: string | null
+  sharingLink: string
+  thumbnail?: { link: string }
+}
+```
+
+- Drive creates the link with its own token: one `io.cozy.permissions` share by link per file, with the `GET` verb on that file only, no expiry and no password. The calling app needs no permission on `io.cozy.files`.
+- It needs `folderId`: shared drives are not supported.
+- A file whose link fails is a failed file in `results`, but it stays stored: retrying it stores a second copy.
+- A file cancelled once stored gets no link.
+
 ### Behavior
 
 - A name already taken keeps both files, with an adjusted name for the new one.
