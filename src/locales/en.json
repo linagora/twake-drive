@@ -29,6 +29,7 @@
   },
   "Nav": {
     "item_drive": "My Drive",
+    "item_downloads": "Downloads",
     "item_recent": "Recents",
     "item_sharings": "Sharings",
     "item_shared": "Shared by me",
