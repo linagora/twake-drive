@@ -124,6 +124,13 @@ export async function uploadFilesToDrive(
       })
     }
   }
-  if (failure) throw Object.assign(failure, { results })
+  if (failure) {
+    // A new error: the one of the request may hold its `Response`, which
+    // postMessage cannot clone, and the caller would then get nothing
+    throw Object.assign(new Error(failure.message), {
+      ...(typeof failure.status === 'number' ? { status: failure.status } : {}),
+      results
+    })
+  }
   return results.map(({ document }) => document)
 }

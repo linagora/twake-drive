@@ -74,7 +74,7 @@ Pass exactly one of `folderId` and `driveId`.
 
 On success, the caller receives the created files' metadata through the normal `done` result, in the order of `files`.
 
-If any file fails, the intent ends with `error`. The error is the first failure, plus a `results` list with one entry per file, in the order of `files`:
+If any file fails, the intent ends with `error`. The error has the `message` and the numeric `status` (when there is one) of the first failure, plus a `results` list with one entry per file, in the order of `files`:
 
 ```ts
 { document: IOCozyFile }                   // stored
