@@ -26,8 +26,8 @@ import { NEXTCLOUD_MIGRATIONS_DOCTYPE } from '@/lib/doctypes'
 import { initFlags } from '@/lib/flags'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
-import Nav from '@/modules/navigation/Nav'
 import { NavProvider, useNavContext } from '@/modules/navigation/NavContext'
+import NavWrapper from '@/modules/navigation/NavWrapper'
 import {
   wasOperationRedirected,
   RESET_OPERATION_REDIRECTED
@@ -154,7 +154,7 @@ const LayoutContent = () => {
                 />
               </div>
             ) : null}
-            <Nav />
+            <NavWrapper />
           </div>
           {isDesktop && <LayoutSidebarFooter />}
         </Sidebar>

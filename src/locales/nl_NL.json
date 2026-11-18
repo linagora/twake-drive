@@ -29,6 +29,7 @@
   },
   "Nav": {
     "item_drive": "Schijf",
+    "item_downloads": "Downloads",
     "item_recent": "Recent",
     "item_sharings": "Gedeelde items",
     "item_shared": "Door mij gedeeld",

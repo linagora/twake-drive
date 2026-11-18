@@ -2,6 +2,8 @@ import type { IOCozyFile } from 'cozy-client/types/types'
 
 import { DOCTYPE_APPS } from '@/lib/doctypes'
 
+export const DOWNLOADS_FOLDER_ID = 'io.cozy.apps/downloads'
+
 const APP_FOLDER_IDS = [
   'io.cozy.apps/calendar',
   'io.cozy.apps/chat',

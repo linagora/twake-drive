@@ -4,15 +4,17 @@ import flag from 'cozy-flags'
 
 import { getFolderContentPartialFilter } from './getFolderContentPartialFilter'
 
-import { TRASH_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import {
   DOCTYPE_AI_CHAT_ASSISTANTS,
   DOCTYPE_ALBUMS,
+  DOCTYPE_APPS,
   DOCTYPE_FILES_RECENTS,
   DOCTYPE_FILES_SETTINGS,
   DOCTYPE_FILES_VERSIONS,
   NEXTCLOUD_MIGRATIONS_DOCTYPE
 } from '@/lib/doctypes'
+import { DOWNLOADS_FOLDER_ID } from '@/lib/magicFolders'
 import { formatFolderQueryId } from '@/lib/queries'
 
 export interface QueryConfig {
@@ -415,6 +417,23 @@ export const buildExternalDrivesQuery: QueryBuilder<
       .sortBy([{ [sortAttribute]: sortOrder }]),
   options: {
     as: 'io.cozy.files/metadata.createdByApp/nextcloud',
+    fetchPolicy: defaultFetchPolicy
+  }
+})
+
+export const buildDownloadsFolderQuery: QueryBuilder = () => ({
+  definition: () =>
+    Q('io.cozy.files')
+      .where({
+        dir_id: ROOT_DIR_ID,
+        type: 'directory',
+        referenced_by: {
+          $elemMatch: { type: DOCTYPE_APPS, id: DOWNLOADS_FOLDER_ID }
+        }
+      })
+      .indexFields(['dir_id', 'type']),
+  options: {
+    as: `io.cozy.files/referenced_by/${DOWNLOADS_FOLDER_ID}`,
     fetchPolicy: defaultFetchPolicy
   }
 })
