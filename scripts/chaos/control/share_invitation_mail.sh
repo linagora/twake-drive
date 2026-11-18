@@ -12,7 +12,7 @@ api "$CHAOS_USER" POST /sharings/ -H 'Content-Type: application/vnd.api+json' --
   {data:{type:"io.cozy.sharings", attributes:{description:$t, rules:[{title:$t, doctype:"io.cozy.files", values:[$d], add:"sync", update:"sync", remove:"sync"}]},
          relationships:{recipients:{data:[{type:"io.cozy.contacts", email:$r}]}}}}')" || fail "$(why 'the sharing')"
 sid="$(jq -r '.data.id' <<<"$BODY")"
-CLEANUPS+=("api '$CHAOS_USER' DELETE '/sharings/$sid/recipients'")
+cleanup api "$CHAOS_USER" DELETE "/sharings/$sid/recipients"
 while :; do
   found="$(curl -s -m "$(ct)" "$CHAOS_MAIL_URL/api/v1/search?query=$(jq -rn --arg q "to:$rcpt" '$q|@uri')")" \
     || fail "the mailbox (Mailpit) does not answer"
@@ -21,7 +21,7 @@ while :; do
   [ "$(remaining)" -gt 0 ] || fail "no invitation received after ${BUDGET}s"
   sleep 0.5
 done
-CLEANUPS+=("curl -s -m 5 -X DELETE -H 'Content-Type: application/json' -d '{\"IDs\":[\"$mid\"]}' '$CHAOS_MAIL_URL/api/v1/messages'")
+cleanup curl -s -m 5 -X DELETE -H 'Content-Type: application/json' -d "$(jq -nc --arg m "$mid" '{IDs:[$m]}')" "$CHAOS_MAIL_URL/api/v1/messages"
 msg="$(curl -s -m "$(ct)" "$CHAOS_MAIL_URL/api/v1/message/$mid")" || fail "the mail received cannot be read (Mailpit)"
 jq -e --arg s "$sid" '.Text | contains("/sharings/" + $s + "/discovery")' <<<"$msg" >/dev/null \
   || fail "the invitation has no link to the sharing: $(jq -r '.Text' <<<"$msg" | head -c 200)"

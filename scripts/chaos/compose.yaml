@@ -6,7 +6,7 @@
 # CouchDB and S3 to inspect the data, OnlyOffice, the mails).
 
 x-couchdb: &couchdb
-  image: couchdb:3.4.3
+  image: couchdb:3.4.3@sha256:d9b6609989f1d47822e84005946cecc2fd49e4be5e4f35da960d4379f6c60de0
   mem_limit: 1g
   # every instance opens tens of databases (shards and indexes), as docker-compose.e2e.yml says
   ulimits:
@@ -24,7 +24,7 @@ x-couchdb: &couchdb
     retries: 60
 
 x-redis: &redis
-  image: redis:8.0.2
+  image: redis:8.0.2@sha256:b43d2dcbbdb1f9e1582e3a0f37e53bf79038522ccffb56a25858969d7a9b6c11
   mem_limit: 256m
   entrypoint: ["bash", "/node.sh"]
   volumes:
@@ -103,7 +103,7 @@ services:
   # cozy-stack takes one URL per CouchDB cluster: the load balancer in front of its 3 nodes (and the creation of the
   # databases fixed for a cluster, conf/haproxy/haproxy.cfg). Part of the stack, never faulted.
   couchdb-lb:
-    image: haproxy:3.0
+    image: haproxy:3.0@sha256:9bb76fb1e4b3477f64e564ee4ba70a41d2e27e510aa98b7fc9cbda80d24fb125
     hostname: couchdb-lb
     mem_limit: 64m
     volumes:
@@ -126,7 +126,7 @@ services:
     depends_on: [redis1]
 
   s3:
-    image: minio/minio:RELEASE.2025-06-13T11-33-47Z
+    image: minio/minio:RELEASE.2025-06-13T11-33-47Z@sha256:064117214caceaa8d8a90ef7caa58f2b2aeb316b5156afe9ee8da5b4d83e12c8
     hostname: s3
     mem_limit: 512m
     command: ["server", "/data"]
@@ -167,14 +167,14 @@ services:
       start_period: 30s
 
   mail:
-    image: axllent/mailpit:v1.21.0
+    image: axllent/mailpit:v1.21.0@sha256:4d0fba94d7410f80317c0736185b6f3a966f227d078975768a2984289e072f02
     hostname: mail
     mem_limit: 128m
     ports:
       - "127.0.0.1:${CHAOS_MAIL_PORT:?}:8025"
 
   ldap:
-    image: osixia/openldap:1.5.0
+    image: osixia/openldap:1.5.0@sha256:18742e9c449c9c1afe129d3f2f3ee15fb34cc43e5f940a20f3399728f41d7c28
     hostname: ldap
     mem_limit: 256m
     # --copy-service: the bootstrap LDIFs are copied before osixia rewrites them in place
@@ -190,7 +190,8 @@ services:
       - ./conf/ldap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
 
   sso:
-    image: yadd/lemonldap-ng-full
+    # "latest", the build of 2026-11-17 (the image has no other tag)
+    image: yadd/lemonldap-ng-full:latest@sha256:a58039c599b3041c5b8a34a86a00bac2613c4606321c308a0eb4356a8b0a0502
     mem_limit: 384m
     environment:
       SSODOMAIN: example.com

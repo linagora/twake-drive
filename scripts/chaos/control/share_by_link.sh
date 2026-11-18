@@ -13,7 +13,7 @@ api "$CHAOS_USER" POST "/permissions?codes=email" -H 'Content-Type: application/
 pid="$(jq -r '.data.id' <<<"$BODY")"
 code="$(jq -r '.data.attributes.shortcodes.email // .data.attributes.codes.email // empty' <<<"$BODY")"
 [ -n "$code" ] || fail "no sharecode in $(head -c 200 <<<"$BODY")"
-CLEANUPS+=("api '$CHAOS_USER' DELETE '/permissions/$pid'")
+cleanup api "$CHAOS_USER" DELETE "/permissions/$pid"
 public() { curl -s -m "$(ct)" -o "$WORK/pub" -w '%{http_code}' -H "Host: $CHAOS_INSTANCE" -H "Authorization: Bearer $code" "$CHAOS_STACK_URL$1"; }
 c="$(public "/files/$d")"
 [ "$c" = 200 ] || fail "the folder with the link: HTTP $c $(head -c 200 "$WORK/pub")"
