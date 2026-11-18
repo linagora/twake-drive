@@ -7,9 +7,15 @@ import {
   ROOT_DIR_ID,
   SHARINGS_VIEW_ROUTE
 } from '@/constants/config'
+import { DOCTYPE_FILES_RECENTS } from '@/lib/doctypes'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 export const isDriveBackedFile = (file: File): boolean => !!file.driveId
+
+// A recent whose file the user can no longer read is listed as the recent
+// itself, with only its last known name and type.
+export const isUnreadableRecent = (file: { _type?: string }): boolean =>
+  file._type === DOCTYPE_FILES_RECENTS
 
 export const makeFileMetadata = (
   formattedUpdatedAt?: string,

@@ -237,7 +237,7 @@ const File = ({
         )}
         <SharingShortcutBadge file={attributes} />
       </FileOpener>
-      {contextMenuActions && canInteractWithFile && (
+      {contextMenuActions.length > 0 && canInteractWithFile && (
         <FileAction
           t={t}
           ref={filerowMenuToggleRef}
@@ -248,7 +248,7 @@ const File = ({
           }}
         />
       )}
-      {contextMenuActions && actionMenuVisible && (
+      {contextMenuActions.length > 0 && actionMenuVisible && (
         <ActionMenuWithHeader
           file={attributes}
           anchorElRef={filerowMenuToggleRef}
