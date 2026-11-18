@@ -734,6 +734,20 @@ describe('computePath', () => {
     ).toBe('../dir123')
   })
 
+  it('should open a directory from recents in the folder view', () => {
+    const file = { _id: 'dir123' }
+    expect(computePath(file, { type: 'directory', pathname: '/recent' })).toBe(
+      '/folder/dir123'
+    )
+  })
+
+  it('should open a shared drive directory from recents in its drive', () => {
+    const file = { _id: 'dir123', driveId: 'drive456' }
+    expect(
+      computePath(file, { type: 'shared-drive', pathname: '/recent' })
+    ).toBe('/shareddrive/drive456/dir123')
+  })
+
   it.each([
     {
       type: 'onlyoffice',

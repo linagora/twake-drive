@@ -225,8 +225,8 @@ export const computePath = (
         return `/folder/${file._id}`
       }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
-      // so we redirect to root route for folders
-      if (pathname.startsWith('/favorites')) {
+      // so we redirect to root route for folders. Recents have no folder route either.
+      if (pathname.startsWith('/favorites') || pathname.startsWith('/recent')) {
         return `/folder/${file._id}`
       }
       if (pathname.startsWith('/sharings/') && paths.length === 2) {
