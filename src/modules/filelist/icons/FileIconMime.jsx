@@ -5,10 +5,13 @@ import { Icon } from '@linagora/twake-icons'
 import { isDirectory } from 'cozy-client/dist/models/file'
 
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
+import { findAppFolderIcon } from '@/lib/magicFolders'
 import { CustomizedIcon } from '@/modules/views/Folder/CustomizedIcon'
 
 const FileIconMime = ({ file, size = 32 }) => {
   const isDir = isDirectory(file)
+  const appFolderIcon = isDir ? findAppFolderIcon(file) : null
+  const hasAppFolderIcon = appFolderIcon !== null
 
   if (
     isDir &&
@@ -19,6 +22,14 @@ const FileIconMime = ({ file, size = 32 }) => {
         selectedColor={file.metadata.decorations.color}
         selectedIcon={file.metadata.decorations.icon}
         selectedIconColor={file.metadata.decorations.icon_color}
+        size={size}
+      />
+    )
+  } else if (hasAppFolderIcon) {
+    return (
+      <CustomizedIcon
+        selectedIcon={appFolderIcon}
+        selectedIconColor="var(--primaryContrastTextColor)"
         size={size}
       />
     )
