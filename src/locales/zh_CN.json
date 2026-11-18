@@ -78,6 +78,7 @@
   },
   "Nav": {
     "item_drive": "硬盘",
+    "item_downloads": "下载",
     "item_recent": "最近更改",
     "item_sharings": "分享",
     "item_shared": "由我分享",

@@ -78,6 +78,7 @@
   },
   "Nav": {
     "item_drive": "ドライブ",
+    "item_downloads": "ダウンロード",
     "item_recent": "最近使用したファイル",
     "item_sharings": "共有",
     "item_shared": "自分が共有した",

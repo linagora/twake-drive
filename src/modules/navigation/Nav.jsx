@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 
 import { Icon, ClockOutline, Cloud2, Star, Trash } from '@linagora/twake-icons'
@@ -8,6 +9,7 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import NextcloudIcon from '@/assets/icons/icon-nextcloud.svg'
+import DownloadsNavItem from '@/modules/navigation/DownloadsNavItem'
 import { ExternalNavItem } from '@/modules/navigation/ExternalNavItem'
 import { FavoriteList } from '@/modules/navigation/FavoriteList'
 import { useNavContext } from '@/modules/navigation/NavContext'
@@ -15,11 +17,20 @@ import { NavItem } from '@/modules/navigation/NavItem'
 import { SharedDriveList } from '@/modules/navigation/SharedDriveList'
 import { SharingsNavItem } from '@/modules/navigation/SharingsNavItem'
 import { ExternalDrives } from '@/modules/navigation/components/ExternalDrivesList'
+import { makeDriveNavRegExp } from '@/modules/navigation/helpers'
 
-export const Nav = () => {
+export const Nav = ({
+  downloadsFolderId = null,
+  displayedDownloadsSubfolderId = null
+}) => {
   const clickState = useNavContext()
   const { isDesktop } = useBreakpoints()
   const { t } = useI18n()
+  const downloadsNavFolderIds = [
+    downloadsFolderId,
+    displayedDownloadsSubfolderId
+  ].filter(folderId => folderId !== null)
+  const driveRegExp = makeDriveNavRegExp(downloadsNavFolderIds)
 
   return (
     <UINav>
@@ -27,9 +38,16 @@ export const Nav = () => {
         to="/folder"
         icon={<Icon icon={Cloud2} />}
         label="drive"
-        rx={/\/(folder|nextcloud)(\/.*)?/}
+        rx={driveRegExp}
         clickState={clickState}
       />
+      {downloadsFolderId !== null && (
+        <DownloadsNavItem
+          folderId={downloadsFolderId}
+          highlightedFolderIds={downloadsNavFolderIds}
+          clickState={clickState}
+        />
+      )}
       {!isDesktop ? (
         <NavItem
           to="/favorites"
@@ -74,6 +92,11 @@ export const Nav = () => {
       ) : null}
     </UINav>
   )
+}
+
+Nav.propTypes = {
+  downloadsFolderId: PropTypes.string,
+  displayedDownloadsSubfolderId: PropTypes.string
 }
 
 export default Nav

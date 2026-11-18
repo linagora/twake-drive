@@ -29,6 +29,7 @@
   },
   "Nav": {
     "item_drive": "Мой диск",
+    "item_downloads": "Загрузки",
     "item_recent": "Недавние",
     "item_sharings": "Общие",
     "item_shared": "Мои отправленные файлы",
