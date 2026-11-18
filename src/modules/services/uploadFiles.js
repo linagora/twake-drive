@@ -66,7 +66,12 @@ async function makeResultDocument(client, document, sharingLink, signal) {
 }
 
 // A file stored before its link failed stays in Drive.
-export async function uploadFilesToDrive(client, data, signal) {
+export async function uploadFilesToDrive(
+  client,
+  data,
+  signal,
+  onProgress = null
+) {
   const { driveId, folderId, files, sharingLink } = getFilesConfig(data)
   signal.throwIfAborted()
   const dirId = driveId
@@ -74,8 +79,11 @@ export async function uploadFilesToDrive(client, data, signal) {
     : await getLocalDirId(client, folderId)
   const results = []
   let failure
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
     signal.throwIfAborted()
+    const onUploadProgress = onProgress
+      ? ({ loaded, total }) => onProgress({ index, loaded, total })
+      : null
     try {
       const { data: document } = await uploadFileWithConflictStrategy(
         client,
@@ -84,7 +92,8 @@ export async function uploadFilesToDrive(client, data, signal) {
           name: file.name,
           dirId,
           driveId,
-          conflictStrategy: 'rename'
+          conflictStrategy: 'rename',
+          onUploadProgress
         }
       )
       results.push({

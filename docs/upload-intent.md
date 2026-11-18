@@ -109,6 +109,16 @@ Each `document` is then the File Picker link entry instead of the `io.cozy.files
 - A file whose link fails is a failed file in `results`, but it stays stored: retrying it stores a second copy.
 - A file cancelled once stored gets no link.
 
+### Progress
+
+Add `progress: true` to follow the upload. While a file uploads, Drive sends results through `sendResult`, which the caller gets with the `onResult` option of `start()` (cozy-interapp 0.20.0 or later):
+
+```ts
+{ index: number, loaded: number, total: number } // index in files, bytes
+```
+
+The final result still comes through `done` or `error`.
+
 ### Behavior
 
 - A name already taken keeps both files, with an adjusted name for the new one.

@@ -117,7 +117,8 @@ describe('Upload intent service lifecycle', () => {
     expect(uploadFilesToDrive).toHaveBeenCalledWith(
       mockClient,
       data,
-      expect.any(AbortSignal)
+      expect.any(AbortSignal),
+      null
     )
     expect(uploadFileFromUrl).not.toHaveBeenCalled()
   })
@@ -133,4 +134,33 @@ describe('Upload intent service lifecycle', () => {
     render(<Upload service={service} />)
     await waitFor(() => expect(service.throw).toHaveBeenCalledWith(quota))
   })
+
+  it.each([
+    [true, [[{ index: 0, loaded: 1, total: 2 }]]],
+    [undefined, []]
+  ])(
+    'sends the upload progress as results when progress is %s',
+    async (progress, results) => {
+      const data = {
+        folderId: 'folder',
+        files: [new File(['a'], 'a.txt')],
+        progress
+      }
+      const service = {
+        getData: () => data,
+        sendResult: jest.fn(),
+        terminate: jest.fn(),
+        throw: jest.fn()
+      }
+      uploadFilesToDrive.mockImplementation(
+        async (client, data, signal, onProgress) => {
+          onProgress?.({ index: 0, loaded: 1, total: 2 })
+          return []
+        }
+      )
+      render(<Upload service={service} />)
+      await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+      expect(service.sendResult.mock.calls).toEqual(results)
+    }
+  )
 })
