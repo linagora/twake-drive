@@ -13,8 +13,12 @@ jest.mock('cozy-client/dist/models/sharing', () => ({
 }))
 
 const sharing = { rules: [{ values: ['root'] }] }
+const revokeSharingLink = jest.fn()
 const fakeClient = (data = sharing) => ({
-  fetchQueryAndGetFromState: jest.fn().mockResolvedValue({ data })
+  fetchQueryAndGetFromState: jest.fn().mockResolvedValue({ data }),
+  collection: jest.fn(doctype =>
+    doctype === 'io.cozy.permissions' ? { revokeSharingLink } : null
+  )
 })
 const signal = new AbortController().signal
 const files = ['a', 'b', 'c', 'd'].map(name => new File([name], `${name}.txt`))
@@ -210,6 +214,24 @@ describe('uploadFilesToDrive', () => {
         { error: { message: 'denied', status: 403 } },
         { document: { id: 'id-b.txt', sharingLink: 'link-id-b.txt' } }
       ])
+    })
+
+    it('revokes the link a failed call may have created, so that no public share is left', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => {
+        if (id === 'id-a.txt') throw new Error('Network error')
+        return `link-${id}`
+      })
+
+      await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      ).catch(error => error)
+
+      expect(revokeSharingLink.mock.calls).toEqual([[stored(files[0]).data]])
     })
 
     it('turns the link on with an object too, as the File Picker does', async () => {

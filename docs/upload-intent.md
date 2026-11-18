@@ -106,7 +106,7 @@ Each `document` is then the File Picker link entry instead of the `io.cozy.files
 
 - Drive creates the link with its own token: one `io.cozy.permissions` share by link per file, with the `GET` verb on that file only, no expiry and no password. The calling app needs no permission on `io.cozy.files`.
 - It needs `folderId`: shared drives are not supported.
-- A file whose link fails is a failed file in `results`, but it stays stored: retrying it stores a second copy.
+- A file whose link fails is a failed file in `results`, but it stays stored: retrying it stores a second copy. Drive revokes any share by link of that file, in case the Stack saved one before the call failed.
 - A file cancelled once stored gets no link.
 
 ### Progress

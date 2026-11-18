@@ -1,6 +1,7 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
 import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
+import logger from '@/lib/logger'
 import { makeFilePickerFileEntry } from '@/modules/services/components/FilePicker/payload'
 import { getLocalDirId } from '@/modules/services/uploadFromUrl'
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
@@ -61,7 +62,19 @@ async function makeResultDocument(client, document, sharingLink, signal) {
   if (!sharingLink) return document
   // A file cancelled once stored gets no public link
   signal.throwIfAborted()
-  const link = await makeSharingLink(client, [document._id])
+  let link
+  try {
+    link = await makeSharingLink(client, [document._id])
+  } catch (error) {
+    // The Stack may have saved the share before the call failed: the file
+    // is reported failed, so no public share of it is left behind
+    try {
+      await client.collection('io.cozy.permissions').revokeSharingLink(document)
+    } catch (revokeError) {
+      logger.warn('Upload intent could not revoke a sharing link', revokeError)
+    }
+    throw error
+  }
   return makeFilePickerFileEntry(document, { sharingLink: link })
 }
 
