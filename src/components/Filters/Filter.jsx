@@ -68,7 +68,6 @@ const useStyles = makeStyles(theme => ({
   },
   input: {
     boxSizing: 'border-box',
-    height: FILTER_HEIGHT,
     minWidth: 0,
     ...theme.typography.body2,
     lineHeight: `${FILTER_HEIGHT}px`,
@@ -80,7 +79,9 @@ const useStyles = makeStyles(theme => ({
     '&:focus': {
       backgroundColor: 'transparent'
     },
-    '&&': {
+    // Outranks the fixed input height the theme sets on desktop
+    '&&&': {
+      height: FILTER_HEIGHT,
       padding: theme.spacing(0, 4, 0, 2)
     }
   },
