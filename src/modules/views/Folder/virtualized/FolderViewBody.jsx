@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { makeColumns } from '../helpers'
+import { makeColumns, normalizeOrderProps } from '../helpers'
 import { getFolderViewState } from '../hooks/getFolderViewState'
 import FolderViewBodyContent from './FolderViewBodyContent'
 
@@ -26,21 +26,21 @@ const FolderViewBody = ({
   withFilePath = false,
   refreshFolderContent = null,
   driveId,
-  orderProps = {
-    sortOrder: {},
-    setOrder: () => {},
-    isSettingsLoaded: true
-  }
+  orderProps
 }) => {
   const { isDesktop } = useBreakpoints()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { clearItems } = useNewItemHighlightContext()
-  const { sortOrder, setOrder, isSettingsLoaded } = orderProps
+  const { sortOrder, setOrder, isSettingsLoaded, keepQueryOrder } =
+    normalizeOrderProps(orderProps)
 
   const { isInError, isLoading, isEmpty } = getFolderViewState({ queryResults })
 
-  const columns = useMemo(() => makeColumns(isBigThumbnail), [isBigThumbnail])
+  const columns = useMemo(
+    () => makeColumns(isBigThumbnail, { sortable: !keepQueryOrder }),
+    [isBigThumbnail, keepQueryOrder]
+  )
 
   useScrollToTop(currentFolderId)
   // Reset the new-item-highlight tracker on folder change and on desktop /
@@ -98,7 +98,8 @@ const FolderViewBody = ({
       driveId={driveId}
       orderProps={{
         sortOrder,
-        setOrder
+        setOrder,
+        keepQueryOrder
       }}
       refreshFolderContent={refreshFolderContent}
     />

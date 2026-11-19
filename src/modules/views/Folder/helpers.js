@@ -67,10 +67,23 @@ export const shadeColor = (baseHex, { to = 'white', factor = 0.2 } = {}) => {
   return rgbToHex(mixed)
 }
 
-export const makeColumns = isBigThumbnail => {
+const DEFAULT_ORDER_PROPS = {
+  sortOrder: {},
+  setOrder: () => {},
+  isSettingsLoaded: true,
+  keepQueryOrder: false
+}
+
+// A view may pass only some of the order props, `keepQueryOrder` for instance.
+export const normalizeOrderProps = orderProps => ({
+  ...DEFAULT_ORDER_PROPS,
+  ...orderProps
+})
+
+export const makeColumns = (isBigThumbnail, { sortable = true } = {}) => {
   const { t } = getDriveI18n()
 
-  return [
+  const columns = [
     {
       id: 'name',
       maxWidth: 0,
@@ -108,6 +121,10 @@ export const makeColumns = isBigThumbnail => {
       sortable: false
     }
   ]
+
+  return sortable
+    ? columns
+    : columns.map(column => ({ ...column, sortable: false }))
 }
 
 /**
