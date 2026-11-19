@@ -134,6 +134,13 @@ describe('Empty', () => {
     expect(screen.queryByTestId('upload-folder')).toBe(null)
   })
 
+  it('does not offer the file upload before the folder document loads', () => {
+    mockDisplayedFolder = null
+    renderAt('/sharings/drive-id/folder-id', <EmptyDrive driveId="drive-id" />)
+
+    expect(screen.queryByTestId('upload-file')).toBe(null)
+  })
+
   it('shows the folder illustration at 160 px in a 10 rem container in Drive', () => {
     renderAt('/folder/folder-id', <EmptyDrive />)
 

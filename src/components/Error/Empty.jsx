@@ -75,7 +75,8 @@ const EmptyCanvas = ({
       text={
         <>
           {text}
-          {showUploadLayout && canUpload !== false && (
+          {/* Without the folder document, an upload would fall back to the personal Drive root. */}
+          {showUploadLayout && canUpload !== false && displayedFolder && (
             <span className="u-db u-mt-1">
               <UploadButton
                 componentsProps={{
@@ -87,9 +88,7 @@ const EmptyCanvas = ({
               />
               <UploadButton
                 isDirectory
-                disabled={
-                  !folderId || !displayedFolder || !canWriteToCurrentFolder
-                }
+                disabled={!folderId || !canWriteToCurrentFolder}
                 className="u-ml-half"
                 componentsProps={{
                   button: { variant: 'secondary' }
