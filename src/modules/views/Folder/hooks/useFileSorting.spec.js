@@ -173,4 +173,30 @@ describe('useFileSorting', () => {
 
     expect(result.current.allFiles).toHaveLength(0)
   })
+
+  it('should keep the order of the query results when asked to', () => {
+    const { result } = renderHook(() =>
+      useFileSorting('folder-1', mockQueryResults, {
+        ...mockOrderProps,
+        keepQueryOrder: true
+      })
+    )
+
+    expect(result.current.sortedFiles.map(file => file._id)).toEqual([
+      '1',
+      '2',
+      '3'
+    ])
+  })
+
+  it('should let the loading state follow the query when keeping its order', () => {
+    const { result } = renderHook(() =>
+      useFileSorting('folder-1', mockQueryResults, {
+        ...mockOrderProps,
+        keepQueryOrder: true
+      })
+    )
+
+    expect(result.current.isSettingsLoaded).toBe(false)
+  })
 })

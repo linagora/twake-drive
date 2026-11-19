@@ -6,13 +6,12 @@ import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
-import { sortFiles } from '../sortFiles'
 import { useSyncingFakeFile } from '../useSyncingFakeFile'
 import Grid from './Grid'
+import { useSortedRows } from './useSortedRows'
 
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
-import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import RectangularSelection from '@/modules/selection/RectangularSelection'
@@ -56,11 +55,8 @@ const FolderViewBodyContent = ({
   const { showAlert } = useAlert()
   const { viewType } = useViewSwitcherContext()
   const { t } = useI18n()
-  const { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt } =
-    useFileLastUpdated()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
-  const { sortOrder } = orderProps
-  const { order, attribute: orderBy } = sortOrder
+  const { sortOrder, keepQueryOrder } = orderProps
 
   const fetchMore = queryResults.find(query => query.hasMore)?.fetchMore
 
@@ -75,19 +71,7 @@ const FolderViewBodyContent = ({
     [queryResults, IsAddingFolder, syncingFakeFile]
   )
 
-  const sortedRows = useMemo(() => {
-    return sortFiles(
-      rows,
-      { order, attribute: orderBy },
-      { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt }
-    )
-  }, [
-    rows,
-    order,
-    orderBy,
-    getFileLastUpdatedAt,
-    groupDirectoriesFirstByUpdatedAt
-  ])
+  const sortedRows = useSortedRows({ rows, sortOrder, keepQueryOrder })
 
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {

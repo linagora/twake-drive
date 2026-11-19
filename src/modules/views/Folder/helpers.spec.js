@@ -1,4 +1,11 @@
-import { hexToRgb, rgbToHex, mixWith, shadeColor } from './helpers'
+import {
+  hexToRgb,
+  rgbToHex,
+  mixWith,
+  shadeColor,
+  makeColumns,
+  normalizeOrderProps
+} from './helpers'
 
 // Mock locales to make labels deterministic in tests
 jest.mock('@/locales', () => ({
@@ -54,5 +61,30 @@ describe('color helpers', () => {
     // Fallback to input if base is invalid
     expect(shadeColor('zzz', { to: 'white', factor: 0.5 })).toBe('zzz')
     expect(shadeColor(12345, { to: 'white', factor: 0.5 })).toBe(12345)
+  })
+})
+
+describe('makeColumns', () => {
+  test('makes no column sortable when sorting is disabled', () => {
+    const columns = makeColumns(false, { sortable: false })
+
+    expect(columns.every(c => c.sortable === false)).toBe(true)
+  })
+})
+
+describe('normalizeOrderProps', () => {
+  test('keeps the defaults when only keepQueryOrder is given', () => {
+    const orderProps = normalizeOrderProps({ keepQueryOrder: true })
+
+    expect(orderProps).toMatchObject({
+      sortOrder: {},
+      isSettingsLoaded: true,
+      keepQueryOrder: true
+    })
+    expect(orderProps.setOrder).toEqual(expect.any(Function))
+  })
+
+  test('sorts by default', () => {
+    expect(normalizeOrderProps().keepQueryOrder).toBe(false)
   })
 })
