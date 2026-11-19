@@ -10,6 +10,11 @@ Generic Twake/Cozy conventions live in
 The repo-specific decisions documented here take precedence when they
 conflict. E2E rules live in `e2e/AGENTS.md`.
 
+**Code reviews only:** when asked to review code (a PR, branch, commit or
+working-tree changes), read and apply [REVIEW.md](REVIEW.md) in addition to
+the applicable `twake-guidelines` skills. Do not load `REVIEW.md` for ordinary
+implementation, debugging or explanation tasks.
+
 ## Core architecture principles
 
 **All data flows through `cozy-client`.** Queries are defined in
