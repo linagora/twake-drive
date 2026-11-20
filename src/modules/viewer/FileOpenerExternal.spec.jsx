@@ -53,6 +53,16 @@ const pdfFile = {
   path: '/Rapport.pdf'
 }
 
+const noteFile = {
+  _id: 'file-note-id',
+  id: 'file-note-id',
+  _type: 'io.cozy.files',
+  type: 'file',
+  name: 'Journal.cozy-note',
+  class: 'text',
+  path: '/Journal.cozy-note'
+}
+
 describe('FileOpenerExternal', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -104,6 +114,14 @@ describe('FileOpenerExternal', () => {
     setup({ file: pdfFile })
 
     expect(await screen.findByText('Viewer')).toBeInTheDocument()
+  })
+
+  it('never offers OnlyOffice for a note, even without its mime', async () => {
+    setup({ file: noteFile })
+
+    expect(await screen.findByText('Viewer')).toBeInTheDocument()
+    const { componentsProps } = mockViewer.mock.calls[0][0]
+    expect(componentsProps.OnlyOfficeViewer.isEnabled).toBe(false)
   })
 
   it('renders the viewer for a PDF when Office is disabled', async () => {

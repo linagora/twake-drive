@@ -8,6 +8,8 @@ import I18n from 'twake-i18n'
 import LightFileViewer from './LightFileViewer'
 import AppLike from 'test/components/AppLike'
 
+import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+
 jest.mock('cozy-intent', () => ({
   WebviewIntentProvider: ({ children }) => children,
   useWebviewIntent: () => ({ call: () => {} })
@@ -23,16 +25,23 @@ jest.mock('cozy-client/dist/models/permission', () => ({
   isDocumentReadOnly: jest.fn().mockResolvedValue(false)
 }))
 
+jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
+  ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
+  isOfficeEnabled: jest.fn(() => false)
+}))
+
 const client = new createMockClient({})
 
-const setup = ({ isDesktop = false, isMobile = false } = {}) => {
+const setup = ({
+  isDesktop = false,
+  isMobile = false,
+  file = { id: '01', type: 'file', name: 'fileName.txt' }
+} = {}) => {
   useBreakpoints.mockReturnValue({ isDesktop, isMobile })
   const root = render(
     <AppLike client={client}>
       <I18n lang="en" dictRequire={() => ''}>
-        <LightFileViewer
-          files={[{ id: '01', type: 'file', name: 'fileName.txt' }]}
-        />
+        <LightFileViewer files={[file]} />
       </I18n>
     </AppLike>
   )
@@ -68,5 +77,15 @@ describe('LightFileViewer', () => {
       expect(queryByTestId('public-toolbar')).toBeFalsy()
       expect(queryByTestId('viewer-toolbar')).toBeTruthy()
     })
+  })
+
+  it('never offers to open a note in OnlyOffice', () => {
+    isOfficeEnabled.mockReturnValue(true)
+    const { root } = setup({
+      isDesktop: true,
+      file: { id: '01', type: 'file', class: 'text', name: 'Journal.cozy-note' }
+    })
+
+    expect(root.queryByText(/Only ?Office/)).toBeNull()
   })
 })

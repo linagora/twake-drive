@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 
 import { useClient, models } from 'cozy-client'
 
+import { DOCTYPE_APPS } from '@/lib/doctypes'
+
 export const usePublicWritePermissions = currentFolderId => {
   const client = useClient()
   const [fetchStatus, setFetchStatus] = useState('pending')
@@ -12,7 +14,9 @@ export const usePublicWritePermissions = currentFolderId => {
       try {
         setFetchStatus('loading')
         const permissions = await models.permission.fetchOwn(client)
-        setHasWritePermissions(!models.permission.isReadOnly(permissions[0]))
+        // The link may also read some apps, which says nothing about its rights.
+        const filesRule = permissions.find(rule => rule.type !== DOCTYPE_APPS)
+        setHasWritePermissions(!models.permission.isReadOnly(filesRule))
         setFetchStatus('loaded')
       } catch (_error) {
         setFetchStatus('error')

@@ -15,6 +15,10 @@ import FabProvider from '@/lib/FabProvider'
 import { DOCTYPE_APPS, DOCTYPE_CONTACTS, DOCTYPE_FILES } from '@/lib/doctypes'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 
+// New share links may read Notes, so that their Create menu and their notes
+// know whether it is installed on the sharing instance.
+const LINK_APP_SLUGS = ['notes']
+
 const DriveProvider = ({ client, lang, polyglot, dictRequire, children }) => {
   const { isPublic } = usePublicContext()
 
@@ -27,6 +31,7 @@ const DriveProvider = ({ client, lang, polyglot, dictRequire, children }) => {
             documentType="Files"
             isPublic={isPublic}
             contactsSuggestEnabled={flag('sharing.contacts-suggest.enabled')}
+            linkAppSlugs={LINK_APP_SLUGS}
           >
             <NativeFileSharingProvider>
               <CozyTheme ignoreCozySettings={isPublic} className="u-w-100">
