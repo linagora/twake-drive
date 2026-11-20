@@ -1,15 +1,26 @@
 import { joinPath } from '@/lib/path'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
+
+// Views whose routes carry no driveId (Recents) list shared drive items next to
+// local ones. Their modals then open under a `shareddrive/:driveId` segment, so
+// that they read the item through its drive.
+const shouldOpenInDrive = (file, withDriveIdInModalPath) =>
+  withDriveIdInModalPath && isSharedDriveDoc(file)
 
 export const navigateToModal = ({
   navigate,
   pathname,
   search = '',
   files,
-  path
+  path,
+  withDriveIdInModalPath = false
 }) => {
   const file = Array.isArray(files) ? files[0] : files
+  const drivePrefix = shouldOpenInDrive(file, withDriveIdInModalPath)
+    ? `shareddrive/${file.driveId}/`
+    : ''
   const targetPathname = pathname
-    ? joinPath(pathname, `file/${file.id}/${path}`)
+    ? joinPath(pathname, `${drivePrefix}file/${file.id}/${path}`)
     : `v/${path}`
   const targetLocation = search
     ? { pathname: targetPathname, search }
@@ -23,11 +34,18 @@ export const navigateToModalWithMultipleFile = ({
   pathname,
   files,
   path,
-  search
+  search,
+  withDriveIdInModalPath = false
 }) => {
+  const [firstFile] = files
+  const drivePrefix = shouldOpenInDrive(firstFile, withDriveIdInModalPath)
+    ? `shareddrive/${firstFile.driveId}/${firstFile.dir_id}/`
+    : ''
   return navigate(
     {
-      pathname: pathname ? joinPath(pathname, path) : `v/${path}`,
+      pathname: pathname
+        ? joinPath(pathname, `${drivePrefix}${path}`)
+        : `v/${path}`,
       search: search ? `?${search}` : ''
     },
     {

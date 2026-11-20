@@ -24,7 +24,7 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const versions = ({ t, navigate, pathname }) => {
+export const versions = ({ t, navigate, pathname, withDriveIdInModalPath }) => {
   const label = t('SelectionBar.history')
   const icon = History
 
@@ -37,7 +37,13 @@ export const versions = ({ t, navigate, pathname }) => {
       return selection.length === 1 && isFile(selection[0])
     },
     action: files => {
-      return navigateToModal({ navigate, pathname, files, path: 'revision' })
+      return navigateToModal({
+        navigate,
+        pathname,
+        files,
+        path: 'revision',
+        withDriveIdInModalPath
+      })
     },
     Component: makeComponent(label, icon)
   }

@@ -1,5 +1,6 @@
 import type { Download, Page, Locator } from '@playwright/test'
 
+import { HistoryModalPage } from './HistoryModalPage'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp, expect } from '../helpers/fixtures'
@@ -194,6 +195,18 @@ export class FileRow {
     return moveTo
   }
 
+  async openHistory(): Promise<HistoryModalPage> {
+    const menu = await this.openMenu()
+    await menu
+      .getByRole('menuitem', {
+        name: new RegExp(escapeRegExp(t('SelectionBar.history')))
+      })
+      .click()
+    const history = new HistoryModalPage(this.page)
+    await history.waitForOpen()
+    return history
+  }
+
   async moveTo(targetFolder: string): Promise<void> {
     const moveTo = await this.openMoveTo()
     await moveTo.openFolder(targetFolder)
@@ -212,6 +225,12 @@ export class FileRow {
 
   /** The confirmation names the file, so it acts on this row alone. */
   async sendToTrash(open?: () => Promise<Locator>): Promise<void> {
+    await this.confirmTrash(open)
+    await this.waitHidden()
+  }
+
+  /** Confirms the trash without waiting for the row to leave the list. */
+  async confirmTrash(open?: () => Promise<Locator>): Promise<void> {
     await this.runAction(
       new RegExp(`^${escapeRegExp(t('SelectionBar.trash'))}$`, 'i'),
       {
@@ -224,7 +243,6 @@ export class FileRow {
       },
       open
     )
-    await this.waitHidden()
   }
 
   async download(): Promise<Download> {
