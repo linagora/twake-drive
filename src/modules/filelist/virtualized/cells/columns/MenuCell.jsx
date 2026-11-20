@@ -29,7 +29,10 @@ const MenuCell = ({ row, actions }) => {
         file={row}
         ref={filerowMenuToggleRef}
         disabled={isInSyncFromSharing}
-        onClick={toggleShowActionMenu}
+        onClick={event => {
+          event.stopPropagation()
+          toggleShowActionMenu()
+        }}
       />
       {contextMenuActions && showActionMenu && (
         <ActionMenuWithHeader
