@@ -1,6 +1,7 @@
 import { getIllegalCharacters } from 'cozy-stack-client/dist/getIllegalCharacter'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
+import { UPLOAD_MAGIC_FOLDER_IDS } from '@/lib/magicFolders'
 import {
   isConflictError,
   uploadWithRenamedFile
@@ -23,11 +24,7 @@ function getUploadName(name) {
 }
 
 function getUploadFolderId(folderId) {
-  if (
-    folderId.includes('/') &&
-    folderId !== 'io.cozy.apps/mail' &&
-    folderId !== 'io.cozy.apps/notes'
-  ) {
+  if (folderId.includes('/') && !UPLOAD_MAGIC_FOLDER_IDS.includes(folderId)) {
     throw new Error('Unsupported destination')
   }
   return folderId

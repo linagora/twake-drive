@@ -246,6 +246,7 @@
   },
   "Nav": {
     "item_drive": "Mijn Drive",
+    "item_downloads": "Downloads",
     "item_sharings": "Gedeeld",
     "item_file_picker": "Bestand kiezen"
   },

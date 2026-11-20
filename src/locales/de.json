@@ -29,6 +29,7 @@
   },
   "Nav": {
     "item_drive": "Laufwerk",
+    "item_downloads": "Downloads",
     "item_recent": "Zuletzt",
     "item_sharings": "Freigaben",
     "item_shared": "Von mir geteilt",
