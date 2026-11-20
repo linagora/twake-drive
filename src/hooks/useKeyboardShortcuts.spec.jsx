@@ -5,7 +5,8 @@ import { Provider } from 'react-redux'
 import { createStore } from 'redux'
 
 jest.mock('cozy-client/dist/models/file', () => ({
-  isFile: jest.fn()
+  isFile: jest.fn(),
+  isDirectory: jest.fn(() => false)
 }))
 
 jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
@@ -70,6 +71,7 @@ jest.mock('@/modules/upload/NewItemHighlightProvider', () => ({
 }))
 
 import { isFile } from 'cozy-client/dist/models/file'
+import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -83,6 +85,7 @@ import {
   useClipboardContext
 } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder } from '@/hooks'
+import { rename } from '@/modules/actions/rename'
 import { startRenamingAsync } from '@/modules/drive/rename'
 import { useNextcloudCurrentFolder } from '@/modules/nextcloud/hooks/useNextcloudCurrentFolder'
 import { handlePasteOperation } from '@/modules/paste'
@@ -635,6 +638,154 @@ describe('useKeyboardShortcuts', () => {
       })
 
       expect(mockDispatch).not.toHaveBeenCalled()
+    })
+
+    describe('when the view passes its actions', () => {
+      const pressF2On = (item, actionsOptions) => {
+        useSelectionContext.mockReturnValue({
+          selectedItems: [item],
+          selectAll: mockSelectAll,
+          hideSelectionBar: mockHideSelectionBar,
+          clearSelection: mockClearSelection,
+          isSelectAll: false
+        })
+        const actions = makeActions([rename], {
+          t: key => key,
+          hasWriteAccess: true,
+          dispatch: mockDispatch,
+          ...actionsOptions
+        })
+
+        renderHook(
+          () =>
+            useKeyboardShortcuts({
+              client: mockClient,
+              items: mockItems,
+              actions
+            }),
+          { wrapper: createWrapper() }
+        )
+        act(() => {
+          document.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'F2', bubbles: true })
+          )
+        })
+      }
+
+      it('does not rename a received shared drive whose menu hides Rename', () => {
+        pressF2On(
+          { ...mockSelectedItems[0], driveId: 'drive-1' },
+          { shouldHideIfSharedDriveRecipient: true }
+        )
+
+        expect(mockDispatch).not.toHaveBeenCalled()
+      })
+
+      it('does not rename in a folder the user cannot write to', () => {
+        pressF2On(mockSelectedItems[0], { hasWriteAccess: false })
+
+        expect(mockDispatch).not.toHaveBeenCalled()
+      })
+
+      it('does not rename an infected file, as its menu hides Rename', () => {
+        pressF2On(
+          { ...mockSelectedItems[0], antivirus_scan: { status: 'infected' } },
+          {}
+        )
+
+        expect(mockDispatch).not.toHaveBeenCalled()
+      })
+
+      it('does not rename when the menu shows Rename disabled', () => {
+        useSelectionContext.mockReturnValue({
+          selectedItems: [mockSelectedItems[0]],
+          selectAll: mockSelectAll,
+          hideSelectionBar: mockHideSelectionBar,
+          clearSelection: mockClearSelection,
+          isSelectAll: false
+        })
+        const actions = [
+          {
+            rename: {
+              name: 'rename',
+              displayCondition: docs => docs.length === 1,
+              disabled: () => true
+            }
+          }
+        ]
+
+        renderHook(
+          () =>
+            useKeyboardShortcuts({
+              client: mockClient,
+              items: mockItems,
+              actions
+            }),
+          { wrapper: createWrapper() }
+        )
+        act(() => {
+          document.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'F2', bubbles: true })
+          )
+        })
+
+        expect(mockDispatch).not.toHaveBeenCalled()
+      })
+
+      it('keeps one keydown listener when the view rebuilds its actions, and reads the latest ones', () => {
+        useSelectionContext.mockReturnValue({
+          selectedItems: [mockSelectedItems[0]],
+          selectAll: mockSelectAll,
+          hideSelectionBar: mockHideSelectionBar,
+          clearSelection: mockClearSelection,
+          isSelectAll: false
+        })
+        // Stable context values, so only the actions change between renders.
+        require('@/modules/upload/NewItemHighlightProvider').useNewItemHighlightContext.mockReturnValue(
+          { addItems: jest.fn() }
+        )
+        const makeRenameActions = isOffered => [
+          { rename: { name: 'rename', displayCondition: () => isOffered } }
+        ]
+        const removeListener = jest.spyOn(document, 'removeEventListener')
+        const { rerender } = renderHook(
+          ({ actions }) =>
+            useKeyboardShortcuts({
+              client: mockClient,
+              items: mockItems,
+              actions
+            }),
+          {
+            wrapper: createWrapper(),
+            initialProps: { actions: makeRenameActions(true) }
+          }
+        )
+
+        rerender({ actions: makeRenameActions(true) })
+        rerender({ actions: makeRenameActions(false) })
+        act(() => {
+          document.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'F2', bubbles: true })
+          )
+        })
+
+        expect(removeListener).not.toHaveBeenCalledWith(
+          'keydown',
+          expect.any(Function)
+        )
+        expect(mockDispatch).not.toHaveBeenCalled()
+        removeListener.mockRestore()
+      })
+
+      it('renames an item whose menu offers Rename', () => {
+        pressF2On(mockSelectedItems[0], {
+          shouldHideIfSharedDriveRecipient: true
+        })
+
+        expect(mockDispatch).toHaveBeenCalledWith(
+          startRenamingAsync(mockSelectedItems[0])
+        )
+      })
     })
   })
 

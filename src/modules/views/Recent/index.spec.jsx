@@ -12,6 +12,8 @@ import RecentViewWithProvider from './index'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+
 const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => ({
@@ -33,6 +35,10 @@ jest.mock('cozy-client/dist/hooks/useQuery', () =>
   }))
 )
 jest.mock('components/useHead', () => jest.fn())
+jest.mock('@/hooks/useKeyboardShortcuts', () => {
+  const actual = jest.requireActual('@/hooks/useKeyboardShortcuts')
+  return { useKeyboardShortcuts: jest.fn(actual.useKeyboardShortcuts) }
+})
 jest.mock('cozy-sharing', () => ({
   __esModule: true,
   ...jest.requireActual('cozy-sharing'),
@@ -86,6 +92,16 @@ const setup = ({ nbFiles, path, dir_id, updated_at }) => {
 }
 
 describe('Recent View', () => {
+  it('gives its menu actions to the keyboard shortcuts', () => {
+    // Same known nested link warnings as the test below.
+    jest.spyOn(console, 'error').mockImplementation()
+    jest.spyOn(console, 'warn').mockImplementation()
+    setup({ nbFiles: 1, path: '/test', dir_id: '123', updated_at: '' })
+
+    const { actions } = useKeyboardShortcuts.mock.calls.at(-1)[0]
+    expect(actions.some(action => 'rename' in action)).toBe(true)
+  })
+
   it('tests the recent view', async () => {
     // TODO : Remove nested <a> on File when withFilePath is true
     jest.spyOn(console, 'error').mockImplementation()

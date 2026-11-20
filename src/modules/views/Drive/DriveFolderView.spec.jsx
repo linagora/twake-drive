@@ -4,6 +4,7 @@ import React from 'react'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import AppRoute from '@/modules/navigation/AppRoute'
 
 jest.mock('modules/views/Drive/useTrashRedirect', () => ({
@@ -37,6 +38,10 @@ jest.mock('modules/shareddrives/hooks/useSharedDrives', () => ({
 }))
 
 jest.mock('components/useHead', () => jest.fn())
+jest.mock('@/hooks/useKeyboardShortcuts', () => {
+  const actual = jest.requireActual('@/hooks/useKeyboardShortcuts')
+  return { useKeyboardShortcuts: jest.fn(actual.useKeyboardShortcuts) }
+})
 
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
   useSharedDriveFolder: jest.fn().mockReturnValue({
@@ -61,6 +66,15 @@ describe('Drive View', () => {
     )
     return { ...rendered, client }
   }
+
+  it('gives its menu actions to the keyboard shortcuts', async () => {
+    await act(async () => {
+      await setup()
+    })
+
+    const { actions } = useKeyboardShortcuts.mock.calls.at(-1)[0]
+    expect(actions.some(action => 'rename' in action)).toBe(true)
+  })
 
   it('should use FolderViewBreadcrumb with correct rootBreadcrumbPath', async () => {
     let render

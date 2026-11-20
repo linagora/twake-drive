@@ -41,32 +41,9 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
 
-export const RecentView = () => {
-  const base = useFolderViewBase()
-  const sharingContext = useSharingContext()
+const useRecentActions = ({ base, sharingContext, files }) => {
   const { allLoaded, refresh, isOwner, byDocId } = sharingContext
   const nativeSharing = useNativeFileSharing()
-  useHead({ title: base.t('breadcrumb.title_recent') })
-  const [sortOrder, setSortOrder, isSettingsLoaded] =
-    useFolderSort(RECENT_FOLDER_ID)
-
-  const recentsResult = useRecentFiles()
-
-  // Shared-drive and federated files arrive from the dataproxy seconds after
-  // the local files; surface that background fetch once a list is on screen.
-  const isFetchingMore =
-    recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
-
-  useKeyboardShortcuts({
-    client: base.client,
-    items: recentsResult?.data || [],
-    sharingContext,
-    allowCopy: false,
-    pushModal: base.pushModal,
-    popModal: base.popModal,
-    refresh
-  })
-
   const actionsOptions = {
     ...base,
     ...nativeSharing,
@@ -77,10 +54,10 @@ export const RecentView = () => {
     allLoaded,
     isOwner,
     byDocId,
-    selectAll: () => base.toggleSelectAllItems(recentsResult?.data || [])
+    selectAll: () => base.toggleSelectAllItems(files)
   }
 
-  const actions = makeActions(
+  return makeActions(
     [
       selectAllItems,
       share,
@@ -101,6 +78,39 @@ export const RecentView = () => {
     ],
     actionsOptions
   )
+}
+
+export const RecentView = () => {
+  const base = useFolderViewBase()
+  const sharingContext = useSharingContext()
+  const { refresh } = sharingContext
+  useHead({ title: base.t('breadcrumb.title_recent') })
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(RECENT_FOLDER_ID)
+
+  const recentsResult = useRecentFiles()
+
+  // Shared-drive and federated files arrive from the dataproxy seconds after
+  // the local files; surface that background fetch once a list is on screen.
+  const isFetchingMore =
+    recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
+
+  const actions = useRecentActions({
+    base,
+    sharingContext,
+    files: recentsResult?.data || []
+  })
+
+  useKeyboardShortcuts({
+    client: base.client,
+    items: recentsResult?.data || [],
+    sharingContext,
+    allowCopy: false,
+    pushModal: base.pushModal,
+    popModal: base.popModal,
+    refresh,
+    actions
+  })
 
   return (
     <FolderView>

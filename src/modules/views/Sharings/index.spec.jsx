@@ -20,6 +20,7 @@ import {
   SHARING_TAB_DRIVES,
   SHARING_TAB_WITH_ME
 } from '@/constants/config'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 
 const mockSharingContext = jest.fn()
 
@@ -62,6 +63,10 @@ jest.mock('cozy-client/dist/utils', () => ({
   hasQueryBeenLoaded: jest.fn().mockReturnValue(true)
 }))
 jest.mock('components/useHead', () => jest.fn())
+jest.mock('@/hooks/useKeyboardShortcuts', () => {
+  const actual = jest.requireActual('@/hooks/useKeyboardShortcuts')
+  return { useKeyboardShortcuts: jest.fn(actual.useKeyboardShortcuts) }
+})
 
 const SharingsRoute = ({ tab }) => (
   <SharingsTabProvider tab={tab}>
@@ -168,6 +173,16 @@ describe('Sharings View', () => {
         container.querySelector('.fil-content-file-placeholder')
       ).not.toBeNull()
     })
+  })
+
+  it('lets F2 follow the Rename rule of its menu on a received shared drive', () => {
+    setup()
+
+    const { actions } = useKeyboardShortcuts.mock.calls.at(-1)[0]
+    const { rename } = actions.find(action => 'rename' in action)
+    expect(
+      rename.displayCondition([{ _id: 'drive-root', driveId: 'drive-1' }])
+    ).toBe(false)
   })
 
   it('should not display placeholder when all files are loaded', async () => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback, useRef } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { isFile } from 'cozy-client/dist/models/file'
@@ -15,6 +15,8 @@ import {
   OPERATION_CUT
 } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder } from '@/hooks'
+import { filterActionsByPolicy } from '@/modules/actions/policies'
+import type { DriveAction } from '@/modules/actions/types'
 import DeleteConfirm from '@/modules/drive/DeleteConfirm'
 import { startRenamingAsync } from '@/modules/drive/rename'
 import { useNextcloudCurrentFolder } from '@/modules/nextcloud/hooks/useNextcloudCurrentFolder'
@@ -49,6 +51,10 @@ interface UseKeyboardShortcutsProps {
   pushModal?: (modal: React.ReactElement) => void
   popModal?: () => void
   refresh?: () => void
+  actions?: Record<
+    string,
+    DriveAction & { disabled?: (docs: IOCozyFile[]) => boolean }
+  >[]
 }
 
 export const useKeyboardShortcuts = ({
@@ -64,7 +70,8 @@ export const useKeyboardShortcuts = ({
   isPublic = false,
   pushModal,
   popModal,
-  refresh
+  refresh,
+  actions
 }: UseKeyboardShortcutsProps): void => {
   const dispatch = useDispatch()
   const { t } = useI18n()
@@ -272,10 +279,30 @@ export const useKeyboardShortcuts = ({
     }
   }, [isSelectAll, clearSelection, selectAll, items])
 
+  // A ref keeps the keydown listener from being re-added each time a view rebuilds its actions.
+  const actionsRef = useRef(actions)
+  useEffect(() => {
+    actionsRef.current = actions
+  })
+
   const handleRename = useCallback(() => {
-    if (selectedItems.length === 1) {
-      dispatch(startRenamingAsync(selectedItems[0]))
+    if (selectedItems.length !== 1) return
+
+    // F2 follows the menu: no shortcut when the menu hides or disables Rename.
+    const currentActions = actionsRef.current
+    if (currentActions) {
+      const renameAction = filterActionsByPolicy(
+        currentActions,
+        selectedItems
+      ).find(action => 'rename' in action)?.rename
+      if (
+        !renameAction?.displayCondition?.(selectedItems) ||
+        renameAction.disabled?.(selectedItems)
+      )
+        return
     }
+
+    dispatch(startRenamingAsync(selectedItems[0]))
   }, [selectedItems, dispatch])
 
   const handleEscape = useCallback(() => {
