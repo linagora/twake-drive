@@ -1,5 +1,8 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
+import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
+import logger from '@/lib/logger'
+import { makeFilePickerFileEntry } from '@/modules/services/components/FilePicker/payload'
 import { getLocalDirId } from '@/modules/services/uploadFromUrl'
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
 import { buildSharedDriveIdQuery } from '@/queries'
@@ -20,7 +23,15 @@ function getFilesConfig(data) {
   if (!isFileList(files)) {
     throw new Error('files must be a non-empty list of files')
   }
-  return { driveId, folderId, files }
+  // As in the File Picker, true or an object turns the link on
+  const sharingLink =
+    data.sharingLink === true ||
+    (typeof data.sharingLink === 'object' && data.sharingLink !== null)
+  // Links are only made for files of the user's Drive for now
+  if (sharingLink && driveId) {
+    throw new Error('sharingLink needs a folderId')
+  }
+  return { driveId, folderId, files, sharingLink }
 }
 
 function isFileList(files) {
@@ -47,23 +58,65 @@ async function getRootId(client, driveId) {
 // keeps both files. A failed file does not stop the others; the intent still
 // ends in error, carrying one result per file so the caller retries only the
 // failed ones. The error crosses postMessage, so each result stays plain data.
-export async function uploadFilesToDrive(client, data, signal) {
-  const { driveId, folderId, files } = getFilesConfig(data)
+async function makeResultDocument(client, document, sharingLink, signal) {
+  if (!sharingLink) return document
+  // A file cancelled once stored gets no public link
+  signal.throwIfAborted()
+  let link
+  try {
+    link = await makeSharingLink(client, [document._id])
+  } catch (error) {
+    // The Stack may have saved the share before the call failed: the file
+    // is reported failed, so no public share of it is left behind
+    try {
+      await client.collection('io.cozy.permissions').revokeSharingLink(document)
+    } catch (revokeError) {
+      logger.warn('Upload intent could not revoke a sharing link', revokeError)
+    }
+    throw error
+  }
+  return makeFilePickerFileEntry(document, { sharingLink: link })
+}
+
+// A file stored before its link failed stays in Drive.
+export async function uploadFilesToDrive(
+  client,
+  data,
+  signal,
+  onProgress = null
+) {
+  const { driveId, folderId, files, sharingLink } = getFilesConfig(data)
   signal.throwIfAborted()
   const dirId = driveId
     ? await getRootId(client, driveId)
     : await getLocalDirId(client, folderId)
   const results = []
   let failure
-  for (const file of files) {
+  for (const [index, file] of files.entries()) {
     signal.throwIfAborted()
+    const onUploadProgress = onProgress
+      ? ({ loaded, total }) => onProgress({ index, loaded, total })
+      : null
     try {
       const { data: document } = await uploadFileWithConflictStrategy(
         client,
         file,
-        { name: file.name, dirId, driveId, conflictStrategy: 'rename' }
+        {
+          name: file.name,
+          dirId,
+          driveId,
+          conflictStrategy: 'rename',
+          onUploadProgress
+        }
       )
-      results.push({ document })
+      results.push({
+        document: await makeResultDocument(
+          client,
+          document,
+          sharingLink,
+          signal
+        )
+      })
     } catch (error) {
       failure ??= error
       results.push({
@@ -71,6 +124,13 @@ export async function uploadFilesToDrive(client, data, signal) {
       })
     }
   }
-  if (failure) throw Object.assign(failure, { results })
+  if (failure) {
+    // A new error: the one of the request may hold its `Response`, which
+    // postMessage cannot clone, and the caller would then get nothing
+    throw Object.assign(new Error(failure.message), {
+      ...(typeof failure.status === 'number' ? { status: failure.status } : {}),
+      results
+    })
+  }
   return results.map(({ document }) => document)
 }

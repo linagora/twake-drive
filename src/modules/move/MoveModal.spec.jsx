@@ -808,6 +808,37 @@ describe('MoveModal component', () => {
       })
     })
 
+    it('takes the destination instance from the sharing when the shared drive root has no createdOn', async () => {
+      defaultTargetFolder.driveId = 'drive-beta'
+      const fetchSharing = jest
+        .spyOn(mockClient, 'fetchQueryAndGetFromState')
+        .mockResolvedValue({
+          data: {
+            members: [
+              { status: 'owner', instance: 'https://alice.mycozy.cloud' }
+            ]
+          }
+        })
+      setup({ entries: defaultEntries.slice(0, 1) })
+
+      fireEvent.click(await screen.findByText('Move'))
+      fireEvent.click(await screen.findByRole('button', { name: 'Ok' }))
+
+      await waitFor(() => {
+        expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+          mockClient,
+          expect.objectContaining({ instance: '' }),
+          {
+            instance: 'https://alice.mycozy.cloud',
+            sharing_id: 'drive-beta',
+            dir_id: 'destinationFolder'
+          },
+          false
+        )
+      })
+      fetchSharing.mockRestore()
+    })
+
     it('handles partial successes when moving multiple shared drive entries', async () => {
       let shouldFail = true
       setup({

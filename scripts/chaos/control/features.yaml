@@ -1,0 +1,116 @@
+# The main features of Twake Drive (the Drive web app on cozy-stack), one control script each (exit 0: works, 1: does
+# not, 2: the probe is broken). The API is called as the Drive front calls it, on the instance of alice (bob for the
+# recipient side of the sharings), with the token a signed-in client holds: obtained once through the SSO (LemonLDAP
+# password grant exchanged on POST /oidc/access_token, valid 7 days) and reused; only sso_sign_in and password_sign_in
+# sign in anew each run. Fixtures (a text, an image, a .docx, a folder, the sharings with bob) are made once while the
+# stack is healthy and kept in $CHAOS_RUN/control. A slow answer is still an answer: one call may take 30 s, a script
+# stops polling at 50 s and says why. On the healthy stack each takes a few seconds.
+timeout_seconds: 60
+features:
+  sso_sign_in:
+    script: sso_sign_in.sh
+    description: a user signs in through the SSO (new LemonLDAP token, password checked in LDAP), the instance exchanges it for its own token (POST /oidc/access_token) that lists the root folder
+  password_sign_in:
+    script: password_sign_in.sh
+    description: a user signs in on the login page of the instance with their password (PBKDF2-hashed as the page does) and gets a session the instance recognizes
+  drive_web_app:
+    script: drive_web_app.sh
+    description: a signed-in user opens Drive in the browser, its index.html (with the session's token) and its scripts served from the app's files (S3)
+  browse_files:
+    script: browse_files.sh
+    description: a user browses their files as Drive queries them, the root folder, a folder's content and the recent files (POST /files/_find on Mango indexes); metadata only
+  upload_download:
+    script: upload_download.sh
+    description: a user uploads a file and downloads it back (POST /files/:dir-id, GET /files/download/:id), the same bytes
+  modify_files:
+    script: modify_files.sh
+    description: a user creates folders, renames one and moves it into the other (PATCH /files/:id); it is found at its new path
+  trash_restore:
+    script: trash_restore.sh
+    description: a user moves a folder to the trash, sees it in the trash and restores it to its place
+  empty_trash:
+    script: empty_trash.sh
+    description: a user deletes for good a trashed folder holding a file (DELETE /files/trash/:id, the trash-files job); both are gone
+  download_link:
+    script: download_link.sh
+    description: a user downloads a file with Drive's download button, a download link made (POST /files/downloads) and fetched without authentication, the same content
+  download_archive:
+    script: download_archive.sh
+    description: a user downloads two files at once, a zip archive made (POST /files/archive) and fetched, holding both
+  preview:
+    script: preview.sh
+    description: a user previews an image in Drive's viewer, its thumbnail links given with its metadata and the large thumbnail served
+  thumbnail_generation:
+    script: thumbnail_generation.sh
+    description: a user uploads a photo, its thumbnails are made in the background (thumbnail job) and served
+    async: true
+  realtime:
+    script: realtime.sh
+    description: Drive's websocket (/realtime/, subscribed to io.cozy.files) is pushed the creation of a folder by another client
+    async: true
+  share_by_link:
+    script: share_by_link.sh
+    description: a user shares a folder by link (POST /permissions?codes=), whoever has the link opens that folder (the sharecode as bearer) and nothing else
+  share_invitation_mail:
+    script: share_invitation_mail.sh
+    description: a user shares a folder with someone by email (POST /sharings/), the invitation mail with the sharing's link arrives in their mailbox
+    async: true
+  sharing_sync:
+    script: sharing_sync.sh
+    description: in a folder synchronized with a colleague (Cozy to Cozy sharing, accepted by bob), a folder alice creates appears in bob's own Drive (sharing replication)
+    async: true
+  shared_drive:
+    script: shared_drive.sh
+    description: in alice's shared drive, bob (from his instance, which asks alice's) sees the folder alice created, and alice sees the folder bob created
+  notes:
+    script: notes.sh
+    description: a user creates a note, opens it, edits it (prosemirror steps) and saves it to its file, which holds the text
+  office_open:
+    script: office_open.sh
+    description: a user opens an office document (GET /office/:id/open), the browser loads the editor from OnlyOffice's Document Server, which loads the document from the instance
+  office_edit:
+    script: office_edit.sh
+    description: an office document edited in OnlyOffice is saved (the Document Server's save callback), the instance writes its new version from the Document Server
+  admin_instances:
+    script: admin_instances.sh
+    description: an administrator lists the instances and reads one through the admin API
+
+impacts:
+  # "No service"
+  couchdb: all
+  # "No upload / modification of files (VFS locks), no background jobs (thumbnails, sharing replication, mails, trash),
+  # no realtime, no download links / archives"
+  #   upload: upload_download, thumbnail_generation (a photo uploaded), office_edit (a .docx uploaded and saved), notes (a
+  #     note is a file written in the VFS, under the notes lock and the VFS lock), empty_trash (a file uploaded first)
+  #   modification of files (every write to the file tree takes the VFS lock, a new folder too): modify_files,
+  #     trash_restore, empty_trash; and the probes that create a folder as the feature they check or before it:
+  #     shared_drive (alice and bob each create a folder in the drive), sharing_sync (alice creates the folder to be
+  #     replicated), realtime (the folder whose event is pushed), share_invitation_mail (the folder shared)
+  #   background jobs: thumbnail_generation, sharing_sync (share-replicate), share_invitation_mail (sendmail),
+  #     empty_trash (trash-files)
+  #   realtime: realtime
+  #   download links / archives: download_link, download_archive; preview (the secrets of the thumbnail links are in
+  #     the same store as the download links); office_open and office_edit (the document URL given to the Document
+  #     Server is a download link)
+  # Not claimed, must keep working: the sign-ins, drive_web_app, browse_files, share_by_link, admin_instances.
+  redis: [upload_download, thumbnail_generation, office_edit, notes, empty_trash, modify_files, trash_restore, shared_drive,
+          sharing_sync, realtime, share_invitation_mail, download_link, download_archive, preview, office_open]
+  # "Cannot upload / download / preview files, the Drive web app does not load (its assets are in S3); browsing the
+  # metadata of the files still works"
+  #   upload: upload_download, thumbnail_generation, office_edit, empty_trash (a file uploaded first), notes (a note is a
+  #     file whose content is written in S3)
+  #   download: upload_download, download_link, download_archive, office_open (the Document Server downloads the document)
+  #   preview: preview, thumbnail_generation
+  #   the Drive web app: drive_web_app
+  # Must keep working (the metadata): browse_files, modify_files, trash_restore, share_by_link, sharing_sync, shared_drive
+  # (folders only), realtime, share_invitation_mail, the sign-ins, admin_instances.
+  s3: [upload_download, thumbnail_generation, office_edit, empty_trash, notes, download_link, download_archive, office_open,
+       preview, drive_web_app]
+  # "Cannot open / edit office documents"
+  onlyoffice: [office_open, office_edit]
+  # "No new sign-in through the SSO; open sessions and tokens keep working": every other probe uses the token or the
+  # session it holds (password_sign_in checks the instance's own password, not LDAP's).
+  ldap: [sso_sign_in]
+  # "No mail sent (sharing invitations by mail, notifications)": the invitation by mail. The other mails (notifications)
+  # are not probed: no API lets a user or an administrator send one on demand.
+  smtp: [share_invitation_mail]

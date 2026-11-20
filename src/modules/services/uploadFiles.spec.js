@@ -1,15 +1,46 @@
+import { MessageChannel } from 'node:worker_threads'
+
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
+import { makeSharingLink } from 'cozy-client/dist/models/sharing'
+import { errorSerializer } from 'cozy-interapp/dist/helpers'
+import { FetchError } from 'cozy-stack-client/dist/errors'
 
 import { isFilesUpload, uploadFilesToDrive } from './uploadFiles'
+
+/**
+ * The error as the caller of the intent gets it: serialized by the service,
+ * posted (a structured clone, which refuses a `Response`), deserialized
+ */
+async function deliver(error) {
+  const { port1, port2 } = new MessageChannel()
+  const received = new Promise(resolve => port2.once('message', resolve))
+  try {
+    port1.postMessage(errorSerializer.serialize(error))
+    return errorSerializer.deserialize(await received)
+  } finally {
+    port1.close()
+  }
+}
+
+const fetchError = status =>
+  new FetchError(new Response('', { status }), 'Forbidden')
 
 jest.mock('cozy-client/dist/models/file', () => ({
   ...jest.requireActual('cozy-client/dist/models/file'),
   uploadFileWithConflictStrategy: jest.fn()
 }))
+jest.mock('cozy-client/dist/models/sharing', () => ({
+  ...jest.requireActual('cozy-client/dist/models/sharing'),
+  makeSharingLink: jest.fn()
+}))
 
 const sharing = { rules: [{ values: ['root'] }] }
+const revokeSharingLink = jest.fn()
 const fakeClient = (data = sharing) => ({
-  fetchQueryAndGetFromState: jest.fn().mockResolvedValue({ data })
+  fetchQueryAndGetFromState: jest.fn().mockResolvedValue({ data }),
+  collection: jest.fn(doctype =>
+    doctype === 'io.cozy.permissions' ? { revokeSharingLink } : null
+  )
 })
 const signal = new AbortController().signal
 const files = ['a', 'b', 'c', 'd'].map(name => new File([name], `${name}.txt`))
@@ -52,7 +83,8 @@ describe('uploadFilesToDrive', () => {
         name: 'a.txt',
         dirId: 'root',
         driveId: 'd1',
-        conflictStrategy: 'rename'
+        conflictStrategy: 'rename',
+        onUploadProgress: null
       }
     )
   })
@@ -70,7 +102,8 @@ describe('uploadFilesToDrive', () => {
         name: 'a.txt',
         dirId: 'f1',
         driveId: undefined,
-        conflictStrategy: 'rename'
+        conflictStrategy: 'rename',
+        onUploadProgress: null
       }
     )
   })
@@ -96,7 +129,7 @@ describe('uploadFilesToDrive', () => {
       signal
     ).catch(error => error)
 
-    expect(failure).toBe(quota)
+    expect(failure).toMatchObject({ message: 'quota', status: 413 })
     expect(failure.results).toEqual([
       { document: { name: 'a.txt' } },
       { error: { message: 'quota', status: 413 } },
@@ -137,5 +170,200 @@ describe('uploadFilesToDrive', () => {
     await expect(
       uploadFilesToDrive(fakeClient(null), { driveId: 'd1', files }, signal)
     ).rejects.toThrow('The destination is not a shared drive')
+  })
+
+  describe('with a public link for each file', () => {
+    const folder = { _id: 'f1', type: 'directory' }
+    const stored = file => ({
+      data: {
+        _id: `id-${file.name}`,
+        name: file.name,
+        type: 'file',
+        size: '1',
+        mime: 'text/plain'
+      }
+    })
+
+    it('returns the entries of the file picker, with a read-only link', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => `link-${id}`)
+      const client = fakeClient(folder)
+
+      const entries = await uploadFilesToDrive(
+        client,
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      )
+
+      expect(entries).toMatchObject([
+        {
+          id: 'id-a.txt',
+          name: 'a.txt',
+          size: 1,
+          mimeType: 'text/plain',
+          sharingLink: 'link-id-a.txt'
+        },
+        {
+          id: 'id-b.txt',
+          name: 'b.txt',
+          size: 1,
+          mimeType: 'text/plain',
+          sharingLink: 'link-id-b.txt'
+        }
+      ])
+      expect(makeSharingLink).toHaveBeenCalledWith(client, ['id-a.txt'])
+    })
+
+    it('fails the file whose link cannot be created, keeping the others', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => {
+        if (id === 'id-a.txt')
+          throw Object.assign(new Error('denied'), { status: 403 })
+        return `link-${id}`
+      })
+
+      const failure = await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      ).catch(error => error)
+
+      expect(failure.results).toMatchObject([
+        { error: { message: 'denied', status: 403 } },
+        { document: { id: 'id-b.txt', sharingLink: 'link-id-b.txt' } }
+      ])
+    })
+
+    it('revokes the link a failed call may have created, so that no public share is left', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => {
+        if (id === 'id-a.txt') throw new Error('Network error')
+        return `link-${id}`
+      })
+
+      await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      ).catch(error => error)
+
+      expect(revokeSharingLink.mock.calls).toEqual([[stored(files[0]).data]])
+    })
+
+    it('delivers the link of a file and the 403 of the next to the caller', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockImplementation(async (client, [id]) => {
+        if (id === 'id-b.txt') throw fetchError(403)
+        return `link-${id}`
+      })
+
+      const failure = await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 2), sharingLink: true },
+        signal
+      ).catch(error => error)
+
+      const received = await deliver(failure)
+      expect(received.status).toBe(403)
+      expect(received.results).toMatchObject([
+        { document: { id: 'id-a.txt', sharingLink: 'link-id-a.txt' } },
+        { error: { status: 403 } }
+      ])
+    })
+
+    it('turns the link on with an object too, as the File Picker does', async () => {
+      uploadFileWithConflictStrategy.mockImplementation(async (client, file) =>
+        stored(file)
+      )
+      makeSharingLink.mockResolvedValue('link')
+
+      const entries = await uploadFilesToDrive(
+        fakeClient(folder),
+        { folderId: 'f1', files: files.slice(0, 1), sharingLink: {} },
+        signal
+      )
+
+      expect(entries).toMatchObject([{ sharingLink: 'link' }])
+    })
+
+    it('makes no link for a file cancelled once stored', async () => {
+      const controller = new AbortController()
+      uploadFileWithConflictStrategy.mockImplementation(
+        async (client, file) => {
+          controller.abort()
+          return stored(file)
+        }
+      )
+
+      await expect(
+        uploadFilesToDrive(
+          fakeClient(folder),
+          { folderId: 'f1', files: files.slice(0, 1), sharingLink: true },
+          controller.signal
+        )
+      ).rejects.toThrow()
+      expect(makeSharingLink).not.toHaveBeenCalled()
+    })
+
+    it('refuses a shared drive', async () => {
+      await expect(
+        uploadFilesToDrive(
+          fakeClient(),
+          { driveId: 'd1', files, sharingLink: true },
+          signal
+        )
+      ).rejects.toThrow('sharingLink needs a folderId')
+      expect(uploadFileWithConflictStrategy).not.toHaveBeenCalled()
+    })
+  })
+
+  it('reports the upload progress of each file', async () => {
+    uploadFileWithConflictStrategy.mockImplementation(
+      async (client, file, { onUploadProgress }) => {
+        onUploadProgress({ loaded: 1, total: 2 })
+        return { data: {} }
+      }
+    )
+    const onProgress = jest.fn()
+
+    await uploadFilesToDrive(
+      fakeClient(),
+      { driveId: 'd1', files: files.slice(0, 2) },
+      signal,
+      onProgress
+    )
+
+    expect(onProgress.mock.calls).toEqual([
+      [{ index: 0, loaded: 1, total: 2 }],
+      [{ index: 1, loaded: 1, total: 2 }]
+    ])
+  })
+
+  it('delivers the stored files and the 413 of a failed upload to the caller', async () => {
+    uploadFileWithConflictStrategy.mockImplementation(async (client, file) => {
+      if (file === files[1]) throw fetchError(413)
+      return { data: { _id: `id-${file.name}` } }
+    })
+
+    const failure = await uploadFilesToDrive(
+      fakeClient(),
+      { driveId: 'd1', files: files.slice(0, 2) },
+      signal
+    ).catch(error => error)
+
+    const received = await deliver(failure)
+    expect(received.status).toBe(413)
+    expect(received.results).toMatchObject([
+      { document: { _id: 'id-a.txt' } },
+      { error: { status: 413 } }
+    ])
   })
 })

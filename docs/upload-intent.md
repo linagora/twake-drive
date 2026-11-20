@@ -74,7 +74,7 @@ Pass exactly one of `folderId` and `driveId`.
 
 On success, the caller receives the created files' metadata through the normal `done` result, in the order of `files`.
 
-If any file fails, the intent ends with `error`. The error is the first failure, plus a `results` list with one entry per file, in the order of `files`:
+If any file fails, the intent ends with `error`. The error has the `message` and the numeric `status` (when there is one) of the first failure, plus a `results` list with one entry per file, in the order of `files`:
 
 ```ts
 { document: IOCozyFile }                   // stored
@@ -82,6 +82,42 @@ If any file fails, the intent ends with `error`. The error is the first failure,
 ```
 
 Retry only the files whose entry has an `error`.
+
+### Public link
+
+Add `sharingLink: true` (or an object, as in the File Picker) to get a public link for each stored file, as the `sharingLink` action of the [File Picker](file-picker-intent.md) gives:
+
+```ts
+{ folderId: string, files: File[], sharingLink: true }
+```
+
+Each `document` is then the File Picker link entry instead of the `io.cozy.files` document, in the result and in `results`:
+
+```ts
+{
+  id: string
+  name: string // the stored name
+  size: number
+  mimeType: string | null
+  sharingLink: string
+  thumbnail?: { link: string }
+}
+```
+
+- Drive creates the link with its own token: one `io.cozy.permissions` share by link per file, with the `GET` verb on that file only, no expiry and no password. The calling app needs no permission on `io.cozy.files`.
+- It needs `folderId`: shared drives are not supported.
+- A file whose link fails is a failed file in `results`, but it stays stored: retrying it stores a second copy. Drive then tries to revoke any share by link of that file, in case the Stack saved one before the call failed. This is best effort: if the revocation fails too, it is only logged, and the share may stay active.
+- A file cancelled once stored, before its link is made, gets no link. A cancel that comes while the link is being made may leave a link that the caller never receives.
+
+### Progress
+
+Add `progress: true` to follow the upload. While a file uploads, Drive sends results through `sendResult`, which the caller gets with the `onResult` option of `start()` (cozy-interapp 0.20.0 or later):
+
+```ts
+{ index: number, loaded: number, total: number } // index in files, bytes
+```
+
+The final result still comes through `done` or `error`.
 
 ### Behavior
 

@@ -8,6 +8,7 @@ import { SidebarPage } from '../pages/SidebarPage'
 
 // Guards linagora/twake-drive#4264: after removing a shared folder's last recipient, the owner must still be able to share and open it.
 const FOLDER_NAME = `Unshared Folder ${stamp()}`
+const RESHARED_FOLDER_NAME = `Reshared Folder ${stamp()}`
 
 test.describe.serial('Unsharing a folder', () => {
   test('owner can still share and open it after the last recipient is removed', async ({
@@ -49,5 +50,35 @@ test.describe.serial('Unsharing a folder', () => {
       aliceDrive.openFolderError,
       'folder must open without error'
     ).toBeHidden()
+  })
+
+  // Guards linagora/twake-drive#4629: the stack deletes the drive left without recipients, so sharing again must create a new one instead of reusing it. Re-add in the same modal, a reload would forget the deleted drive and mask the bug.
+  test('owner can add a member again after removing the last one', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await createAndShareFolderWithBob(
+      alicePage,
+      aliceDrive,
+      RESHARED_FOLDER_NAME
+    )
+
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      RESHARED_FOLDER_NAME,
+      'by-me'
+    )
+    const modal = await aliceDrive.row(RESHARED_FOLDER_NAME).share()
+    await modal.removeMember('bob')
+
+    await modal.addMember(USERS.bob.email)
+    await modal.shareButton.click()
+    await expect(
+      modal.memberItem('bob'),
+      'Bob must be invited again'
+    ).toBeVisible({ timeout: 15_000 })
+    await modal.close()
   })
 })

@@ -1,0 +1,13 @@
+# From ldap-rest, test/fixtures/mail-schema.ldif
+
+# Additional mail attributes schema
+# Defines mail-related attributes needed by Twake
+# Note: mailForwardingAddress is already defined in inetmaildomain schema
+
+dn: cn=mail,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: mail
+olcAttributeTypes: {0}( 1.3.6.1.4.1.99999.2.1.1 NAME 'mailAlternateAddress' DESC 'Alternate email address' EQUALITY caseIgnoreIA5Match SUBSTR caseIgnoreIA5SubstringsMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.26{256} )
+olcAttributeTypes: {1}( 1.3.6.1.4.1.99999.2.1.2 NAME 'mailHost' DESC 'Mail server host' EQUALITY caseIgnoreIA5Match SYNTAX 1.3.6.1.4.1.1466.115.121.1.26 SINGLE-VALUE )
+olcAttributeTypes: {2}( 1.3.6.1.4.1.99999.2.1.3 NAME 'mailQuotaSize' DESC 'Mail quota size in bytes' EQUALITY integerMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.27 SINGLE-VALUE )
+olcAttributeTypes: {3}( 1.3.6.1.4.1.99999.2.1.5 NAME 'mailReplyText' DESC 'Mail auto-reply text' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )

@@ -1,0 +1,54 @@
+# What Twake Drive claims when one of the services it relies on fails. twake-chaos checks each claim on the chaos stack
+# (compose.yaml) and records what does not hold.
+#
+#   faultTolerance     nodes of the component that can be lost with no impact at all (absent: a single node, none)
+#   downImpact         what stops working while the whole component is down; every other feature keeps working
+#   accidentRecovery   live: once the component is back, everything works again without restarting cozy-stack
+#   requiredOnStartup  true: cozy-stack may refuse to start without it; false: it starts, degraded as downImpact says
+#   failFast           true: while it is down, what downImpact names fails fast with a clear error (no request hanging)
+#
+# No resilience claim is documented by the maintainers yet: these are written from cozy-stack's code and documentation
+# (the source of each is given), to be confirmed or corrected by them.
+components:
+  # CouchDB holds every document: the instances (global database), files metadata, sharings, OAuth clients, jobs.
+  # faultTolerance: a cluster of 3 with n=3 and quorum reads/writes (r=w=2, CouchDB's defaults) loses no data and keeps
+  # answering with one node down; cozy-stack takes one URL (cozy.example.yaml, couchdb.url) so a load balancer is in front.
+  # requiredOnStartup: model/stack/main.go, couchdb.InitGlobalDB is fatal; the image's entrypoint waits 60s for CouchDB.
+  couchdb:
+    faultTolerance: 1
+    downImpact: "No service"
+    accidentRecovery: live
+    requiredOnStartup: true
+  # cozy.example.yaml: "redis is not mandatory" without addrs, but once set it holds the jobs, the locks, the sessions,
+  # the download links, the realtime, the rate limiting (pkg/config/config/config.go, GetRedis per database).
+  # faultTolerance: a Sentinel set of 3 (quorum 2), cozy-stack's redis.master (failover client).
+  # requiredOnStartup: model/job/redis_broker.go and redis_scheduler.go start without reaching Redis.
+  redis:
+    faultTolerance: 1
+    downImpact: "No upload / modification of files (VFS locks), no background jobs (thumbnails, sharing replication, mails, trash), no realtime, no download links / archives"
+    failFast: true
+    accidentRecovery: live
+    requiredOnStartup: false
+  # docs/s3.md: files, versions, thumbnails, the installed apps (apps-web) and the dynamic assets live in S3.
+  # requiredOnStartup: model/stack/main.go, InitDefaultS3Connection (bucket creation or HeadBucket, 30s) is fatal.
+  s3:
+    downImpact: "Cannot upload / download / preview files, the Drive web app does not load (its assets are in S3); browsing the metadata of the files still works"
+    failFast: true
+    accidentRecovery: live
+    requiredOnStartup: true
+  # docs/office.md: the Document Server opens, edits and saves the office documents; cozy-stack only points to it.
+  onlyoffice:
+    downImpact: "Cannot open / edit office documents"
+    accidentRecovery: live
+    requiredOnStartup: false
+  # LemonLDAP authenticates against it (docs/delegated-auth.md: OIDC sign-in, POST /oidc/access_token checks the token
+  # at the SSO's userinfo); cozy-stack does not use LDAP itself.
+  ldap:
+    downImpact: "No new sign-in through the SSO; open sessions and tokens keep working"
+    accidentRecovery: live
+    requiredOnStartup: false
+  # cozy.example.yaml, mail: the sendmail job (sharing invitations by mail, notifications).
+  smtp:
+    downImpact: "No mail sent (sharing invitations by mail, notifications)"
+    accidentRecovery: live
+    requiredOnStartup: false
