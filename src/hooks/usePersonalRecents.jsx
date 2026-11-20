@@ -27,6 +27,15 @@ export const usePersonalRecents = ({ enabled = true } = {}) => {
     if (hasOnlyEmptyPages && fetchStatus === 'loaded') fetchMore()
   }, [hasOnlyEmptyPages, fetchStatus, fetchMore])
 
+  // An empty page adds no row, so the end of the list stays in view and the
+  // scroll does not ask for more again: follow the cursor until a page has some.
+  const fetchMoreRecents = useCallback(async () => {
+    let page
+    do {
+      page = await fetchMore()
+    } while (page?.next && page.data.length === 0)
+  }, [fetchMore])
+
   const rows = useMemo(
     () => recents.map(recent => recent.file?.data ?? recent),
     [recents]
@@ -48,7 +57,7 @@ export const usePersonalRecents = ({ enabled = true } = {}) => {
     error: lastError ?? null,
     lastUpdate: isWaitingForNextPage ? null : lastUpdate,
     hasMore,
-    fetchMore,
+    fetchMore: fetchMoreRecents,
     getLastActivityAt
   }
 }
