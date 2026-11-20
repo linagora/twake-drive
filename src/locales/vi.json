@@ -453,7 +453,15 @@
     "item": {
       "pending": "Đang chờ",
       "preparing": "Đang chuẩn bị",
-      "conflict": "Đang chờ lựa chọn"
+      "conflict": "Đang chờ lựa chọn",
+      "paused": "Đã tạm dừng",
+      "offline": "Đang chờ mạng",
+      "retrying": "Lỗi máy chủ, đang thử lại",
+      "gone": "Tải lên đã hết hạn",
+      "pause": "Tạm dừng",
+      "resume": "Tiếp tục",
+      "send_again": "Gửi lại",
+      "cancel": "Hủy tải lên"
     }
   },
   "Viewer": {

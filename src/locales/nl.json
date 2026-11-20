@@ -265,5 +265,17 @@
       "DOCUMENTS_FAILED": "De geselecteerde documenten en hun paden konden niet worden opgehaald.",
       "DESTINATION_UNAVAILABLE": "De bestemmingsmap kon niet worden geladen."
     }
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "Gepauzeerd",
+      "offline": "Wachten op netwerk",
+      "retrying": "Serverfout, opnieuw proberen",
+      "gone": "Upload verlopen",
+      "pause": "Pauzeren",
+      "resume": "Hervatten",
+      "send_again": "Opnieuw verzenden",
+      "cancel": "Upload annuleren"
+    }
   }
 }

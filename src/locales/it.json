@@ -453,7 +453,15 @@
     "item": {
       "pending": "In attesa",
       "preparing": "In preparazione",
-      "conflict": "In attesa di una scelta"
+      "conflict": "In attesa di una scelta",
+      "paused": "In pausa",
+      "offline": "In attesa della rete",
+      "retrying": "Errore del server, nuovo tentativo",
+      "gone": "Caricamento scaduto",
+      "pause": "Pausa",
+      "resume": "Riprendi",
+      "send_again": "Invia di nuovo",
+      "cancel": "Annulla il caricamento"
     }
   },
   "Viewer": {

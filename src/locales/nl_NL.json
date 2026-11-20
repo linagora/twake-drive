@@ -342,7 +342,15 @@
     "header_done": "%{done} van de %{total} geüpload",
     "close": "sluiten",
     "item": {
-      "pending": "In wachtrij"
+      "pending": "In wachtrij",
+      "paused": "Gepauzeerd",
+      "offline": "Wachten op netwerk",
+      "retrying": "Serverfout, opnieuw proberen",
+      "gone": "Upload verlopen",
+      "pause": "Pauzeren",
+      "resume": "Hervatten",
+      "send_again": "Opnieuw verzenden",
+      "cancel": "Upload annuleren"
     }
   },
   "Viewer": {

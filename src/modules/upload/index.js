@@ -8,6 +8,13 @@ import {
   resolveFileConflict
 } from '@/modules/upload/conflictResolution'
 import { uploadConflictStrategies } from '@/modules/upload/constants'
+import {
+  UPLOAD_CANCELLED,
+  createFile,
+  findResumableUpload,
+  resumableStatus as resumable,
+  updateFile
+} from '@/modules/upload/resumable'
 
 export { uploadConflictStrategies }
 
@@ -16,6 +23,9 @@ const SLUG = 'upload'
 export const ADD_TO_UPLOAD_QUEUE = 'ADD_TO_UPLOAD_QUEUE'
 const UPLOAD_FILE = 'UPLOAD_FILE'
 const UPLOAD_PROGRESS = 'UPLOAD_PROGRESS'
+const UPLOAD_RESUMABLE_STATUS = 'UPLOAD_RESUMABLE_STATUS'
+const UPLOAD_PARKED = 'UPLOAD_PARKED'
+const RESUME_UPLOAD = 'RESUME_UPLOAD'
 export const RECEIVE_UPLOAD_SUCCESS = 'RECEIVE_UPLOAD_SUCCESS'
 export const RECEIVE_UPLOAD_ERROR = 'RECEIVE_UPLOAD_ERROR'
 export const RECEIVE_UPLOAD_CONFLICT = 'RECEIVE_UPLOAD_CONFLICT'
@@ -30,6 +40,8 @@ const CANCEL_UPLOAD_CONFLICTS = 'CANCEL_UPLOAD_CONFLICTS'
 const CANCEL = 'cancel'
 const PENDING = 'pending'
 const LOADING = 'loading'
+// A resumable upload paused or expired, out of the turn of the queue
+const PAUSED = 'paused'
 const CREATED = 'created'
 const UPDATED = 'updated'
 const FAILED = 'failed'
@@ -49,12 +61,13 @@ const ERR_MAX_FILE_SIZE =
 
 const DONE_STATUSES = [CREATED, UPDATED]
 const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, FAILED, UNREADABLE]
-const IN_PROGRESS_STATUSES = [PENDING, RESOLVING, CONFLICT]
+const IN_PROGRESS_STATUSES = [PENDING, RESOLVING, CONFLICT, PAUSED]
 
 export const status = {
   CANCEL,
   PENDING,
   LOADING,
+  PAUSED,
   CREATED,
   UPDATED,
   FAILED,
@@ -88,6 +101,10 @@ const getStatus = (state, action) => {
   switch (action.type) {
     case UPLOAD_FILE:
       return LOADING
+    case UPLOAD_PARKED:
+      return PAUSED
+    case RESUME_UPLOAD:
+      return PENDING
     case RECEIVE_UPLOAD_SUCCESS:
       return action.isUpdate ? UPDATED : CREATED
     case RECEIVE_UPLOAD_CONFLICT:
@@ -172,6 +189,18 @@ const getProgress = (state, action) => {
   }
 }
 
+const getResumableStatus = (state, action) => {
+  switch (action.type) {
+    case UPLOAD_RESUMABLE_STATUS:
+    case UPLOAD_PARKED:
+      return action.resumableStatus
+    case UPLOAD_PROGRESS:
+      return state
+    default:
+      return null
+  }
+}
+
 const item = (state, action = { isUpdate: false }) => {
   const resolvedUploadedItem =
     action.uploadedItem !== undefined
@@ -188,6 +217,7 @@ const item = (state, action = { isUpdate: false }) => {
     ...state,
     status: getStatus(state.status, action),
     progress: getProgress(state.progress, action),
+    resumableStatus: getResumableStatus(state.resumableStatus, action),
     ...(resolvedUploadedItem !== undefined
       ? { uploadedItem: resolvedUploadedItem }
       : {}),
@@ -234,6 +264,9 @@ export const queue = (state = [], action) => {
     case RECEIVE_UPLOAD_ERROR:
     case RECEIVE_UPLOAD_CONFLICT:
     case RECEIVE_UPLOAD_RENAMED:
+    case UPLOAD_RESUMABLE_STATUS:
+    case UPLOAD_PARKED:
+    case RESUME_UPLOAD:
     case UPLOAD_PROGRESS: {
       // No matching row (e.g. the queue was purged before a stale
       // dispatch landed): return the same reference so connected
@@ -349,6 +382,13 @@ const receiveUploadRenamed = (fileId, name, relativePath) => ({
     : { finalName: name })
 })
 
+// A resumable upload paused or expired leaves its turn: the next files go on,
+// and it waits for its turn again once resumed.
+const PARKED_STATUSES = [resumable.PAUSED, resumable.GONE]
+const uploadTurns = new Map()
+let isPassRunning = false
+let kickQueueIfIdle = noop
+
 /**
  * Upload a single pending queue item: resolve its target directory
  * (server-side folder id if the item came from a flattened folder drop,
@@ -365,19 +405,57 @@ const receiveUploadRenamed = (fileId, name, relativePath) => ({
  * @param {{dispatch: Function, safeCallback: Function, getConflictStrategy: Function,
  *   onUploadConflict: Function}} io
  */
-const uploadPendingItem = async (
+const uploadPendingItem = async (pendingItem, client, dirID, driveId, io) => {
+  const { file, fileId } = pendingItem
+  io.dispatch({ type: UPLOAD_FILE, fileId, file })
+  const parked = uploadTurns.get(fileId)
+  const turn = parked ?? {}
+  const turnEnd = new Promise(resolve => {
+    turn.end = resolve
+  })
+  turn.holding = true
+  if (parked) {
+    findResumableUpload(fileId)?.resume()
+  } else {
+    uploadTurns.set(fileId, turn)
+    const onParked = () => {
+      turn.holding = false
+      turn.end()
+    }
+    turn.done = (async () => {
+      await sendPendingItem(pendingItem, client, dirID, driveId, io, onParked)
+      uploadTurns.delete(fileId)
+      // A parked upload ends out of any pass: the queue may need one to end
+      if (!turn.holding) io.kickQueueIfIdle()
+    })()
+  }
+  await Promise.race([turn.done, turnEnd])
+}
+
+const sendPendingItem = async (
   pendingItem,
   client,
   dirID,
   driveId,
-  { dispatch, safeCallback, getConflictStrategy, onUploadConflict }
+  { dispatch, safeCallback, getConflictStrategy, onUploadConflict },
+  onParked
 ) => {
   const { file, fileId, folderId, uploadBatchId } = pendingItem
   const { relativePath } = pendingItem
   const targetDirId = folderId ?? dirID
   try {
-    dispatch({ type: UPLOAD_FILE, fileId, file })
-    const onUploadProgress = event => dispatch(uploadProgress(fileId, event))
+    const uploadOptions = {
+      onUploadProgress: event => dispatch(uploadProgress(fileId, event)),
+      resumableKey: fileId,
+      onResumableStatus: resumableStatus => {
+        if (!PARKED_STATUSES.includes(resumableStatus)) {
+          dispatch({ type: UPLOAD_RESUMABLE_STATUS, fileId, resumableStatus })
+          return
+        }
+        dispatch({ type: UPLOAD_PARKED, fileId, resumableStatus })
+        onParked()
+      }
+    }
     const onNameResolved = name =>
       dispatch(receiveUploadRenamed(fileId, name, relativePath))
     const result = await uploadOrResolveFileConflict(
@@ -385,7 +463,7 @@ const uploadPendingItem = async (
       file,
       targetDirId,
       {
-        onUploadProgress,
+        uploadOptions,
         driveId,
         getConflictStrategy,
         onNameResolved
@@ -446,9 +524,26 @@ export const processNextFile =
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'
       )
     }
+    const nextPass = () =>
+      dispatch(
+        processNextFile(
+          fileUploadedCallback,
+          queueCompletedCallback,
+          dirID,
+          sharingState,
+          { client },
+          driveId,
+          addItems,
+          onUploadConflict
+        )
+      )
+    kickQueueIfIdle = () => {
+      if (!isPassRunning) nextPass()
+    }
     const pendingItem = getUploadQueue(getState()).find(
       i => i.status === PENDING
     )
+    isPassRunning = Boolean(pendingItem)
     if (!pendingItem) {
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
@@ -459,21 +554,21 @@ export const processNextFile =
       dispatch,
       safeCallback,
       getConflictStrategy,
-      onUploadConflict
+      onUploadConflict,
+      kickQueueIfIdle: () => kickQueueIfIdle()
     })
-    dispatch(
-      processNextFile(
-        fileUploadedCallback,
-        queueCompletedCallback,
-        dirID,
-        sharingState,
-        { client },
-        driveId,
-        addItems,
-        onUploadConflict
-      )
-    )
+    nextPass()
   }
+
+/**
+ * Put a paused or expired resumable upload back in the queue, at its place.
+ *
+ * @param {string} fileId - Queue id of the file
+ */
+export const resumeUpload = fileId => dispatch => {
+  dispatch({ type: RESUME_UPLOAD, fileId })
+  kickQueueIfIdle()
+}
 
 const getFileFromEntry = entry =>
   new Promise((resolve, reject) => entry.file(resolve, reject))
@@ -510,6 +605,7 @@ const readAllEntries = async dirReader => {
  * @returns {string} One of the values exported in `status`.
  */
 const classifyUploadError = error => {
+  if (error.name === UPLOAD_CANCELLED) return CANCEL
   if (error.name === 'NotFoundError') return UNREADABLE
   if (error.message?.includes(ERR_MAX_FILE_SIZE)) return ERR_MAX_FILE_SIZE
   // Raw 409 errors are not modal-waiting conflicts.
@@ -525,7 +621,7 @@ const classifyUploadError = error => {
  * @param {object} client - cozy-client instance
  * @param {File} file
  * @param {string} dirID
- * @param {{onUploadProgress?: Function, driveId?: string, getConflictStrategy?: Function,
+ * @param {{uploadOptions?: object, driveId?: string, getConflictStrategy?: Function,
  *   onNameResolved?: Function}} options
  * @returns {Promise<{data?: object, isUpdate?: boolean, isConflict?: boolean, isCancel?: boolean}>}
  */
@@ -533,16 +629,10 @@ const uploadOrResolveFileConflict = async (
   client,
   file,
   dirID,
-  { onUploadProgress, driveId, getConflictStrategy, onNameResolved } = {}
+  { uploadOptions, driveId, getConflictStrategy, onNameResolved } = {}
 ) => {
   try {
-    const data = await uploadFile(
-      client,
-      file,
-      dirID,
-      { onUploadProgress },
-      driveId
-    )
+    const data = await uploadFile(client, file, dirID, uploadOptions, driveId)
     return { data, isUpdate: false }
   } catch (err) {
     if (err.status !== CONFLICT_ERROR) throw err
@@ -551,7 +641,7 @@ const uploadOrResolveFileConflict = async (
       client,
       file,
       dirID,
-      uploadOptions: { onUploadProgress },
+      uploadOptions,
       driveId,
       getConflictStrategy,
       onNameResolved
@@ -626,11 +716,11 @@ const uploadFile = async (client, file, dirID, options = {}, driveId) => {
     }
   }
 
-  const { onUploadProgress } = options
-
-  const resp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .createFile(file, { dirId: dirID, onUploadProgress })
+  const resp = await createFile(client, file, {
+    ...options,
+    dirId: dirID,
+    driveId
+  })
 
   return resp.data
 }
@@ -658,9 +748,7 @@ export const overwriteFile = async (
   // treats the rest as upload options (onUploadProgress, etc.) — so
   // they must sit at the top level of the second argument, not nested
   // under an `options` key.
-  const resp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .updateFile(file, { fileId, ...options })
+  const resp = await updateFile(client, file, { ...options, fileId, driveId })
 
   return resp.data
 }
@@ -1123,7 +1211,8 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   // addToUploadQueue thunk re-kicks processNextFile after the matching
   // RESOLVE_FOLDER_ITEMS dispatch.
   // Conflict rows also wait for the modal choice.
-  if (queue.some(i => [RESOLVING, CONFLICT].includes(i.status))) return
+  // Paused uploads wait for the user too.
+  if (queue.some(i => [RESOLVING, CONFLICT, PAUSED].includes(i.status))) return
   // Once the queue is done, saved modal choices for these batches are stale.
   const uploadBatchIds = [
     ...new Set(queue.map(i => i.uploadBatchId).filter(Boolean))
