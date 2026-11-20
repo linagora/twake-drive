@@ -8,6 +8,7 @@ import { TRASH_DIR_ID } from '@/constants/config'
 import {
   DOCTYPE_AI_CHAT_ASSISTANTS,
   DOCTYPE_ALBUMS,
+  DOCTYPE_FILES_RECENTS,
   DOCTYPE_FILES_SETTINGS,
   DOCTYPE_FILES_VERSIONS,
   NEXTCLOUD_MIGRATIONS_DOCTYPE
@@ -82,6 +83,20 @@ export const buildRecentQuery: QueryBuilder = () => ({
   options: {
     as: 'recent-view-query',
     fetchPolicy: defaultFetchPolicy
+  }
+})
+
+// Nothing updates the recents in the store yet: coming back to the view
+// refetches them.
+const RECENTS_CACHE_TIMEOUT = 10 * 1000
+
+// The stack sorts by last activity and puts the file of each recent in
+// `included`: an `include()` would fetch each file again.
+export const buildPersonalRecentsQuery: QueryBuilder = () => ({
+  definition: () => Q(DOCTYPE_FILES_RECENTS),
+  options: {
+    as: DOCTYPE_FILES_RECENTS,
+    fetchPolicy: CozyClient.fetchPolicies.olderThan(RECENTS_CACHE_TIMEOUT)
   }
 })
 

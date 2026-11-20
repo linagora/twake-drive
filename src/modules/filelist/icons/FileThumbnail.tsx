@@ -19,7 +19,11 @@ import styles from '@/styles/filelist.styl'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { DOCTYPE_KONNECTORS } from '@/lib/doctypes'
-import { isInfected, isDriveBackedFile } from '@/modules/filelist/helpers'
+import {
+  isInfected,
+  isDriveBackedFile,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 import { BadgeKonnector } from '@/modules/filelist/icons/BadgeKonnector'
 import FileIcon from '@/modules/filelist/icons/FileIcon'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
@@ -52,7 +56,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
 
   const fileIcon = <FileIcon file={file} size={size} viewType={viewType} />
 
-  if (isNextcloudFile(file)) {
+  if (isNextcloudFile(file) || isUnreadableRecent(file)) {
     return <FileIconMime file={file} size={size} />
   }
 

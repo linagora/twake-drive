@@ -1,6 +1,7 @@
 import extraDoctypes from '@/lib/extraDoctypes'
 
 export const DOCTYPE_FILES = 'io.cozy.files'
+export const DOCTYPE_FILES_RECENTS = 'io.cozy.files.recents'
 export const DOCTYPE_FILES_SETTINGS = 'io.cozy.files.settings'
 export const DOCTYPE_FILES_VERSIONS = 'io.cozy.files.versions'
 export const DOCTYPE_DRIVE_SETTINGS = 'io.cozy.drive.settings'
@@ -22,6 +23,15 @@ export const schema = {
       old_versions: {
         type: 'has-many',
         doctype: 'io.cozy.files.versions'
+      }
+    }
+  },
+  recents: {
+    doctype: DOCTYPE_FILES_RECENTS,
+    relationships: {
+      file: {
+        type: 'has-one',
+        doctype: DOCTYPE_FILES
       }
     }
   },
