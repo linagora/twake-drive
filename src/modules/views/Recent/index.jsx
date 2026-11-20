@@ -21,6 +21,7 @@ import { RECENT_FOLDER_ID } from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import useRecentFiles from '@/hooks/useRecentFiles'
+import useVisibleRecentFiles from '@/hooks/useVisibleRecentFiles'
 import {
   download,
   trash,
@@ -50,7 +51,7 @@ export const RecentView = () => {
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(RECENT_FOLDER_ID)
 
-  const recentsResult = useRecentFiles()
+  const recentsResult = useVisibleRecentFiles(useRecentFiles())
 
   // Shared-drive and federated files arrive from the dataproxy seconds after
   // the local files; surface that background fetch once a list is on screen.
