@@ -1,4 +1,10 @@
-import { configure, render, screen, waitFor } from '@testing-library/react'
+import {
+  configure,
+  fireEvent,
+  render,
+  screen,
+  waitFor
+} from '@testing-library/react'
 import React from 'react'
 
 import CozyClient from 'cozy-client'
@@ -37,7 +43,11 @@ jest.mock('@/modules/views/Folder/CustomizedIcon', () => ({
   )
 }))
 
-useSharingContext.mockReturnValue({ byDocId: {}, allLoaded: true })
+useSharingContext.mockReturnValue({
+  byDocId: {},
+  allLoaded: true,
+  refresh: jest.fn()
+})
 
 // The whole view renders: give it time when the full suite loads the machine.
 configure({ asyncUtilTimeout: 4000 })
@@ -161,13 +171,23 @@ const setup = ({ pages = [firstPage] } = {}) => {
     return { data: [], rows: [] }
   })
 
+  const modalContextValue = {
+    pushModal: jest.fn(),
+    popModal: jest.fn(),
+    modalStack: []
+  }
+
   window.history.pushState({}, '', '/#/recent')
   render(
-    <AppLike client={client} store={store}>
+    <AppLike
+      client={client}
+      store={store}
+      modalContextValue={modalContextValue}
+    >
       <RecentView />
     </AppLike>
   )
-  return { client }
+  return { client, pushModal: modalContextValue.pushModal }
 }
 
 const linkOf = name => screen.getByText(name).closest('a')
@@ -266,6 +286,33 @@ describe('Recent view with the personal recents of the stack', () => {
       .queryAllByLabelText('More')
       .filter(node => node.closest('.fil-content-row'))
     expect(rowActions).toEqual([])
+  })
+
+  describe('ignores the keyboard shortcuts on a selected item', () => {
+    const selectPhoto = async () => {
+      const result = setup()
+      fireEvent.click(await screen.findByText('photo'))
+      await waitFor(() =>
+        expect(
+          screen.getByText('photo').closest('.fil-content-row-selected')
+        ).toBeInTheDocument()
+      )
+      return result
+    }
+
+    it('does not ask to trash it on Delete', async () => {
+      const { pushModal } = await selectPhoto()
+      fireEvent.keyDown(document.body, { key: 'Delete' })
+
+      expect(pushModal).not.toHaveBeenCalled()
+    })
+
+    it('does not rename it on F2', async () => {
+      await selectPhoto()
+      fireEvent.keyDown(document.body, { key: 'F2' })
+
+      expect(screen.queryByDisplayValue('photo.jpg')).toBe(null)
+    })
   })
 
   it('loads the next page instead of showing an empty first page', async () => {

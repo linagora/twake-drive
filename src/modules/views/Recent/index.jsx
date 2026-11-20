@@ -46,6 +46,13 @@ import { makeParentFolderName } from '@/modules/filelist/helpers'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
 
+// The shortcuts act on the selection, so they stay unmounted while the view
+// offers no item action.
+const KeyboardShortcuts = props => {
+  useKeyboardShortcuts(props)
+  return null
+}
+
 const RecentViewContent = ({
   recentsResult,
   orderProps,
@@ -62,16 +69,6 @@ const RecentViewContent = ({
   // the local files; surface that background fetch once a list is on screen.
   const isFetchingMore =
     recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
-
-  useKeyboardShortcuts({
-    client: base.client,
-    items: withActions ? recentsResult?.data || [] : [],
-    sharingContext,
-    allowCopy: false,
-    pushModal: base.pushModal,
-    popModal: base.popModal,
-    refresh
-  })
 
   const actionsOptions = {
     ...base,
@@ -111,6 +108,17 @@ const RecentViewContent = ({
 
   return (
     <FolderView>
+      {withActions && (
+        <KeyboardShortcuts
+          client={base.client}
+          items={recentsResult?.data || []}
+          sharingContext={sharingContext}
+          allowCopy={false}
+          pushModal={base.pushModal}
+          popModal={base.popModal}
+          refresh={refresh}
+        />
+      )}
       <Content className={base.isMobile ? '' : 'u-pt-1'}>
         <FolderViewHeader>
           <Breadcrumb path={[{ name: base.t('breadcrumb.title_recent') }]} />
