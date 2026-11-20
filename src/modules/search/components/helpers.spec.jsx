@@ -5,7 +5,7 @@ import flag from 'cozy-flags'
 
 import { indexFiles, makeNormalizedFile, TYPE_DIRECTORY } from './helpers'
 
-import { ROOT_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 
 models.note.fetchURL = jest.fn(() => 'noteUrl')
 models.file.shouldBeOpenedByOnlyOffice = jest.fn(() => false)
@@ -25,6 +25,51 @@ const noteFileProps = {
 describe('indexFiles', () => {
   afterEach(() => {
     flag.mockReturnValue(false)
+  })
+
+  it('indexes live trash-like names but excludes Bin files and folders', async () => {
+    const files = [
+      { _id: ROOT_DIR_ID, type: TYPE_DIRECTORY, path: '/' },
+      {
+        _id: TRASH_DIR_ID,
+        dir_id: ROOT_DIR_ID,
+        type: TYPE_DIRECTORY,
+        name: '.cozy_trash',
+        path: '/.cozy_trash'
+      },
+      {
+        _id: 'live',
+        dir_id: ROOT_DIR_ID,
+        type: TYPE_DIRECTORY,
+        name: '.cozy_trash_backup',
+        path: '/.cozy_trash_backup'
+      },
+      {
+        _id: 'trashed-folder',
+        dir_id: TRASH_DIR_ID,
+        type: TYPE_DIRECTORY,
+        name: 'Projects',
+        path: '/.cozy_trash/Projects'
+      },
+      {
+        _id: 'trashed-file',
+        dir_id: TRASH_DIR_ID,
+        type: 'file',
+        name: 'report.txt',
+        trashed: true
+      }
+    ]
+    const fetchJSON = jest.fn().mockResolvedValue({
+      rows: files.map(file => ({ id: file._id, doc: file }))
+    })
+
+    const search = await indexFiles({ getStackClient: () => ({ fetchJSON }) })
+
+    expect(search.search('cozy_trash')).toEqual([
+      expect.objectContaining({ id: 'live' })
+    ])
+    expect(search.search('Projects')).toEqual([])
+    expect(search.search('report')).toEqual([])
   })
 
   it.each([
