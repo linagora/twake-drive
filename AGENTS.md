@@ -10,6 +10,8 @@ Generic Twake/Cozy conventions live in
 The repo-specific decisions documented here take precedence when they
 conflict. E2E rules live in `e2e/AGENTS.md`.
 
+- Decisions: `docs/decisions.md`, mandatory. Search it before asking a question or proposing a change; record every decision there, in the commit that applies it (skill `twake-decisions`).
+
 ## Core architecture principles
 
 **All data flows through `cozy-client`.** Queries are defined in
