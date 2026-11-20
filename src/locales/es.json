@@ -74,6 +74,7 @@
     "menu_manage_access": "Gestionar el acceso",
     "menu_leave_shared_drive": "Abandonar el uso compartido",
     "menu_upload": "Cargar archivos",
+    "menu_upload_folder": "Cargar carpeta",
     "item_more": "Más",
     "menu_new_folder": "Carpeta",
     "menu_select": "Seleccionar los items",
@@ -403,6 +404,7 @@
       "element": "elemento"
     },
     "alert": {
+      "no_files": "Esta carpeta no contiene archivos, así que no se ha cargado nada.",
       "success": "%{smart_count} %{type} cargado correctamente. |||| %{smart_count} %{type} cargados correctamente.",
       "success_conflicts": "%{smart_count} %{type} cargado con %{conflictNumber} conflicto(s). |||| %{smart_count} %{type} cargados con %{conflictNumber} conflicto(s).",
       "success_updated": "%{smart_count} %{type} cargado y %{updatedCount} actualizado(s). |||| %{smart_count} %{type} cargados y %{updatedCount} actualizado(s).",

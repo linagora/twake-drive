@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
-import { Icon, Upload } from '@linagora/twake-icons'
+import { Folder, Icon, Upload } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import Button from 'cozy-ui/transpiled/react/Buttons'
@@ -12,6 +12,7 @@ import { useI18n } from 'twake-i18n'
 
 import { uploadFiles } from '@/modules/navigation/duck'
 import { usePublicContext } from '@/modules/public/PublicProvider'
+import { isDirectoryPickerAvailable } from '@/modules/upload'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const UploadButtonBase = ({
@@ -25,7 +26,8 @@ const UploadButtonBase = ({
   componentsProps,
   variant,
   onUploaded,
-  onUploadStart
+  onUploadStart,
+  isDirectory
 }) => {
   const { showAlert } = useAlert()
   const { addItems } = useNewItemHighlightContext()
@@ -39,7 +41,8 @@ const UploadButtonBase = ({
     driveId !== undefined ? driveId : displayedFolder?.driveId
 
   const onUpload = files => {
-    onUploadStart?.()
+    // Staying on the current view: uploadFiles only reports the empty folder.
+    if (files.length > 0) onUploadStart?.()
     dispatch(
       uploadFiles(
         files,
@@ -56,6 +59,8 @@ const UploadButtonBase = ({
   const { isPublic } = usePublicContext()
   const buttonVariant = variant ?? (isPublic ? 'secondary' : 'primary')
 
+  if (isDirectory && (disabled || !isDirectoryPickerAvailable())) return null
+
   const button = (
     <Button
       {...componentsProps?.button}
@@ -70,7 +75,7 @@ const UploadButtonBase = ({
           : undefined
       }
       component="span"
-      startIcon={<Icon icon={Upload} size={12} />}
+      startIcon={<Icon icon={isDirectory ? Folder : Upload} size={12} />}
       label={label}
     />
   )
@@ -86,8 +91,9 @@ const UploadButtonBase = ({
       disabled={disabled}
       multiple
       onChange={files => onUpload(files)}
-      data-testid="upload-btn"
+      data-testid={isDirectory ? 'upload-folder-btn' : 'upload-btn'}
       value={[]} // always erase the value to be able to re-upload the same file
+      {...(isDirectory && { webkitdirectory: '' })}
     >
       {button}
     </FileInput>
@@ -105,6 +111,7 @@ UploadButtonBase.propTypes = {
   folderId: PropTypes.string,
   driveId: PropTypes.string,
   onUploadStart: PropTypes.func,
+  isDirectory: PropTypes.bool,
   // in case of upload conflicts, shared files are not overridden
   sharingState: PropTypes.object.isRequired
 }

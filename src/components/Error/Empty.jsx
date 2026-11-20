@@ -14,6 +14,7 @@ import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { isSpacePath } from '@/modules/routeUtils'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import { UploadButton } from '@/modules/upload/UploadButton'
@@ -30,6 +31,7 @@ const EmptyCanvas = ({
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
   const folderId = useCurrentFolderId()
+  const canWriteToCurrentFolder = useCurrentFolderWriteAccess()
   const { displayedFolder } = useDisplayedFolder()
   const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
   const displayedSharedFolder = sharedDriveResult?.data
@@ -73,13 +75,25 @@ const EmptyCanvas = ({
       text={
         <>
           {text}
-          {showUploadLayout && canUpload !== false && (
+          {/* Without the folder document, an upload would fall back to the personal Drive root. */}
+          {showUploadLayout && canUpload !== false && displayedFolder && (
             <span className="u-db u-mt-1">
               <UploadButton
                 componentsProps={{
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
+                displayedFolder={displayedSharedFolder || displayedFolder}
+                onUploaded={onUploaded}
+              />
+              <UploadButton
+                isDirectory
+                disabled={!folderId || !canWriteToCurrentFolder}
+                className="u-ml-half"
+                componentsProps={{
+                  button: { variant: 'secondary' }
+                }}
+                label={t('toolbar.menu_upload_folder')}
                 displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
               />

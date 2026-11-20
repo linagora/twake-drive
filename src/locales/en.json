@@ -74,6 +74,7 @@
     "menu_manage_access": "Manage access",
     "menu_leave_shared_drive": "Leave sharing",
     "menu_upload": "Upload files",
+    "menu_upload_folder": "Upload folder",
     "item_more": "More",
     "menu_new_folder": "Folder",
     "menu_select": "Select items",
@@ -403,6 +404,7 @@
       "element": "element"
     },
     "alert": {
+      "no_files": "This folder contains no files, so nothing was uploaded.",
       "success": "%{smart_count} %{type} uploaded with success. |||| %{smart_count} %{type} uploaded with success.",
       "success_conflicts": "%{smart_count} %{type} uploaded with %{conflictNumber} conflict(s). |||| %{smart_count} %{type} uploaded with %{conflictNumber} conflict(s).",
       "success_updated": "%{smart_count} %{type} uploaded and %{updatedCount} updated. |||| %{smart_count} %{type} uploaded and %{updatedCount} updated.",
