@@ -45,59 +45,61 @@ test.describe('MOVE intent execution', () => {
     })
   })
 
-  test('moves a source outside a restricted destination subtree and returns complete mutation data without rereading the file', async ({
-    alicePage,
-    aliceDrive
-  }) => {
-    const childName = `Intent child ${stamp()}`
-    const childId = await createFolder({
-      instance: USERS.alice.instance,
-      name: childName,
-      parentId: destinationId
-    })
-    const nestedName = `Intent nested ${stamp()}`
-    await createFolder({
-      instance: USERS.alice.instance,
-      name: nestedName,
-      parentId: childId
-    })
-    const picker = new MoveIntentPage(alicePage)
-    await picker.open({
-      fileIds: [sourceId],
-      defaultDirId: destinationId,
-      restrictToDefaultDir: true
-    })
-    await picker.waitReady()
-    await picker.doubleClickFolder(childName)
-    await picker.expectBreadcrumb(nestedName, false)
-    expect(picker.moveRequestCount(sourceId)).toBe(0)
-    const initialReads = picker.readRequestCount(sourceId)
-    await picker.confirmMove()
-    const result = await picker.waitResult()
-    expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      _id: sourceId,
-      _type: 'io.cozy.files',
-      name: sourceName,
-      dir_id: childId,
-      path: `/${destinationName}/${childName}/${sourceName}`,
-      mime: 'text/plain'
-    })
-    expect(result[0]._rev).toEqual(expect.any(String))
-    expect(Number(result[0].size)).toBeGreaterThan(0)
-    expect(picker.readRequestCount(sourceId)).toBe(initialReads)
-    expect(picker.moveRequestCount(sourceId)).toBe(1)
-    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${sourceFolderId}`)
-    await aliceDrive.row(sourceName).waitHidden()
-    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${childId}`)
-    await aliceDrive.row(sourceName).waitVisible()
-    expect(
-      await fetchFileContent({
+  for (const target of ['row', 'chevron'] as const) {
+    test(`moves into the restricted destination after a double-click on the ${target}, without rereading the source`, async ({
+      alicePage,
+      aliceDrive
+    }) => {
+      const childName = `Intent child ${stamp()}`
+      const childId = await createFolder({
         instance: USERS.alice.instance,
-        fileId: result[0]._id
+        name: childName,
+        parentId: destinationId
       })
-    ).toBe('Real MOVE content')
-  })
+      const nestedName = `Intent nested ${stamp()}`
+      await createFolder({
+        instance: USERS.alice.instance,
+        name: nestedName,
+        parentId: childId
+      })
+      const picker = new MoveIntentPage(alicePage)
+      await picker.open({
+        fileIds: [sourceId],
+        defaultDirId: destinationId,
+        restrictToDefaultDir: true
+      })
+      await picker.waitReady()
+      await picker.doubleClickFolder(childName, target)
+      await picker.expectBreadcrumb(nestedName, false)
+      expect(picker.moveRequestCount(sourceId)).toBe(0)
+      const initialReads = picker.readRequestCount(sourceId)
+      await picker.confirmMove()
+      const result = await picker.waitResult()
+      expect(result).toHaveLength(1)
+      expect(result[0]).toMatchObject({
+        _id: sourceId,
+        _type: 'io.cozy.files',
+        name: sourceName,
+        dir_id: childId,
+        path: `/${destinationName}/${childName}/${sourceName}`,
+        mime: 'text/plain'
+      })
+      expect(result[0]._rev).toEqual(expect.any(String))
+      expect(Number(result[0].size)).toBeGreaterThan(0)
+      expect(picker.readRequestCount(sourceId)).toBe(initialReads)
+      expect(picker.moveRequestCount(sourceId)).toBe(1)
+      await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${sourceFolderId}`)
+      await aliceDrive.row(sourceName).waitHidden()
+      await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${childId}`)
+      await aliceDrive.row(sourceName).waitVisible()
+      expect(
+        await fetchFileContent({
+          instance: USERS.alice.instance,
+          fileId: result[0]._id
+        })
+      ).toBe('Real MOVE content')
+    })
+  }
 
   test('creates a destination with the existing inline creation flow before moving', async ({
     alicePage,

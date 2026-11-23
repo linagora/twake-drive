@@ -50,7 +50,7 @@ export const PickerViewNameCell = ({
   const disabledReason = getItemDisabledReason?.(row)
   const handleNavigate = event => {
     event.stopPropagation()
-    onItemNavigate(row)
+    onItemNavigate(row, event)
   }
 
   const filenameContent = (
