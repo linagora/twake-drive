@@ -671,6 +671,8 @@
       "skippedCells": "Table: %{smart_count} selected cell was left unchanged |||| Table: %{smart_count} selected cells were left unchanged",
       "closeNotice": "Close",
       "insertChart": "Insert the chart",
+      "chartType": "Type of chart",
+      "chartRange": "Cells",
       "notApplied": "This answer has no cells to write in the sheet",
       "notWritten": "The editor could not apply all of this answer",
       "suggestions": {

@@ -47,6 +47,8 @@
       "skippedCells": "表格：有 %{smart_count} 個選取的儲存格未變更",
       "closeNotice": "關閉",
       "insertChart": "插入圖表",
+      "chartType": "圖表類型",
+      "chartRange": "儲存格",
       "notApplied": "此回答沒有可寫入工作表的儲存格",
       "notWritten": "編輯器無法完整套用此回答",
       "suggestions": {

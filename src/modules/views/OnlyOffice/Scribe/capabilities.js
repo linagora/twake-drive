@@ -1,6 +1,6 @@
 // What the LLM reads (the *_FOR_LLM objects) stays in English whatever the
-// language of the user: only the labels and the messages of the chips are
-// translated.
+// language of the user: only the labels, the messages of the chips and the
+// titles of the params on the card are translated.
 
 export const INSERT_SLIDE = 'insert_slide'
 export const INSERT_CHART = 'insert_chart'
@@ -95,7 +95,13 @@ const INSERT_CHART_FOR_LLM = {
   ],
   parameters: {
     type: 'object',
+    // The card shows the params in this order: the title first. The stack
+    // sorts them for the LLM.
     properties: {
+      title: {
+        type: 'string',
+        description: 'a short title of the chart, in the language of the cells'
+      },
       type: {
         type: 'string',
         description:
@@ -105,10 +111,6 @@ const INSERT_CHART_FOR_LLM = {
         type: 'string',
         description:
           'the cells to chart, as a range of the sheet given with the message, as A1:C5: the row of the headers and the column of the names with the values, without a total row'
-      },
-      title: {
-        type: 'string',
-        description: 'a short title of the chart, in the language of the cells'
       }
     },
     required: ['type', 'range']
@@ -166,6 +168,21 @@ const EDITORS = {
         name: INSERT_CHART,
         label: t('OnlyOffice.scribe.insertChart'),
         ...INSERT_CHART_FOR_LLM,
+        // The titles of the params on the card: the stack gives them to no LLM
+        parameters: {
+          ...INSERT_CHART_FOR_LLM.parameters,
+          properties: {
+            ...INSERT_CHART_FOR_LLM.parameters.properties,
+            type: {
+              ...INSERT_CHART_FOR_LLM.parameters.properties.type,
+              title: t('OnlyOffice.scribe.chartType')
+            },
+            range: {
+              ...INSERT_CHART_FOR_LLM.parameters.properties.range,
+              title: t('OnlyOffice.scribe.chartRange')
+            }
+          }
+        },
         confirm: true
       }
     ],

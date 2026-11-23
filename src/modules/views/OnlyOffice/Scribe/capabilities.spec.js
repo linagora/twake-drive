@@ -48,8 +48,16 @@ describe('makeCapabilities', () => {
       parameters: {
         type: 'object',
         properties: {
-          type: { type: 'string', description: expect.any(String) },
-          range: { type: 'string', description: expect.any(String) },
+          type: {
+            type: 'string',
+            description: expect.any(String),
+            title: 't(OnlyOffice.scribe.chartType)'
+          },
+          range: {
+            type: 'string',
+            description: expect.any(String),
+            title: 't(OnlyOffice.scribe.chartRange)'
+          },
           title: { type: 'string', description: expect.any(String) }
         },
         required: ['type', 'range']
