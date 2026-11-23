@@ -12,7 +12,7 @@ import {
   test
 } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
-import { trashById } from '../helpers/stack'
+import { createFile, trashById } from '../helpers/stack'
 import type { DrivePage } from '../pages/DrivePage'
 import type { MoveToPage } from '../pages/MoveToPage'
 
@@ -85,16 +85,17 @@ test.describe('MoveTo folder creation', () => {
     alicePage,
     aliceDrive
   }) => {
-    await alicePage.goto(ALICE_ROOT)
-
     const folderName = `0AA-${stamp()}`
     let createdFolder: string | null = null
     const sourceFile = `Move source ${stamp()}.txt`
-    const sourcePath = path.join(path.dirname(FIXTURE), sourceFile)
-    await copyFile(FIXTURE, sourcePath)
+    const sourceId = await createFile({
+      instance: USERS.alice.instance,
+      name: sourceFile,
+      content: 'MoveTo folder creation fixture'
+    })
 
     try {
-      await aliceDrive.uploadFiles(sourcePath)
+      await alicePage.goto(ALICE_ROOT)
       await aliceDrive.row(sourceFile).waitVisible()
 
       const moveTo = await aliceDrive.row(sourceFile).openMoveTo()
@@ -109,20 +110,19 @@ test.describe('MoveTo folder creation', () => {
       await expect(moveTo.breadcrumb).toHaveText(t('Nav.item_drive'))
       await expect(moveTo.isFolderSelected(folderName)).resolves.toBe(false)
 
-      await moveTo.openFolder(folderName)
-      await expect(moveTo.moveButton).toBeEnabled()
-      await moveTo.confirm()
+      await moveTo.openFolderWithKeyboard(folderName)
+      await moveTo.confirmWithKeyboard()
 
       await aliceDrive.row(sourceFile).waitHidden()
       await aliceDrive.row(folderName).open()
       await alicePage.waitForURL(/\/folder\/[^/]+$/)
       await expect(aliceDrive.row(sourceFile).cell).toBeVisible()
     } finally {
-      await alicePage.goto(ALICE_ROOT)
+      await trashById(USERS.alice.instance, sourceId)
       if (createdFolder) {
+        await alicePage.goto(ALICE_ROOT)
         await aliceDrive.row(createdFolder).sendToTrash()
       }
-      await safeUnlink(sourcePath)
     }
   })
 

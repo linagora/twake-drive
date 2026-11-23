@@ -61,7 +61,6 @@ jest.mock('@/components/PickerView/PickerViewTable', () => ({
     isItemDisabled,
     getItemDisabledReason,
     onItemClick,
-    onItemDoubleClick,
     onItemNavigate,
     fetchMore,
     beforeItems
@@ -79,7 +78,6 @@ jest.mock('@/components/PickerView/PickerViewTable', () => ({
                 : item.name
             }
             onClick={event => onItemClick?.(item, event)}
-            onDoubleClick={() => onItemDoubleClick?.(item)}
           >
             {item.name}
           </button>
@@ -559,7 +557,7 @@ describe.each([
     setup({ onConfirm })
 
     fireEvent.click(screen.getByRole('tab', { name: 'Nav.item_sharings' }))
-    fireEvent.doubleClick(
+    fireEvent.click(
       await screen.findByRole('button', { name: 'Received folder' })
     )
 
@@ -582,9 +580,7 @@ describe.each([
       await screen.findByRole('button', { name: 'Created folder' })
     ).toBeInTheDocument()
 
-    fireEvent.doubleClick(
-      screen.getByRole('button', { name: 'Received child' })
-    )
+    fireEvent.click(screen.getByRole('button', { name: 'Received child' }))
     expect(hasWriteAccess).toHaveBeenCalledWith(receivedChild._id, 'sharing-id')
     const moveButton = screen.getByRole('button', { name: 'Move.action' })
     await waitFor(() => expect(moveButton).toBeEnabled())
@@ -709,7 +705,7 @@ describe.each([
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeEnabled()
   })
 
-  it('does not select a folder and moves into the current folder after navigation', async () => {
+  it('opens a folder with one click and confirms that destination separately', async () => {
     const onConfirm = jest.fn()
     setup({ onConfirm })
 
@@ -717,9 +713,12 @@ describe.each([
     expect(moveButton).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
-    expect(moveButton).toBeDisabled()
 
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    expect(screen.getByTestId('file-picker-breadcrumb')).toHaveTextContent(
+      'Child folder'
+    )
+    expect(screen.queryByRole('button', { name: 'Child folder' })).toBe(null)
+    expect(onConfirm).not.toHaveBeenCalled()
 
     expect(moveButton).toBeEnabled()
     fireEvent.click(moveButton)
@@ -732,7 +731,7 @@ describe.each([
     setup()
 
     fireEvent.click(screen.getByRole('button', { name: 'Select in Drive' }))
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
 
     expect(screen.getByTestId('drive-selection-count')).toHaveTextContent('1')
   })
@@ -784,7 +783,7 @@ describe.each([
 
     setup({ onConfirm })
 
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
 
     expect(screen.getByTestId('file-picker-error')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeDisabled()
@@ -823,9 +822,7 @@ describe.each([
       })
 
       setup({ onConfirm })
-      fireEvent.doubleClick(
-        screen.getByRole('button', { name: 'Child folder' })
-      )
+      fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
       expect(screen.getByRole('button', { name: 'Move.action' })).toBeEnabled()
 
       rootStatus = status
@@ -942,12 +939,12 @@ describe.each([
     })
 
     setup({ onConfirm })
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeEnabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'My Drive' }))
     invalidDestination = true
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
 
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'Move.action' }))
@@ -980,7 +977,7 @@ describe.each([
     const moveButton = screen.getByRole('button', { name: 'Move.action' })
     expect(moveButton).toBeDisabled()
 
-    fireEvent.doubleClick(screen.getByRole('button', { name: 'Child folder' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Child folder' }))
     expect(moveButton).toBeEnabled()
 
     fireEvent.click(screen.getByRole('button', { name: 'Source folder' }))
@@ -1089,7 +1086,6 @@ describe.each([
     expect(fileButton).toBeDisabled()
 
     fireEvent.click(fileButton)
-    fireEvent.doubleClick(fileButton)
     expect(clientQuery).not.toHaveBeenCalled()
   })
 })

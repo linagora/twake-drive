@@ -132,10 +132,13 @@ export class MoveIntentPage {
 
   async navigateToFolder(name: string): Promise<void> {
     await new FilePickerPage(this.page, this.user).scrollToItem(name)
-    await this.row(name).getByTestId('listitem-onclick').dblclick()
-    await expect(
-      this.breadcrumb().getByText(name, { exact: true })
-    ).toBeVisible()
+    await this.row(name).getByTestId('choice-onclick').click()
+    await this.expectBreadcrumb(name)
+  }
+
+  async doubleClickFolder(name: string): Promise<void> {
+    await this.row(name).getByTestId('choice-onclick').dblclick({ delay: 100 })
+    await this.expectBreadcrumb(name)
   }
 
   async navigateToFolderOnMobile(name: string): Promise<void> {

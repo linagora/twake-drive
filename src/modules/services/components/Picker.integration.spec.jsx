@@ -1322,7 +1322,7 @@ describe('MOVE intent navigation integration', () => {
       expect(
         screen.queryByRole('button', { name: /create folder/i })
       ).toBeInTheDocument()
-      fireEvent.doubleClick(getRow('projects'))
+      fireEvent.click(getRow('projects'))
       await waitForRow('child')
       const invoiceRow = await waitForRow('invoice')
       expect(invoiceRow).toHaveAttribute('aria-disabled', 'true')
@@ -1344,6 +1344,29 @@ describe('MOVE intent navigation integration', () => {
       expect(service.cancel).toHaveBeenCalledWith()
     }
   )
+
+  it('opens the folder on click and moves the file on confirmation', async () => {
+    const { documents, writes } = setupMove({
+      defaultDirId: 'projects',
+      restrictToDefaultDir: true
+    })
+    const row = await waitForRow('child')
+    const moveButton = screen.getByRole('button', { name: 'Move' })
+    expect(moveButton).toBeDisabled()
+
+    fireEvent.click(row, { detail: 1 })
+    expect(
+      await within(screen.getByTestId('file-picker-breadcrumb')).findByText(
+        'Child'
+      )
+    ).toBeInTheDocument()
+    expect(getRow('child')).toBe(null)
+    expect(documents.get('invoice').dir_id).toBe('projects')
+    expect(writes).toEqual([])
+
+    await clickMove()
+    await waitFor(() => expect(documents.get('invoice').dir_id).toBe('child'))
+  })
 
   it('disables its close cross during destination validation', async () => {
     let blockValidation = false
@@ -1576,7 +1599,7 @@ describe('MOVE intent navigation integration', () => {
         { name: 'My Drive' }
       )
     ).toBe(null)
-    fireEvent.doubleClick(getRow('child'))
+    fireEvent.click(getRow('child'))
     const nestedRow = await waitForRow('nested')
     expect(nestedRow).toHaveAttribute('aria-disabled', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Projects' }))
@@ -1628,7 +1651,7 @@ describe('MOVE intent navigation integration', () => {
         { name: 'My Drive' }
       )
     ).toBe(null)
-    fireEvent.doubleClick(getRow('child'))
+    fireEvent.click(getRow('child'))
     await waitFor(() =>
       expect(screen.queryByTestId('file-picker-empty')).toBeInTheDocument()
     )
@@ -1646,7 +1669,7 @@ describe('MOVE intent navigation integration', () => {
     })
     await waitForRow('child')
     documents.set('child', { ...child, dir_id: ROOT_DIR_ID, path: '/Child' })
-    fireEvent.doubleClick(getRow('child'))
+    fireEvent.click(getRow('child'))
     await waitFor(() =>
       expect(client.getDocumentFromState('io.cozy.files', 'child').dir_id).toBe(
         ROOT_DIR_ID
@@ -1666,7 +1689,7 @@ describe('MOVE intent navigation integration', () => {
     setupMove({}, { hasWriteAccess: id => id !== 'projects' })
     const row = await waitForRow('projects')
     expect(row).toHaveAttribute('aria-disabled', 'true')
-    fireEvent.doubleClick(row)
+    fireEvent.click(row)
     expect(getRow('child')).toBe(null)
     expect(
       within(screen.getByTestId('file-picker-breadcrumb')).queryByText(

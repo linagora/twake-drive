@@ -24,7 +24,7 @@ test.describe('MoveTo mobile', () => {
       await aliceDrive.row(sourceFile).waitVisible()
 
       const moveTo = await aliceDrive.row(sourceFile).openMoveTo()
-      await moveTo.openFolder(destination)
+      await moveTo.openFolderOnMobile(destination)
       await moveTo.confirm()
 
       await aliceDrive.row(sourceFile).waitHidden()
