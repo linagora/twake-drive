@@ -8,9 +8,19 @@ import FilesViewerRecent from './FilesViewerRecent'
 
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 const mockNavigate = jest.fn()
+const mockHasWriteAccess = jest.fn()
+let mockFileId = 'local'
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate
+}))
+
+jest.mock('cozy-sharing', () => ({
+  useSharingContext: () => ({ hasWriteAccess: mockHasWriteAccess })
+}))
+
+jest.mock('@/hooks', () => ({
+  useCurrentFileId: () => mockFileId
 }))
 
 jest.mock('cozy-client', () => ({
@@ -68,17 +78,13 @@ const mockQueries = ({
   recents = [],
   fetchStatus = 'loaded',
   lastUpdate = 1,
+  hasMore = false,
+  fetchMore = jest.fn(),
   localRecents = []
 } = {}) => {
   useQuery.mockImplementation((definition, { as }) =>
     as === 'io.cozy.files.recents'
-      ? {
-          data: recents,
-          fetchStatus,
-          lastUpdate,
-          hasMore: false,
-          fetchMore: jest.fn()
-        }
+      ? { data: recents, fetchStatus, lastUpdate, hasMore, fetchMore }
       : { data: localRecents, fetchStatus: 'loaded' }
   )
   useClient.mockReturnValue({ getQueryFromState: () => null })
@@ -89,6 +95,7 @@ const viewerProps = () => mockFilesViewer.mock.calls.at(-1)[0]
 describe('FilesViewerRecent', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockFileId = 'local'
   })
 
   describe('with the personal recents', () => {
@@ -144,6 +151,76 @@ describe('FilesViewerRecent', () => {
       render(<FilesViewerRecent />)
 
       expect(screen.queryByText('viewer-loading')).toBe(null)
+      expect(viewerProps().files).toEqual([localFile])
+    })
+  })
+
+  describe('with the personal recents, sharing in the viewer', () => {
+    beforeEach(() => {
+      flag.mockImplementation(name => name === 'drive.recents.enabled')
+      mockQueries({ recents: [recentOf(driveFile), recentOf(localFile)] })
+    })
+
+    it('hides sharing on a shared drive file the user cannot write', () => {
+      mockFileId = 'drive'
+      mockHasWriteAccess.mockReturnValue(false)
+
+      render(<FilesViewerRecent />)
+
+      expect(mockHasWriteAccess).toHaveBeenCalledWith('dir-1', 'drive-1')
+      expect(viewerProps().viewerProps.panel.sharing.disabled).toBe(true)
+    })
+
+    it('keeps sharing on a shared drive file the user can write', () => {
+      mockFileId = 'drive'
+      mockHasWriteAccess.mockReturnValue(true)
+
+      render(<FilesViewerRecent />)
+
+      expect(viewerProps().viewerProps.panel.sharing.disabled).toBe(false)
+    })
+
+    it('keeps sharing on a local file', () => {
+      mockHasWriteAccess.mockReturnValue(false)
+
+      render(<FilesViewerRecent />)
+
+      expect(viewerProps().viewerProps.panel.sharing.disabled).toBe(false)
+    })
+  })
+
+  describe('with the personal recents, a file beyond the loaded pages', () => {
+    beforeEach(() => {
+      flag.mockImplementation(name => name === 'drive.recents.enabled')
+    })
+
+    it('loads more recents before opening the viewer', () => {
+      mockFileId = 'drive'
+      // The page stays in flight: the rerender below brings it
+      const fetchMore = jest.fn(() => new Promise(() => {}))
+      mockQueries({ recents: [recentOf(localFile)], hasMore: true, fetchMore })
+
+      const { rerender } = render(<FilesViewerRecent />)
+
+      expect(screen.queryByText('viewer-loading')).toBeInTheDocument()
+      expect(mockFilesViewer).not.toHaveBeenCalled()
+      expect(fetchMore).toHaveBeenCalled()
+
+      mockQueries({
+        recents: [recentOf(localFile), recentOf(driveFile)],
+        fetchMore
+      })
+      rerender(<FilesViewerRecent />)
+
+      expect(viewerProps().files).toEqual([localFile, driveFile])
+    })
+
+    it('opens the viewer once no page is left, even without the file', () => {
+      mockFileId = 'unknown'
+      mockQueries({ recents: [recentOf(localFile)] })
+
+      render(<FilesViewerRecent />)
+
       expect(viewerProps().files).toEqual([localFile])
     })
   })
