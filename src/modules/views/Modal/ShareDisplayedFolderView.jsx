@@ -23,6 +23,7 @@ const ShareDisplayedFolderView = () => {
 
     return (
       <ShareModal
+        enableActivityReport={flag('drive.public_link_events.enabled') === true}
         document={displayedFolder}
         documentType="Files"
         sharingDesc={displayedFolder.name}
