@@ -7,6 +7,7 @@ import {
   isDirectory
 } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
+import flag from 'cozy-flags'
 
 import type { File } from '@/components/FolderPicker/types'
 import { TRASH_DIR_ID } from '@/constants/config'
@@ -286,6 +287,11 @@ export const computePath = (
       }
       if (!file.dir_id) {
         throw new Error('Missing dir_id in shared drive file')
+      }
+      // The personal recents list the drive files too: their viewer browses
+      // that list, unlike the shared drive one.
+      if (pathname.startsWith('/recent') && flag('drive.recents.enabled')) {
+        return `/recent/file/${file._id}`
       }
       if (isSpacePath(pathname)) {
         return `${getSpacePath(driveId, file.dir_id)}/file/${file._id}`
