@@ -128,6 +128,11 @@ export class FileViewerPage {
     await confirm.waitFor({ state: 'hidden' })
   }
 
+  /** Goes to the next file of the list, as the right arrow key of the viewer does. */
+  async next(): Promise<void> {
+    await this.page.keyboard.press('ArrowRight')
+  }
+
   /** Closes the viewer by navigating back, then waits for the file route to drop. */
   async close(): Promise<void> {
     await this.page.goBack()
