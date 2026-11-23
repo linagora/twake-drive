@@ -47,6 +47,8 @@
       "skippedCells": "表格：有 %{smart_count} 个选中的单元格未更改",
       "closeNotice": "关闭",
       "insertChart": "插入图表",
+      "chartType": "图表类型",
+      "chartRange": "单元格",
       "notApplied": "此回答没有可写入工作表的单元格",
       "notWritten": "编辑器无法完整应用此回答",
       "suggestions": {
