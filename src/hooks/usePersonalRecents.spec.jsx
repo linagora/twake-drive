@@ -206,4 +206,74 @@ describe('usePersonalRecents', () => {
     expect(result.current.fetchStatus).toBe('failed')
     expect(result.current.error).toBe(lastError)
   })
+
+  describe('with isVisible', () => {
+    const isVisible = file => !file._id.startsWith('hidden')
+
+    it('returns only the visible rows, in the order of the stack', () => {
+      mockQueryResult({
+        data: [makeRecent('b'), makeRecent('hidden-1'), makeRecent('a')]
+      })
+
+      const { result } = renderHook(() => usePersonalRecents({ isVisible }))
+
+      expect(result.current.data).toEqual([makeFile('b'), makeFile('a')])
+    })
+
+    it('loads the next page while the loaded rows are all hidden', () => {
+      const fetchMore = jest.fn()
+      mockQueryResult({
+        data: [makeRecent('hidden-1')],
+        hasMore: true,
+        fetchMore
+      })
+
+      const { result } = renderHook(() => usePersonalRecents({ isVisible }))
+
+      expect(fetchMore).toHaveBeenCalledTimes(1)
+      expect(result.current.fetchStatus).toBe('loading')
+    })
+
+    // Like the store, each page is in the query state once fetchMore resolves.
+    const mockPages = pages => {
+      const fetchMore = jest.fn(async () => {
+        const { data, hasMore } = pages.shift()
+        mockQueryResult({ data, hasMore, fetchMore })
+        return { data: [{}], next: hasMore }
+      })
+      return fetchMore
+    }
+
+    it('loads more again until a page brings a visible row', async () => {
+      const fetchMore = mockPages([
+        { data: [makeRecent('a'), makeRecent('hidden-1')], hasMore: true },
+        {
+          data: [makeRecent('a'), makeRecent('hidden-1'), makeRecent('c')],
+          hasMore: true
+        }
+      ])
+      mockQueryResult({ data: [makeRecent('a')], hasMore: true, fetchMore })
+
+      const { result } = renderHook(() => usePersonalRecents({ isVisible }))
+      await act(() => result.current.fetchMore())
+
+      await waitFor(() =>
+        expect(result.current.data).toEqual([makeFile('a'), makeFile('c')])
+      )
+      expect(fetchMore).toHaveBeenCalledTimes(2)
+    })
+
+    it('stops loading more at the last page, even if its rows are hidden', async () => {
+      const fetchMore = mockPages([
+        { data: [makeRecent('a'), makeRecent('hidden-1')], hasMore: false }
+      ])
+      mockQueryResult({ data: [makeRecent('a')], hasMore: true, fetchMore })
+
+      const { result } = renderHook(() => usePersonalRecents({ isVisible }))
+      await act(() => result.current.fetchMore())
+      await act(() => Promise.resolve())
+
+      expect(fetchMore).toHaveBeenCalledTimes(1)
+    })
+  })
 })

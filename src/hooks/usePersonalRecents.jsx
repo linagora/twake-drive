@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useClient, useQuery } from 'cozy-client'
 
@@ -24,7 +24,8 @@ const fetchMoreUntilRows = async (client, fetchMore) => {
 }
 
 const useFetchMoreRecents = ({
-  recents,
+  visibleCount,
+  hasHiddenRows,
   hasMore,
   fetchStatus,
   isFetching,
@@ -32,19 +33,40 @@ const useFetchMoreRecents = ({
 }) => {
   const client = useClient()
   const isPendingRef = useRef(false)
+  const isLoadingMoreRef = useRef(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [askedAtCount, setAskedAtCount] = useState(null)
 
   // The stack may return an empty page that has a next one: the list stays
   // loading, also while that next page is fetched.
-  const hasOnlyEmptyPages = recents.length === 0 && hasMore
+  const hasOnlyEmptyPages = visibleCount === 0 && hasMore
   const isIdle = fetchStatus === 'loaded' && !isFetching
 
   useEffect(() => {
     if (hasOnlyEmptyPages && isIdle) fetchMore()
   }, [hasOnlyEmptyPages, isIdle, fetchMore])
 
+  // Only hidden rows need to know when a load ends, to go on after it.
+  const loadMore = useCallback(async () => {
+    if (hasHiddenRows) {
+      if (isLoadingMoreRef.current) return
+      isLoadingMoreRef.current = true
+      setIsLoadingMore(true)
+    }
+    try {
+      isPendingRef.current = !(await fetchMoreUntilRows(client, fetchMore))
+    } finally {
+      if (hasHiddenRows) {
+        isLoadingMoreRef.current = false
+        setIsLoadingMore(false)
+      }
+    }
+  }, [client, fetchMore, hasHiddenRows])
+
   const fetchMoreRecents = useCallback(async () => {
-    isPendingRef.current = !(await fetchMoreUntilRows(client, fetchMore))
-  }, [client, fetchMore])
+    if (hasHiddenRows) setAskedAtCount(count => count ?? visibleCount)
+    await loadMore()
+  }, [hasHiddenRows, visibleCount, loadMore])
 
   // Load the pages asked during the refresh, from its cursor.
   useEffect(() => {
@@ -52,6 +74,26 @@ const useFetchMoreRecents = ({
     isPendingRef.current = false
     fetchMoreRecents()
   }, [isFetching, fetchMoreRecents])
+
+  // A page of hidden rows adds nothing to the list, so the end stays in view
+  // and nothing asks for more again: go on until a visible row comes.
+  useEffect(() => {
+    if (askedAtCount === null || isLoadingMore || !isIdle) return
+    if (hasOnlyEmptyPages) return
+    if (visibleCount > askedAtCount || !hasMore) {
+      setAskedAtCount(null)
+      return
+    }
+    loadMore()
+  }, [
+    askedAtCount,
+    isLoadingMore,
+    isIdle,
+    hasOnlyEmptyPages,
+    visibleCount,
+    hasMore,
+    loadMore
+  ])
 
   return {
     isWaitingForNextPage: hasOnlyEmptyPages && fetchStatus !== 'failed',
@@ -64,8 +106,14 @@ const useFetchMoreRecents = ({
  *
  * Each row is the io.cozy.files document of a recent, read from the store.
  * A recent whose file the user can no longer read is returned as is.
+ *
+ * `isVisible` keeps only the rows it accepts, and more pages are loaded while
+ * they bring none. Pass a stable function: it is a dependency of the rows.
  */
-export const usePersonalRecents = ({ enabled = true } = {}) => {
+export const usePersonalRecents = ({
+  enabled = true,
+  isVisible = null
+} = {}) => {
   const {
     data,
     fetchStatus,
@@ -78,18 +126,19 @@ export const usePersonalRecents = ({ enabled = true } = {}) => {
 
   const recents = useMemo(() => data ?? [], [data])
 
+  const rows = useMemo(() => {
+    const files = recents.map(recent => recent.file?.data ?? recent)
+    return isVisible ? files.filter(isVisible) : files
+  }, [recents, isVisible])
+
   const { isWaitingForNextPage, fetchMoreRecents } = useFetchMoreRecents({
-    recents,
+    visibleCount: rows.length,
+    hasHiddenRows: Boolean(isVisible),
     hasMore,
     fetchStatus,
     isFetching,
     fetchMore
   })
-
-  const rows = useMemo(
-    () => recents.map(recent => recent.file?.data ?? recent),
-    [recents]
-  )
 
   const lastActivityAtById = useMemo(
     () => new Map(recents.map(recent => [recent._id, recent.last_activity_at])),
