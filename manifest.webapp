@@ -235,6 +235,11 @@
       "type": "io.cozy.contacts",
       "verbs": ["GET", "POST"]
     },
+    "publicLinkEvents": {
+      "description": "Required to download public link activity reports",
+      "type": "io.cozy.public_links.events",
+      "verbs": ["GET"]
+    },
     "groups": {
       "type": "io.cozy.contacts.groups",
       "verbs": ["GET"]

@@ -25,6 +25,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: use the same gesture on desktop and mobile while keeping the open destination explicit before confirmation.
 - Scope: new MoveTo dialog and MOVE intent on desktop and mobile; legacy, public, and PICK flows are unchanged.
 
+## 2026-11-23, [Architecture] Grant Drive read-only access to public link events
+
+- Decision: The Drive webapp manifest grants whole-type `GET` access to `io.cozy.public_links.events` independently of `drive.public_link_events.enabled`, with no write access granted by this rule.
+- Decided by: doubleface, 2026-11-23.
+- Why: The Stack statistics endpoint requires this permission to export public link reports. Disabling collection does not withdraw the permission or erase past events.
+- Scope: Drive webapp manifest and public link CSV export on a compatible Stack.
+
 ## 2026-11-24, [Tech] Loaders use the CircularProgress of cozy-ui, with props twake-mui shares
 
 - Decision: a loader is a `CircularProgress` from `cozy-ui/transpiled/react/CircularProgress`, never the cozy-ui `Spinner`; it only takes `size`, `color` (`primary` or `inherit`), `className`, and utility classes that twake-css also ships, so the switch to twake-mui only rewrites the import.
