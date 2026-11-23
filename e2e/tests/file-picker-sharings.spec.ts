@@ -6,6 +6,7 @@ import type { Locator } from '@playwright/test'
 import { authenticate } from '../helpers/auth'
 import { USERS } from '../helpers/config'
 import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { t } from '../helpers/i18n'
 import {
   createAndShareFolderWithBob,
@@ -22,6 +23,7 @@ test.describe.serial('File Picker Sharings', () => {
   const nestedName = `PickerNested-${stamp()}`
   const fileName = `picker-shared-${stamp()}.txt`
   const recentFileName = `picker-recent-${stamp()}.txt`
+  const bobDriveFileName = `picker-bob-drive-${stamp()}.txt`
 
   test.beforeAll(async ({ browser, contextOptions }) => {
     const aliceContext = await browser.newContext(contextOptions)
@@ -214,5 +216,53 @@ test.describe.serial('File Picker Sharings', () => {
     expect(response.status()).toBeLessThan(400)
 
     await picker.closeConfirmation()
+  })
+
+  test('picks from the personal recents a shared drive file Bob uploaded', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    setFlags(USERS.bob.instance, {
+      ...DEFAULT_FLAGS,
+      'drive.recents.enabled': true
+    })
+    const tmpPath = path.join(path.dirname(FIXTURE), bobDriveFileName)
+    await copyFile(FIXTURE, tmpPath)
+    try {
+      // The personal recents only hold Bob's own activity, not Alice's
+      await openSharedDrive(bobPage, USERS.bob, bobDrive, rootName)
+      await bobDrive.uploadFiles(tmpPath)
+      await bobDrive.row(bobDriveFileName).waitVisible()
+
+      const picker = new FilePickerPage(bobPage, USERS.bob)
+      await picker.open()
+      const recentsTab = picker.tab(t('Nav.item_recent'))
+      await recentsTab.click()
+      await expect(recentsTab).toHaveAttribute('aria-selected', 'true')
+      await expect(picker.item(bobDriveFileName)).toBeVisible({
+        timeout: 25_000
+      })
+
+      await picker.selectItem(bobDriveFileName)
+      await picker.clickTemporaryDownloadLink()
+      await picker.waitForClosed()
+
+      const link = await picker.getConfirmationLink()
+      const document = await picker.getResultDocument()
+      const [entry] = document as Array<Record<string, unknown>>
+      expect(entry.name).toBe(bobDriveFileName)
+      expect(entry.downloadLink).toBe(link)
+
+      const response = await bobPage.request.get(link)
+      expect(response.status()).toBeLessThan(400)
+
+      await picker.closeConfirmation()
+    } finally {
+      setFlags(USERS.bob.instance, {
+        ...DEFAULT_FLAGS,
+        'drive.recents.enabled': false
+      })
+      await safeUnlink(tmpPath)
+    }
   })
 })
