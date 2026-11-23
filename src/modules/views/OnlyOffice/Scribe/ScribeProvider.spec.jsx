@@ -715,52 +715,20 @@ describe('ScribeProvider', () => {
     expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 
-  it('writes the table the assistant has made in a text document, as a Markdown answer', () => {
-    const { plugin, receive } = setup({ results: [TABLE] })
-    receive({ type: 'twake-scribe:ready' })
+  // A table comes in an answer: a call of an older assistant, or of a past
+  // conversation, writes nothing
+  it.each(['word', 'slide'])(
+    'writes no table call in a %s document',
+    documentType => {
+      const { receive, getSent } = setup({ documentType, results: [TABLE] })
+      receive({ type: 'twake-scribe:ready' })
 
-    fireEvent.click(screen.getByText('result 0'))
+      fireEvent.click(screen.getByText('result 0'))
 
-    expect(plugin.postMessage).toHaveBeenCalledWith(
-      {
-        type: 'twake-scribe:applyAnswer',
-        answerAction: 'insert',
-        text: 'Budget des lots\n\n| Lot | Budget |\n| --- | --- |\n| Atlas | 42 000 € |\n| Borée | 12 000 € |',
-        format: 'markdown'
-      },
-      SERVER_ORIGIN
-    )
-  })
-
-  it('ignores a table with wrong parameters, or outside of a text document', () => {
-    const results = [
-      { capability: 'insert_table', params: { columns: ['Lot'] } },
-      { capability: 'insert_table', params: { columns: [], rows: ['Atlas'] } },
-      { capability: 'insert_table', params: null }
-    ]
-    const { receive, getSent } = setup({ results })
-    receive({ type: 'twake-scribe:ready' })
-
-    results.forEach((_, index) =>
-      fireEvent.click(screen.getByText(`result ${index}`))
-    )
-
-    expect(getSent()).toEqual([])
-    expect(logger.warn).toHaveBeenCalledTimes(results.length)
-  })
-
-  it('adds no table to a presentation', () => {
-    const { receive, getSent } = setup({
-      documentType: 'slide',
-      results: [TABLE]
-    })
-    receive({ type: 'twake-scribe:ready' })
-
-    fireEvent.click(screen.getByText('result 0'))
-
-    expect(getSent()).toEqual([])
-    expect(logger.warn).toHaveBeenCalledTimes(1)
-  })
+      expect(getSent()).toEqual([])
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+    }
+  )
 
   describe('the cells of the selection an answer had no cell for', () => {
     const setupOpen = options => {

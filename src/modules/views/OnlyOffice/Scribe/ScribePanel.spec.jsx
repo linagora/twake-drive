@@ -148,39 +148,15 @@ describe('ScribePanel', () => {
     ])
   })
 
-  it('lets the assistant add a table to a text document, and offers it as a chip', () => {
+  it('offers a table as a chip of a text document, asked as a message', () => {
     setup()
 
     const { capabilities, suggestions } = getIntentProps().data
-    expect(capabilities).toEqual([
-      {
-        name: 'insert_table',
-        description: expect.stringContaining('insert a new table'),
-        examples: expect.any(Array),
-        parameters: {
-          type: 'object',
-          properties: {
-            caption: expect.objectContaining({ type: 'string' }),
-            columns: expect.objectContaining({
-              type: 'array',
-              items: { type: 'string' }
-            }),
-            rows: expect.objectContaining({
-              type: 'array',
-              items: { type: 'string' }
-            })
-          },
-          required: ['columns', 'rows']
-        },
-        instructions: expect.any(String),
-        confirm: false
-      }
-    ])
+    expect(capabilities).toBeUndefined()
     expect(suggestions).toEqual([
       { name: 'catalogue' },
       {
         name: 'table',
-        capability: 'insert_table',
         label: 'Make a table',
         message: 'Present the text as a table'
       }
@@ -209,7 +185,7 @@ describe('ScribePanel', () => {
           required: ['title', 'bullets']
         },
         instructions: expect.any(String),
-        confirm: false
+        confirm: true
       }
     ])
     expect(suggestions).toEqual([

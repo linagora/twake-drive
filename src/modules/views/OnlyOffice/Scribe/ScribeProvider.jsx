@@ -17,11 +17,8 @@ import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 import {
   INSERT_CHART,
   INSERT_SLIDE,
-  INSERT_TABLE,
-  makeTableMarkdown,
   normalizeChart,
-  normalizeSlide,
-  normalizeTable
+  normalizeSlide
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
 import {
   readPanelOpen,
@@ -65,8 +62,6 @@ const makeGeometry = ({ selection, viewer }) => {
   return frame === null ? null : { selection, viewer, frame }
 }
 
-// The plugin has no message for a table: it goes in as a Markdown answer,
-// whose tables the plugin writes as tables of the document
 const makeCapabilityMessage = ({ capability, params }, documentType) => {
   if (capability === INSERT_SLIDE && documentType === 'slide') {
     const slide = normalizeSlide(params)
@@ -79,17 +74,6 @@ const makeCapabilityMessage = ({ capability, params }, documentType) => {
     return chart === null
       ? null
       : { type: 'twake-scribe:insertChart', ...chart }
-  }
-  if (capability === INSERT_TABLE && documentType === 'word') {
-    const table = normalizeTable(params)
-    return table === null
-      ? null
-      : {
-          type: 'twake-scribe:applyAnswer',
-          answerAction: 'insert',
-          text: makeTableMarkdown(table),
-          format: 'markdown'
-        }
   }
   return null
 }
