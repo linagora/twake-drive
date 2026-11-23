@@ -32,6 +32,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: The Stack statistics endpoint requires this permission to export public link reports. Disabling collection does not withdraw the permission or erase past events.
 - Scope: Drive webapp manifest and public link CSV export on a compatible Stack.
 
+## 2026-11-23, [Product] Gate expiration reports on the public link statistics flag
+
+- Decision: Drive opts into the sharing modal's expiration report setting only when the flag `drive.public_link_events.enabled` read by Drive is strictly `true`.
+- Decided by: doubleface, November 2026.
+- Why: The report relies on public link activity collection in Stack.
+- Scope: Drive web file and folder sharing, including the editor toolbar, using the sharing library's existing access rules.
+
 ## 2026-11-24, [Tech] Loaders use the CircularProgress of cozy-ui, with props twake-mui shares
 
 - Decision: a loader is a `CircularProgress` from `cozy-ui/transpiled/react/CircularProgress`, never the cozy-ui `Spinner`; it only takes `size`, `color` (`primary` or `inherit`), `className`, and utility classes that twake-css also ships, so the switch to twake-mui only rewrites the import.

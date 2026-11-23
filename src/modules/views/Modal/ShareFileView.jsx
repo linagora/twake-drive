@@ -33,6 +33,7 @@ const ShareFileView = () => {
   if (hasQueryBeenLoaded(fileResult) && fileResult.data) {
     return (
       <ShareModal
+        enableActivityReport={flag('drive.public_link_events.enabled') === true}
         document={fileResult.data}
         driveId={driveId}
         documentType="Files"

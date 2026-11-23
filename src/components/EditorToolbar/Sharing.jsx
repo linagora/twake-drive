@@ -60,6 +60,9 @@ const Sharing = ({ file }) => {
       )}
       {showShareModal && (
         <ShareModal
+          enableActivityReport={
+            flag('drive.public_link_events.enabled') === true
+          }
           document={file}
           documentType="Files"
           sharingDesc={file.name}
