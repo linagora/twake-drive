@@ -11,6 +11,7 @@ import {
   filePickerItemTypes,
   filePickerModes,
   filePickerSections,
+  FILE_PICKER_RECENTS_ROOT_ID,
   FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
 
@@ -69,6 +70,9 @@ jest.mock('@/modules/views/Sharings/useSharingsQueryResult', () => ({
 jest.mock('@/modules/views/Sharings/useFilteredSharings', () => ({
   useFilteredSharings: jest.fn()
 }))
+jest.mock('@/hooks/useRecentFiles', () =>
+  jest.fn(() => ({ data: [], fetchStatus: 'loaded' }))
+)
 jest.mock('@/components/PickerView/PickerViewTable', () => ({
   PickerViewTable: ({
     items,
@@ -524,6 +528,43 @@ describe('FilePicker', () => {
       },
       status: 'loaded'
     })
+  })
+
+  it('forgets the drive of a folder when coming back to the Recents root', () => {
+    useBreadcrumbPath.mockImplementation(
+      ({ currentFolderId, rootBreadcrumbPath }) => [
+        { ...rootBreadcrumbPath, name: 'Recents root' },
+        { id: currentFolderId, name: 'Folder' }
+      ]
+    )
+    const onCurrentFolderChange = jest.fn()
+
+    render(
+      <FilePicker
+        mode={filePickerModes.CURRENT_FOLDER}
+        initialLocation={{
+          section: filePickerSections.RECENTS,
+          folderId: 'drive-folder-id',
+          driveId: 'drive-id'
+        }}
+        availableSections={[filePickerSections.RECENTS]}
+        displayedTypes={[filePickerItemTypes.FOLDER]}
+        selectableTypes={[]}
+        onCurrentFolderChange={onCurrentFolderChange}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Recents root' }))
+
+    expect(onCurrentFolderChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        location: {
+          section: filePickerSections.RECENTS,
+          folderId: FILE_PICKER_RECENTS_ROOT_ID,
+          driveId: null
+        }
+      })
+    )
   })
 
   it('navigates current-folder mobile row taps', () => {

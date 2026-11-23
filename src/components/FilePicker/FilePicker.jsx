@@ -38,6 +38,12 @@ function getSectionRoot(section) {
     : ROOT_DIR_ID
 }
 
+// Their lists mix local and drive items: going back leaves the drive.
+const VIRTUAL_ROOT_SECTIONS = {
+  [FILE_PICKER_RECENTS_ROOT_ID]: filePickerSections.RECENTS,
+  [FILE_PICKER_SHARINGS_ROOT_ID]: filePickerSections.SHARINGS
+}
+
 function getSelectionMap(selectedItems) {
   return selectedItems?.reduce((itemsById, item) => {
     itemsById[item._id] = item
@@ -167,20 +173,16 @@ const FilePickerController = ({
       if (canNavigateTo && !(await canNavigateTo(folder))) return
       if (request !== navigationRequestRef.current) return
       const folderId = folder.id ?? folder._id
-      const nextLocation =
-        folderId === FILE_PICKER_SHARINGS_ROOT_ID
-          ? {
-              section: filePickerSections.SHARINGS,
-              folderId: FILE_PICKER_SHARINGS_ROOT_ID,
-              driveId: null
-            }
-          : {
-              ...location,
-              folderId,
-              driveId:
-                folder.driveId ??
-                (folderId === ROOT_DIR_ID ? null : location.driveId)
-            }
+      const virtualRootSection = VIRTUAL_ROOT_SECTIONS[folderId]
+      const nextLocation = virtualRootSection
+        ? { section: virtualRootSection, folderId, driveId: null }
+        : {
+            ...location,
+            folderId,
+            driveId:
+              folder.driveId ??
+              (folderId === ROOT_DIR_ID ? null : location.driveId)
+          }
 
       setLocation(nextLocation)
       onLocationChange?.(nextLocation)
