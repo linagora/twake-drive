@@ -865,6 +865,7 @@ describe('computePath', () => {
   it('should return a /shareddrive path for a recipient shared-drive file nested in a folder', () => {
     // Recents/Search hand a shared-drive file with its real parent folder as
     // dir_id; the path must scope it to the proxied shared drive.
+    flag.mockReturnValue(false)
     const file = {
       _id: 'file123',
       dir_id: 'parent-folder',
@@ -873,6 +874,22 @@ describe('computePath', () => {
     }
     expect(
       computePath(file, { type: 'shared-drive-file', pathname: '/recent' })
+    ).toBe('/shareddrive/drive789/parent-folder/file/file123')
+  })
+
+  it('should keep a shared-drive file in the Recent viewer with the personal recents', () => {
+    flag.mockImplementation(name => name === 'drive.recents.enabled')
+    const file = {
+      _id: 'file123',
+      dir_id: 'parent-folder',
+      driveId: 'drive789',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, { type: 'shared-drive-file', pathname: '/recent' })
+    ).toBe('/recent/file/file123')
+    expect(
+      computePath(file, { type: 'shared-drive-file', pathname: '/any' })
     ).toBe('/shareddrive/drive789/parent-folder/file/file123')
   })
 

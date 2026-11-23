@@ -258,9 +258,7 @@ describe('Recent view with the personal recents of the stack', () => {
 
     await screen.findByText('photo')
     expect(linkOf('Projects').getAttribute('href')).toBe('#/folder/folder-1')
-    expect(linkOf('spec').getAttribute('href')).toBe(
-      '#/shareddrive/drive-1/drive-root/file/drive-file'
-    )
+    expect(linkOf('spec').getAttribute('href')).toBe('#/recent/file/drive-file')
     expect(linkOf('meeting').getAttribute('href')).toContain('/n/note')
     expect(linkOf('plan').getAttribute('href')).toContain(
       '/bridge/docs/docs-ext'
