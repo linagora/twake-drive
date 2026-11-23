@@ -20,6 +20,7 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'cozy.assistant.enabled': false,
   'drive.new-file-viewer-ui.enabled': false,
   'drive.onlyoffice.pdf-editing.enabled': false,
+  'drive.recents.enabled': false,
   'drive.virtualization.enabled': false
 }
 
