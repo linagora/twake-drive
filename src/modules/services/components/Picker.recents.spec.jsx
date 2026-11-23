@@ -3,11 +3,13 @@ import React from 'react'
 
 import { Q, createMockClient } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
+import useFlag from 'cozy-flags/dist/useFlag'
 
 import IntentHandler from './IntentHandler'
 import { IntentLike } from 'test/components/IntentLike'
 
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
+import { usePersonalRecents } from '@/hooks/usePersonalRecents'
 
 const mockCreateService = jest.fn()
 const mockGetIntent = jest.fn()
@@ -22,6 +24,15 @@ jest.mock('cozy-interapp', () =>
 jest.mock('cozy-dataproxy-lib', () => ({
   DataProxyProvider: ({ children }) => children,
   useDataProxy: jest.fn()
+}))
+
+jest.mock('cozy-flags/dist/useFlag', () => ({
+  __esModule: true,
+  default: jest.fn()
+}))
+
+jest.mock('@/hooks/usePersonalRecents', () => ({
+  usePersonalRecents: jest.fn()
 }))
 
 jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
@@ -189,5 +200,72 @@ describe('Picker Recents integration', () => {
         downloadLink: 'https://download.example/shared-report.pdf'
       })
     ])
+  })
+
+  it('picks a shared drive file from the personal recents of the stack', async () => {
+    window.innerWidth = 1024
+    useFlag.mockImplementation(name => name === 'drive.recents.enabled')
+    const unreadable = {
+      _id: 'gone-id',
+      _type: 'io.cozy.files.recents',
+      type: 'file',
+      name: 'gone.pdf'
+    }
+    usePersonalRecents.mockImplementation(({ isVisible }) => ({
+      data: [unreadable, recentFile].filter(isVisible),
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: jest.fn()
+    }))
+    const mockRecents = jest.fn()
+    useDataProxy.mockReturnValue({
+      dataProxyServicesAvailable: true,
+      recents: mockRecents
+    })
+    const client = makeClient()
+    const intent = { attributes: { action: 'PICK', type: 'io.cozy.files' } }
+    const service = {
+      getIntent: () => intent,
+      getData: () => ({}),
+      cancel: jest.fn(),
+      terminate: jest.fn(),
+      throw: jest.fn(),
+      notifyReadyToUse: jest.fn()
+    }
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue(service)
+
+    render(
+      <IntentLike client={client}>
+        <IntentHandler intentId="intent-id" />
+      </IntentLike>
+    )
+
+    fireEvent.click(await screen.findByRole('tab', { name: /Recents/i }))
+    const row = await screen.findByTestId('list-item')
+    expect(row).toHaveAttribute('data-file-id', recentFile._id)
+    expect(screen.getAllByTestId('list-item')).toHaveLength(1)
+    expect(mockRecents).not.toHaveBeenCalled()
+
+    const query = jest.spyOn(client, 'query').mockResolvedValue({
+      data: { ...recentFile }
+    })
+    jest.spyOn(client, 'collection').mockReturnValue({
+      getDownloadLinkById: jest
+        .fn()
+        .mockResolvedValue('https://download.example/shared-report.pdf')
+    })
+
+    fireEvent.click(row)
+    fireEvent.click(screen.getByTestId('temporary-download-link-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: recentFile._id,
+        sharingId: recentFile.driveId
+      }),
+      expect.anything()
+    )
   })
 })
