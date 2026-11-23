@@ -1,6 +1,6 @@
 # Scribe in OnlyOffice
 
-The scribe is the AI assistant opened beside an office document, on a text of that document. The user picks a prompt of the assistant (translate, summarize, improve, fix, make shorter, make longer) or types a request, then puts an answer back in the document with one click. A table or a new slide the user asks for goes in the document at once.
+The scribe is the AI assistant opened beside an office document, on a text of that document. The user picks a prompt of the assistant (translate, summarize, improve, fix, make shorter, make longer) or types a request, then puts an answer back in the document with one click. Nothing goes in the document without a click: a table comes in an answer, a new slide or chart the user asks for shows on a card to confirm.
 
 Drive does not talk to the LLM, and does not read or format the document. It links two parts:
 
@@ -46,7 +46,7 @@ Drive (OnlyOffice view)
 
 - Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation. A spreadsheet has its own chips only: "Explain", "Clean up", "Add totals", "Make a chart".
 
-In a text document the user can also ask for a table, from the text or from what they say: it is added under the text, with a header row, see [New tables](#new-tables).
+In a text document the user can also ask for a table, from the text or from what they say: it comes in an answer, shown as a table, and is inserted or put in place of the selection on a click, see [New tables](#new-tables).
 
 In a presentation the scribe works on the current slide: the selected text, the text of a selected shape, or the whole slide. See [Presentations](#presentations). The user can also ask for a new slide, added after the current one, see [New slides](#new-slides).
 
@@ -125,7 +125,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations); in a spreadsheet `selection`, or `region` for the block around a cell, see [Spreadsheets](#spreadsheets)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent). |
 | Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, and drops a text it is still reading, until Drive asks for the text again. |
-| Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document; in a spreadsheet, the cells of `text` (`answerAction: 'apply'`). |
+| Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is. The plugin writes `text`, in Markdown, in the document; in a spreadsheet, the cells of `text` (`answerAction: 'apply'`). |
 | Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel, unless it was closed since the answer. Not sent in a spreadsheet. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 | Drive → Plugin | `twake-scribe:insertChart` | `chartType`, `range`, `title` | A chart the assistant has made, checked by Drive. The plugin adds it beside the data. Spreadsheets only. |
@@ -336,18 +336,18 @@ The editor runs no command while it saves or loads: the reading and the writing 
 
 Beside its `answerActions`, Drive gives the Assistant intent what the editor can do, from `src/modules/views/OnlyOffice/Scribe/capabilities.js`, keyed by the `documentType` of the OnlyOffice config:
 
-- `capabilities`: a description for the LLM of each thing the editor can add, with its parameters as a JSON schema and instructions to fill them. The LLM picks one when the request of the user needs it, and the call comes back as a result of the intent, `{ capability, params }`, as soon as the LLM proposes it (`confirm: false`): there is no card to confirm, since the editor undoes a slide or a table in one step.
-- `suggestions`: the chips above the composer. The menu of the assistant (`{ name: 'catalogue' }`: correct, improve, tone, translate, summarize) comes first, then a chip that asks for the capability with a request of Drive, shown in the conversation as the message of the user.
+- `capabilities`: a description for the LLM of each thing the editor can add, with its parameters as a JSON schema and instructions to fill them. The LLM picks one when the request of the user needs it, and the call comes back as a result of the intent, `{ capability, params }`, once the user has confirmed it on its card (`confirm: true`): the scribe writes nothing in the document without a click.
+- `suggestions`: the chips above the composer. The menu of the assistant (`{ name: 'catalogue' }`: correct, improve, tone, translate, summarize) comes first, then a chip that asks for the capability, or for an answer in a text document, with a request of Drive, shown in the conversation as the message of the user.
 
 | Editor (`documentType`) | Capability | Chip | Request of the chip |
 | --- | --- | --- | --- |
 | Presentation (`slide`) | `insert_slide`, `{ title, bullets }` | New slide | Add a new slide after this one, about the text |
-| Text document (`word`) | `insert_table`, `{ caption, columns, rows }` | Make a table | Present the text as a table |
+| Text document (`word`) | none: a table comes in an answer | Make a table | Present the text as a table |
 | Spreadsheet (`cell`) | `insert_chart`, `{ type, range, title }`; formulas, rows and columns come as cells of an answer | Explain, Clean up, Add totals, Make a chart | Explain what these cells and their formulas do; Fix the typos and make the spelling, the case and the format of these cells consistent; Add a total row under the data, with formulas; Make a chart of these cells |
 
 A spreadsheet has no menu of the assistant, whose prompts are written for a text: its chips are sent with the instructions of a spreadsheet, as any request on its cells. Another editor gets neither key: the assistant shows its own menu. The labels and the requests of the chips are translated by Drive (`OnlyOffice.scribe.suggestions`); what the LLM reads is in English, whatever the language of the user.
 
-Drive checks each call: an unknown capability, one of another editor, parameters of the wrong type, or an empty slide or table are left out, with a warning in the console, and the user is told that the answer was not applied.
+Drive checks each call: an unknown capability, one of another editor (an `insert_table` call of an older assistant or of a past conversation too), parameters of the wrong type, or an empty slide are left out, with a warning in the console, and the user is told that the answer was not applied.
 
 ### New slides
 
@@ -364,9 +364,7 @@ The title is written in the title placeholder, the bullets as the paragraphs of 
 
 ### New tables
 
-A table comes back as `{ capability: 'insert_table', params: { caption, columns, rows } }`: the header of each column, and the data rows as strings whose cells are separated by `|`. Drive lays the cells of each row on the columns (`normalizeTable`): a row too short is padded with empty cells, a row longer than the header widens the table with empty header cells, since the LLM sometimes splits in two cells what it named as one column, an empty row is dropped, and a row the LLM wrote as a line of a Markdown table, with its outer pipes or as the separator line, is read as such. A table without a column or without a row is left out.
-
-Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as the paragraph above it and a pipe in a cell escaped, and sends it to the plugin as an answer to insert: `twake-scribe:applyAnswer` with `{ answerAction: 'insert', text, format: 'markdown' }`. The plugin needs nothing more: it writes it as it writes the tables of any answer, see [Tables](#tables), a table of the document with its header row in bold, under the paragraph of the cursor or under the last paragraph of the selection, and the caption in a paragraph above it. Nothing is replaced: a table is always inserted.
+A text document has no capability for a table: the "Make a table" chip, or a request of the user, gets an answer whose table the LLM writes in Markdown, in an `insert` block. The assistant shows it as a table, under its Insert and Replace buttons, and the plugin writes it as it writes the tables of any answer, see [Tables](#tables). An `insert_table` capability, which wrote the table at once without a card, was dropped: the user could not see the table before it was written, and the LLM, seeing its call in the history of the conversation, wrote its next tables as the rows of that call, as text.
 
 ### New charts
 
@@ -401,7 +399,6 @@ A request is either cells or a chart: "make the ratio, then a chart of it" takes
 
 - A cursor in the text of a shape is put back in the body when the scribe reads the text: the scribe opens on the whole document, and an answer inserted goes beside the shape, never in it.
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
-- A table the assistant makes through `insert_table` has a header row and plain rows: no merged cells, unlike a table written in an answer. The capability tells the LLM to change a table of the selection in an answer instead, which takes its place.
 
 ### Notes and links
 

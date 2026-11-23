@@ -3,7 +3,6 @@
 // translated.
 
 export const INSERT_SLIDE = 'insert_slide'
-export const INSERT_TABLE = 'insert_table'
 export const INSERT_CHART = 'insert_chart'
 
 // The types of chart the spreadsheet editor makes (ChartType of its API)
@@ -73,43 +72,6 @@ const INSERT_SLIDE_FOR_LLM = {
     'Write the title and the bullets in the language of the text of the presentation given with the message. Build on that text when it is about the same subject; do not invent figures, names or dates it does not give.'
 }
 
-const INSERT_TABLE_FOR_LLM = {
-  description:
-    'insert a new table in the text document the user is editing, at the cursor, with a header row and data rows. Pick it when the user asks to make a table, a grid or a comparison in columns, from the text given with the message or from what they say. When the text given with the message already is a table, never pick it: to add a column or a row to that table, to sort it or to change its cells is an answer with the whole table changed. Do not pick it either to fix, rewrite, shorten or translate the text: that is an answer.',
-  examples: [
-    {
-      message: 'Fais un tableau des lots et de leur budget',
-      needs_documents: false
-    },
-    { message: 'Present these figures as a table', needs_documents: false }
-  ],
-  parameters: {
-    type: 'object',
-    properties: {
-      caption: {
-        type: 'string',
-        description:
-          'a short title written above the table, empty when none is needed'
-      },
-      columns: {
-        type: 'array',
-        items: { type: 'string' },
-        description:
-          'the header of each column, 2 to 6 columns: one column per piece of information of a row, like a number, a name, a person or an amount'
-      },
-      rows: {
-        type: 'array',
-        items: { type: 'string' },
-        description:
-          'the data rows, one string per row, the cells separated by " | " in the order of the columns'
-      }
-    },
-    required: ['columns', 'rows']
-  },
-  instructions:
-    'Write in the language of the text given with the message. Keep the figures and names of that text as they are; do not invent values it does not give. Each row has exactly as many cells as there are columns, in their order: never put two pieces of information in one cell nor one piece in two cells.'
-}
-
 // A spreadsheet has no capability: a formula, a row or a column comes as a
 // cell of an answer, which the plugin writes at its address. These
 // instructions take the place of the ones of the assistant, written for a
@@ -161,9 +123,10 @@ const SHEET_CHIPS = [
   { name: 'totals', key: 'totals' }
 ]
 
-// Keyed by the `documentType` of the OnlyOffice config. `confirm: false`:
-// the editor undoes a slide or a table in one step, so they are written
-// without a card to confirm.
+// Keyed by the `documentType` of the OnlyOffice config. `confirm: true`: the
+// scribe writes nothing in the document without a click (docs/decisions.md).
+// A text document has no capability: a table comes in an answer, shown as a
+// table before it is inserted.
 const EDITORS = {
   slide: {
     capabilities: t => [
@@ -171,7 +134,7 @@ const EDITORS = {
         name: INSERT_SLIDE,
         label: t('OnlyOffice.scribe.insertSlide'),
         ...INSERT_SLIDE_FOR_LLM,
-        confirm: false
+        confirm: true
       }
     ],
     suggestions: t => [
@@ -185,14 +148,11 @@ const EDITORS = {
     ]
   },
   word: {
-    capabilities: () => [
-      { name: INSERT_TABLE, ...INSERT_TABLE_FOR_LLM, confirm: false }
-    ],
+    capabilities: () => [],
     suggestions: t => [
       CATALOGUE,
       {
         name: 'table',
-        capability: INSERT_TABLE,
         label: t('OnlyOffice.scribe.suggestions.table'),
         message: t('OnlyOffice.scribe.suggestions.tableMessage')
       }
@@ -206,7 +166,7 @@ const EDITORS = {
         name: INSERT_CHART,
         label: t('OnlyOffice.scribe.insertChart'),
         ...INSERT_CHART_FOR_LLM,
-        confirm: false
+        confirm: true
       }
     ],
     suggestions: t => [
@@ -323,70 +283,4 @@ export const normalizeChart = params => {
         : null,
     title: typeof title === 'string' ? title.trim() : ''
   }
-}
-
-const isStringArray = value =>
-  Array.isArray(value) && value.every(item => typeof item === 'string')
-
-// The LLM sometimes writes the rows as the lines of a Markdown table, with
-// their outer pipes and the separator line under the header
-const OUTER_PIPES = /^\s*\|?|\|?\s*$/g
-const SEPARATOR_CELL = /^:?-+:?$/
-
-/**
- * @param {unknown} params - parameters of an `insert_table` call, as the LLM
- * wrote them, each row a string of cells split on `|`
- * @returns {{ caption: string, columns: string[], rows: string[][] } | null}
- * every row padded to the width of the widest one, header included; null
- * when the parameters are wrong or the table would be empty
- */
-export const normalizeTable = params => {
-  const { caption = '', columns, rows } = params ?? {}
-  const isValid =
-    typeof caption === 'string' && isStringArray(columns) && isStringArray(rows)
-  if (!isValid) return null
-
-  const lines = rows
-    .map(row =>
-      row
-        .replace(OUTER_PIPES, '')
-        .split('|')
-        .map(cell => cell.trim())
-    )
-    .filter(
-      row =>
-        row.some(cell => cell !== '') &&
-        !row.every(cell => SEPARATOR_CELL.test(cell))
-    )
-  // A row longer than the header widens the table: the LLM sometimes splits
-  // a cell it named as one column, and its figures are worth more than an
-  // empty header
-  const width = Math.max(columns.length, ...lines.map(row => row.length))
-  const header = Array.from(
-    { length: width },
-    (_, index) => columns[index]?.trim() ?? ''
-  )
-  const cells = lines.map(row =>
-    Array.from({ length: width }, (_, index) => row[index] ?? '')
-  )
-  if (columns.length === 0 || cells.length === 0) return null
-
-  return { caption: caption.trim(), columns: header, rows: cells }
-}
-
-export const makeTableMarkdown = ({ caption, columns, rows }) => {
-  // A backslash is escaped first: it would escape the character after it
-  const escapeCell = cell =>
-    cell
-      .replace(/\\/g, '\\\\')
-      .replace(/\|/g, '\\|')
-      .replace(/\s*\n\s*/g, ' ')
-  const makeLine = cells => `| ${cells.map(escapeCell).join(' | ')} |`
-
-  const lines = [
-    makeLine(columns),
-    `|${' --- |'.repeat(columns.length)}`,
-    ...rows.map(makeLine)
-  ]
-  return (caption === '' ? '' : `${caption}\n\n`) + lines.join('\n')
 }
