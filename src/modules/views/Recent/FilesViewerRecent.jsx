@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
+import { useSharingContext } from 'cozy-sharing'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import useHead from '@/components/useHead'
+import { useCurrentFileId } from '@/hooks'
 import { usePersonalRecents } from '@/hooks/usePersonalRecents'
 import { isUnreadableRecent } from '@/modules/filelist/helpers'
 import { isTrashedDocument } from '@/modules/services/components/FilePicker/documents'
@@ -15,7 +17,7 @@ import { buildRecentQuery } from '@/queries'
 const isViewableRecent = item =>
   !isUnreadableRecent(item) && item.type === 'file' && !isTrashedDocument(item)
 
-const RecentFilesViewer = ({ files, filesQuery }) => {
+const RecentFilesViewer = ({ files, filesQuery, viewerProps }) => {
   const navigate = useNavigate()
 
   return (
@@ -24,17 +26,42 @@ const RecentFilesViewer = ({ files, filesQuery }) => {
       filesQuery={filesQuery}
       onClose={() => navigate('/recent')}
       onChange={fileId => navigate(`/recent/file/${fileId}`)}
+      viewerProps={viewerProps}
     />
   )
 }
 
 const PersonalFilesViewerRecent = () => {
+  const fileId = useCurrentFileId()
+  const { hasWriteAccess } = useSharingContext()
   const recents = usePersonalRecents({ isVisible: isViewableRecent })
+  const { data, hasMore, fetchStatus, fetchMore, lastUpdate } = recents
+  const currentFile = data.find(file => file._id === fileId)
+
+  // FilesViewer looks a missing file up once, with the drive of the route,
+  // which /recent has not: find the file in the next pages first.
+  const isLookingForFile = !currentFile && hasMore
+
+  useEffect(() => {
+    if (isLookingForFile && fetchStatus === 'loaded') fetchMore()
+  }, [isLookingForFile, fetchStatus, fetchMore])
 
   // A fetchMore puts the query back in loading: keep the viewer meanwhile.
-  if (!recents.lastUpdate) return <FilesViewerLoading />
+  if (!lastUpdate || isLookingForFile) return <FilesViewerLoading />
 
-  return <RecentFilesViewer files={recents.data} filesQuery={recents} />
+  // As in the shared drive viewer, a member who cannot write does not share.
+  const isSharingDisabled = Boolean(
+    currentFile?.driveId &&
+    !hasWriteAccess(currentFile.dir_id, currentFile.driveId)
+  )
+
+  return (
+    <RecentFilesViewer
+      files={data}
+      filesQuery={recents}
+      viewerProps={{ panel: { sharing: { disabled: isSharingDisabled } } }}
+    />
+  )
 }
 
 const LocalFilesViewerRecent = () => {
