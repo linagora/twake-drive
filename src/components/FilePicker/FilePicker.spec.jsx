@@ -95,7 +95,10 @@ jest.mock('@/components/PickerView/PickerViewTable', () => ({
             {item.name}
           </button>
           {onItemNavigate && (
-            <button type="button" onClick={() => onItemNavigate(item)}>
+            <button
+              type="button"
+              onClick={event => onItemNavigate(item, event)}
+            >
               Open {item.name}
             </button>
           )}

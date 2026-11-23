@@ -76,8 +76,8 @@ const CurrentFolderContent = ({
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
-  const handleItemClick = (item, event) => {
-    // The second click can land on a different folder after the rows change.
+  const handleOpenFolder = (item, event) => {
+    // The second click can hit a replacement row or chevron after navigation.
     if (!isMobile && event.detail > 1) return
     if (isDirectory(item)) navigateTo(item)
   }
@@ -94,8 +94,8 @@ const CurrentFolderContent = ({
       getItemDisabledReason={source.getItemDisabledReason}
       beforeItems={beforeItems}
       isNavigationDisabled={isNavigationDisabled}
-      onItemClick={handleItemClick}
-      onItemNavigate={navigateTo}
+      onItemClick={handleOpenFolder}
+      onItemNavigate={handleOpenFolder}
       error={error}
       emptyMessage={
         emptyMessage ?? (

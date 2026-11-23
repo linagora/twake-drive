@@ -136,8 +136,16 @@ export class MoveIntentPage {
     await this.expectBreadcrumb(name)
   }
 
-  async doubleClickFolder(name: string): Promise<void> {
-    await this.row(name).getByTestId('choice-onclick').dblclick({ delay: 100 })
+  async doubleClickFolder(
+    name: string,
+    target: 'row' | 'chevron'
+  ): Promise<void> {
+    const row = this.row(name)
+    const control =
+      target === 'chevron'
+        ? row.getByRole('button', { name: t('Move.openFolder') })
+        : row.getByTestId('choice-onclick')
+    await control.dblclick({ delay: 150 })
     await this.expectBreadcrumb(name)
   }
 

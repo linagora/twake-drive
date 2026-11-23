@@ -152,7 +152,7 @@ describe('PickerViewTableCell', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Move.openFolder' }))
 
-    expect(onItemNavigate).toHaveBeenCalledWith(mockFolder)
+    expect(onItemNavigate).toHaveBeenCalledWith(mockFolder, expect.any(Object))
   })
 
   it('renders updated_at and size cells for respective columns', () => {
