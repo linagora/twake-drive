@@ -466,6 +466,8 @@ export const FilePickerBody = ({
     return (
       <FilePickerRecentsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
+        displayedTypes={displayedTypes}
+        isItemIncluded={isItemIncluded}
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
         renderContent={renderFilePickerContent}
