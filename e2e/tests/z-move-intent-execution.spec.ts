@@ -49,6 +49,18 @@ test.describe('MOVE intent execution', () => {
     alicePage,
     aliceDrive
   }) => {
+    const childName = `Intent child ${stamp()}`
+    const childId = await createFolder({
+      instance: USERS.alice.instance,
+      name: childName,
+      parentId: destinationId
+    })
+    const nestedName = `Intent nested ${stamp()}`
+    await createFolder({
+      instance: USERS.alice.instance,
+      name: nestedName,
+      parentId: childId
+    })
     const picker = new MoveIntentPage(alicePage)
     await picker.open({
       fileIds: [sourceId],
@@ -56,6 +68,9 @@ test.describe('MOVE intent execution', () => {
       restrictToDefaultDir: true
     })
     await picker.waitReady()
+    await picker.doubleClickFolder(childName)
+    await picker.expectBreadcrumb(nestedName, false)
+    expect(picker.moveRequestCount(sourceId)).toBe(0)
     const initialReads = picker.readRequestCount(sourceId)
     await picker.confirmMove()
     const result = await picker.waitResult()
@@ -64,8 +79,8 @@ test.describe('MOVE intent execution', () => {
       _id: sourceId,
       _type: 'io.cozy.files',
       name: sourceName,
-      dir_id: destinationId,
-      path: `/${destinationName}/${sourceName}`,
+      dir_id: childId,
+      path: `/${destinationName}/${childName}/${sourceName}`,
       mime: 'text/plain'
     })
     expect(result[0]._rev).toEqual(expect.any(String))
@@ -74,7 +89,7 @@ test.describe('MOVE intent execution', () => {
     expect(picker.moveRequestCount(sourceId)).toBe(1)
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${sourceFolderId}`)
     await aliceDrive.row(sourceName).waitHidden()
-    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${destinationId}`)
+    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${childId}`)
     await aliceDrive.row(sourceName).waitVisible()
     expect(
       await fetchFileContent({
@@ -488,7 +503,9 @@ test.describe('MOVE intent execution', () => {
           name,
           path: `/${shareName}/${folderName}/${name}`
         })
-        await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${result[0].dir_id}`)
+        await alicePage.goto(
+          `${USERS.alice.appUrl}/#/folder/${result[0].dir_id}`
+        )
         await aliceDrive.row(name).waitVisible()
         expect(
           await fetchFileContent({

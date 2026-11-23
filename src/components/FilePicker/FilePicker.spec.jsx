@@ -256,7 +256,7 @@ describe('FilePicker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'More' }))
     expect(fetchMore).toHaveBeenCalledTimes(1)
 
-    fireEvent.doubleClick(screen.getByTestId('item-folder-id'))
+    fireEvent.click(screen.getByTestId('item-folder-id'))
 
     expect(onCurrentFolderChange).not.toHaveBeenCalledWith({
       folder: null,
@@ -505,7 +505,7 @@ describe('FilePicker', () => {
       />
     )
 
-    fireEvent.doubleClick(screen.getByTestId('item-shared-folder-id'))
+    fireEvent.click(screen.getByTestId('item-shared-folder-id'))
 
     expect(onCurrentFolderChange).toHaveBeenLastCalledWith({
       folder: driveFolder,

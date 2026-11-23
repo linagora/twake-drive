@@ -17,3 +17,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Paul Tran-Van, in a session with an agent (Claude Code), 2026-11-23
 - Why: a call showed no table before it was written, the production LLM seldom called it, and once in the history it made the LLM write its next tables as text rows.
 - Scope: desktop and mobile, the scribe of OnlyOffice in text documents.
+
+## 2026-11-23, [UX] Open move destinations with one click
+
+- Decision: clicking or tapping an eligible folder row opens it; confirmation moves into the currently open folder, not a selected row.
+- Decided by: Bobpodvalnyi (product owner), [#4637](https://github.com/linagora/twake-drive/issues/4637).
+- Why: use the same gesture on desktop and mobile while keeping the open destination explicit before confirmation.
+- Scope: new MoveTo dialog and MOVE intent on desktop and mobile; legacy, public, and PICK flows are unchanged.

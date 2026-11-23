@@ -168,18 +168,42 @@ export class MoveToPage {
     return folderId
   }
 
-  async selectFolder(name: string): Promise<void> {
-    const row: Locator = await this.folderRow(name)
-    await row.click()
-    await expect(this.moveButton).toBeEnabled()
-  }
-
   async openFolder(name: string): Promise<void> {
     const row: Locator = await this.folderRow(name)
-    await row.dblclick()
-    await expect(
-      this.dialog.getByTestId('file-picker-breadcrumb')
-    ).toContainText(name)
+    await row.getByTestId('choice-onclick').click()
+    await this.expectBreadcrumb(name)
+  }
+
+  async openFolderOnMobile(name: string): Promise<void> {
+    const row: Locator = await this.folderRow(name)
+    await row.getByTestId('choice-onclick').tap()
+    await this.expectBreadcrumb(name)
+  }
+
+  async openFolderWithKeyboard(name: string): Promise<void> {
+    const row: Locator = await this.folderRow(name)
+    await row.getByRole('button', { name: t('Move.openFolder') }).press('Enter')
+    await this.expectBreadcrumb(name)
+  }
+
+  async confirmWithKeyboard(): Promise<void> {
+    await expect(this.moveButton).toBeEnabled()
+    for (let i = 0; i < 8; i++) {
+      await this.page.keyboard.press('Tab')
+      if (
+        await this.moveButton.evaluate(
+          button => button === document.activeElement
+        )
+      )
+        break
+    }
+    await expect(this.moveButton).toBeFocused()
+    await this.page.keyboard.press('Enter')
+    await expect(this.dialog).toBeHidden()
+  }
+
+  private async expectBreadcrumb(name: string): Promise<void> {
+    await expect(this.breadcrumb.getByText(name, { exact: true })).toBeVisible()
   }
 
   async showFolderCreation(): Promise<void> {

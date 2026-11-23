@@ -76,12 +76,11 @@ const CurrentFolderContent = ({
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
-  const handleItemDoubleClick = useCallback(
-    item => {
-      if (isDirectory(item)) navigateTo(item)
-    },
-    [navigateTo]
-  )
+  const handleItemClick = (item, event) => {
+    // The second click can land on a different folder after the rows change.
+    if (!isMobile && event.detail > 1) return
+    if (isDirectory(item)) navigateTo(item)
+  }
 
   return (
     <PickerView
@@ -95,8 +94,7 @@ const CurrentFolderContent = ({
       getItemDisabledReason={source.getItemDisabledReason}
       beforeItems={beforeItems}
       isNavigationDisabled={isNavigationDisabled}
-      onItemClick={isMobile ? handleItemDoubleClick : undefined}
-      onItemDoubleClick={handleItemDoubleClick}
+      onItemClick={handleItemClick}
       onItemNavigate={navigateTo}
       error={error}
       emptyMessage={
