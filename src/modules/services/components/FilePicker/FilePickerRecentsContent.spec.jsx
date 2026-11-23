@@ -1,11 +1,20 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
+import useFlag from 'cozy-flags/dist/useFlag'
+
 import { FilePickerRecentsContent } from './FilePickerRecentsContent'
 
+import { filePickerItemTypes } from '@/components/FilePicker/constants'
+import { usePersonalRecents } from '@/hooks/usePersonalRecents'
 import useRecentFiles from '@/hooks/useRecentFiles'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
+jest.mock('cozy-flags/dist/useFlag', () => ({
+  __esModule: true,
+  default: jest.fn()
+}))
+jest.mock('@/hooks/usePersonalRecents')
 jest.mock('@/hooks/useRecentFiles')
 jest.mock('@/modules/selection/SelectionProvider', () => ({
   useSelectionContext: jest.fn()
@@ -187,5 +196,93 @@ describe('FilePickerRecentsContent', () => {
 
     await waitFor(() => expect(setSelectedItems).toHaveBeenCalledWith({}))
     expect(setIsSelectAll).toHaveBeenCalledWith(false)
+  })
+
+  describe('with the personal recents', () => {
+    const { FILE, FOLDER } = filePickerItemTypes
+    const file = { _id: 'file-id', name: 'File', type: 'file' }
+    const folder = { _id: 'folder-id', name: 'Folder', type: 'directory' }
+    const driveFile = {
+      _id: 'drive-file-id',
+      name: 'Drive file',
+      type: 'file',
+      driveId: 'drive-id'
+    }
+    const trashedFile = { _id: 'trashed-id', type: 'file', trashed: true }
+    const trashedFolder = {
+      _id: 'trashed-folder-id',
+      type: 'directory',
+      path: '/.cozy_trash/Old'
+    }
+    const unreadable = {
+      _id: 'gone-id',
+      _type: 'io.cozy.files.recents',
+      type: 'file'
+    }
+
+    function setupPersonal({
+      rows,
+      displayedTypes = [FILE, FOLDER],
+      isItemIncluded = () => true,
+      hasMore = false,
+      fetchMore = jest.fn()
+    }) {
+      useFlag.mockImplementation(name => name === 'drive.recents.enabled')
+      usePersonalRecents.mockImplementation(({ isVisible }) => ({
+        data: rows.filter(isVisible),
+        fetchStatus: 'loaded',
+        hasMore,
+        fetchMore
+      }))
+      useSelectionContext.mockReturnValue({
+        selectedItems: [],
+        setIsSelectAll: jest.fn(),
+        setSelectedItems: jest.fn()
+      })
+      const renderSpy = jest.fn(renderContent)
+      render(
+        <FilePickerRecentsContent
+          rootBreadcrumbPath={rootBreadcrumbPath}
+          displayedTypes={displayedTypes}
+          isItemIncluded={isItemIncluded}
+          renderContent={renderSpy}
+        />
+      )
+      return { source: () => renderSpy.mock.calls.at(-1)[0] }
+    }
+
+    it('lists the readable files and folders of the recents, in their order', () => {
+      setupPersonal({
+        rows: [driveFile, folder, unreadable, trashedFile, trashedFolder, file]
+      })
+
+      expect(useRecentFiles).not.toHaveBeenCalled()
+      expect(screen.getByTestId('items')).toHaveTextContent(
+        'drive-file-id,folder-id,file-id'
+      )
+      expect(screen.getByTestId('breadcrumb')).toHaveTextContent('Recents')
+    })
+
+    it('applies the displayed types and the item filter of the picker', () => {
+      setupPersonal({
+        rows: [driveFile, folder, file],
+        displayedTypes: [FILE],
+        isItemIncluded: item => item._id !== 'file-id'
+      })
+
+      expect(screen.getByTestId('items')).toHaveTextContent('drive-file-id')
+    })
+
+    it('lets the picker load more recents', () => {
+      const fetchMore = jest.fn()
+      const { source } = setupPersonal({
+        rows: [file],
+        hasMore: true,
+        fetchMore
+      })
+
+      expect(screen.getByTestId('has-more')).toHaveTextContent('true')
+      expect(source().fetchMore).toBe(fetchMore)
+    })
   })
 })
