@@ -15,6 +15,7 @@ import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
+import PersonalRecentsRealTime from './PersonalRecentsRealTime'
 
 import useHead from '@/components/useHead'
 import { RECENT_FOLDER_ID } from '@/constants/config'
@@ -194,6 +195,7 @@ const PersonalRecentView = () => {
       groupDirectoriesFirstByUpdatedAt={false}
       showDirectoryLastUpdated={true}
     >
+      <PersonalRecentsRealTime />
       <FileParentFolderProvider getParentFolderPath={getParentFolderPath}>
         <RecentViewContent
           recentsResult={recentsResult}
