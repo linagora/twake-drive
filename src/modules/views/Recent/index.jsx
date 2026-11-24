@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 
 import flag from 'cozy-flags'
@@ -43,26 +43,21 @@ import Toolbar from '@/modules/drive/Toolbar'
 import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
 import { FileParentFolderProvider } from '@/modules/filelist/FileParentFolderContext'
 import { makeParentFolderName } from '@/modules/filelist/helpers'
+import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
-
-// The shortcuts act on the selection, so they stay unmounted while the view
-// offers no item action.
-const KeyboardShortcuts = props => {
-  useKeyboardShortcuts(props)
-  return null
-}
 
 const RecentViewContent = ({
   recentsResult,
   orderProps,
-  keepQueryOrder = false,
-  withActions = true
+  keepQueryOrder = false
 }) => {
   const base = useFolderViewBase()
   const sharingContext = useSharingContext()
-  const { allLoaded, refresh, isOwner, byDocId } = sharingContext
+  const { allLoaded, refresh, isOwner, byDocId, hasWriteAccess } =
+    sharingContext
   const nativeSharing = useNativeFileSharing()
+  const { refreshSelectedItems } = useSelectionContext()
   useHead({ title: base.t('breadcrumb.title_recent') })
 
   // Shared-drive and federated files arrive from the dataproxy seconds after
@@ -70,11 +65,29 @@ const RecentViewContent = ({
   const isFetchingMore =
     recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
 
+  const items = recentsResult?.data
+  useEffect(() => {
+    if (!items) return
+    refreshSelectedItems(items)
+  }, [items, refreshSelectedItems])
+
+  useKeyboardShortcuts({
+    client: base.client,
+    items: recentsResult?.data || [],
+    sharingContext,
+    allowCopy: false,
+    hasItemWriteAccess: hasWriteAccess,
+    pushModal: base.pushModal,
+    popModal: base.popModal,
+    refresh
+  })
+
   const actionsOptions = {
     ...base,
     ...nativeSharing,
     refresh,
     hasWriteAccess: true,
+    hasItemWriteAccess: hasWriteAccess,
     canMove: true,
     isPublic: false,
     allLoaded,
@@ -84,7 +97,7 @@ const RecentViewContent = ({
     selectAll: () => base.toggleSelectAllItems(recentsResult?.data || [])
   }
 
-  const recentActions = makeActions(
+  const actions = makeActions(
     [
       selectAllItems,
       share,
@@ -105,21 +118,9 @@ const RecentViewContent = ({
     ],
     actionsOptions
   )
-  const actions = withActions ? recentActions : []
 
   return (
     <FolderView>
-      {withActions && (
-        <KeyboardShortcuts
-          client={base.client}
-          items={recentsResult?.data || []}
-          sharingContext={sharingContext}
-          allowCopy={false}
-          pushModal={base.pushModal}
-          popModal={base.popModal}
-          refresh={refresh}
-        />
-      )}
       <Content className={base.isMobile ? '' : 'u-pt-1'}>
         <FolderViewHeader>
           <Breadcrumb path={[{ name: base.t('breadcrumb.title_recent') }]} />
@@ -173,7 +174,6 @@ const DataProxyRecentView = () => {
   )
 }
 
-// Item actions come back with linagora/twake-drive#4591.
 const PersonalRecentView = () => {
   const recentsResult = usePersonalRecents()
   const { sharedDrives } = useSharedDrives()
@@ -198,7 +198,6 @@ const PersonalRecentView = () => {
         <RecentViewContent
           recentsResult={recentsResult}
           keepQueryOrder={true}
-          withActions={false}
         />
       </FileParentFolderProvider>
     </FileLastUpdatedProvider>

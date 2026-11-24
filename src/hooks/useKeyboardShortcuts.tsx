@@ -15,6 +15,7 @@ import {
   OPERATION_CUT
 } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder } from '@/hooks'
+import { hasWriteAccessToItems } from '@/modules/actions/helpers'
 import DeleteConfirm from '@/modules/drive/DeleteConfirm'
 import { startRenamingAsync } from '@/modules/drive/rename'
 import { useNextcloudCurrentFolder } from '@/modules/nextcloud/hooks/useNextcloudCurrentFolder'
@@ -46,6 +47,7 @@ interface UseKeyboardShortcutsProps {
   allowDelete?: boolean
   isNextCloudFolder?: boolean
   isPublic?: boolean
+  hasItemWriteAccess?: (docId: string, driveId?: string) => boolean
   pushModal?: (modal: React.ReactElement) => void
   popModal?: () => void
   refresh?: () => void
@@ -62,6 +64,7 @@ export const useKeyboardShortcuts = ({
   allowDelete = true,
   isNextCloudFolder = false,
   isPublic = false,
+  hasItemWriteAccess,
   pushModal,
   popModal,
   refresh
@@ -130,7 +133,10 @@ export const useKeyboardShortcuts = ({
   const handleCut = useCallback(() => {
     if (!selectedItems.length) return
 
-    if (!allowCut) {
+    if (
+      !allowCut ||
+      !hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
+    ) {
       showAlert({
         message: t('alert.cut_not_allowed'),
         severity: 'secondary'
@@ -154,6 +160,7 @@ export const useKeyboardShortcuts = ({
   }, [
     selectedItems,
     allowCut,
+    hasItemWriteAccess,
     currentFolder,
     cutFiles,
     t,
@@ -273,10 +280,13 @@ export const useKeyboardShortcuts = ({
   }, [isSelectAll, clearSelection, selectAll, items])
 
   const handleRename = useCallback(() => {
-    if (selectedItems.length === 1) {
+    if (
+      selectedItems.length === 1 &&
+      hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
+    ) {
       dispatch(startRenamingAsync(selectedItems[0]))
     }
-  }, [selectedItems, dispatch])
+  }, [selectedItems, hasItemWriteAccess, dispatch])
 
   const handleEscape = useCallback(() => {
     hideSelectionBar()
@@ -286,7 +296,10 @@ export const useKeyboardShortcuts = ({
   const handleDelete = useCallback(() => {
     if (!selectedItems.length || !pushModal || !popModal || !refresh) return
 
-    if (!allowDelete) {
+    if (
+      !allowDelete ||
+      !hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
+    ) {
       showAlert({
         message: t('alert.delete_not_allowed'),
         severity: 'secondary'
@@ -301,7 +314,16 @@ export const useKeyboardShortcuts = ({
         onClose={popModal}
       />
     )
-  }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
+  }, [
+    selectedItems,
+    pushModal,
+    popModal,
+    refresh,
+    allowDelete,
+    hasItemWriteAccess,
+    showAlert,
+    t
+  ])
 
   useEffect(() => {
     const shortcuts: Record<string, (() => void | Promise<void>) | undefined> =

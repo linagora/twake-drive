@@ -64,3 +64,14 @@ export const getContextMenuActions = (actions = []) =>
   actions.filter(
     action => Object.values(action)[0]?.displayInContextMenu !== false
   )
+
+/**
+ * Whether the user can write every item, each in its own drive.
+ *
+ * @param {Object[]} items - The items to check
+ * @param {Function} [hasItemWriteAccess] - `hasWriteAccess(docId, driveId)` of the sharing context; without it, every item is writable
+ * @returns {boolean}
+ */
+export const hasWriteAccessToItems = (items, hasItemWriteAccess) =>
+  !hasItemWriteAccess ||
+  items.every(item => hasItemWriteAccess(item._id, item.driveId))

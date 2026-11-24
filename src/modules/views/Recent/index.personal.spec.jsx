@@ -4,7 +4,8 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor
+  waitFor,
+  within
 } from '@testing-library/react'
 import React from 'react'
 
@@ -44,12 +45,6 @@ jest.mock('@/modules/views/Folder/CustomizedIcon', () => ({
     <div data-testid="CustomizedIcon" data-color={selectedColor} />
   )
 }))
-
-useSharingContext.mockReturnValue({
-  byDocId: {},
-  allLoaded: true,
-  refresh: jest.fn()
-})
 
 // The whole view renders: give it time when the full suite loads the machine.
 configure({ asyncUtilTimeout: 4000 })
@@ -220,6 +215,11 @@ describe('Recent view with the personal recents of the stack', () => {
     jest.spyOn(console, 'error').mockImplementation()
     jest.spyOn(console, 'warn').mockImplementation()
     flag.mockImplementation(name => name === 'drive.recents.enabled')
+    useSharingContext.mockReturnValue({
+      byDocId: {},
+      allLoaded: true,
+      refresh: jest.fn()
+    })
     // The "Load more" button of cozy-ui observes its own visibility.
     window.IntersectionObserver = jest.fn(() => ({
       observe: jest.fn(),
@@ -298,41 +298,149 @@ describe('Recent view with the personal recents of the stack', () => {
     expect(linkOf('secret')).toBe(null)
   })
 
-  it('hides the item actions', async () => {
+  it('offers item actions on readable items only', async () => {
     setup()
 
-    await screen.findByText('photo')
-    const rowActions = screen
-      .queryAllByLabelText('More')
-      .filter(node => node.closest('.fil-content-row'))
-    expect(rowActions).toEqual([])
+    await screen.findByText('secret')
+    const rowActionOf = name =>
+      within(
+        screen.getByText(name).closest('.fil-content-row')
+      ).queryByLabelText('More')
+    expect(rowActionOf('photo')).toBeInTheDocument()
+    expect(rowActionOf('spec')).toBeInTheDocument()
+    expect(rowActionOf('secret')).toBe(null)
   })
 
-  describe('ignores the keyboard shortcuts on a selected item', () => {
-    const selectPhoto = async () => {
-      const result = setup()
-      fireEvent.click(await screen.findByText('photo'))
-      await waitFor(() =>
-        expect(
-          screen.getByText('photo').closest('.fil-content-row-selected')
-        ).toBeInTheDocument()
+  it('leaves unreadable items out when selecting all', async () => {
+    const { pushModal } = setup()
+
+    await screen.findByText('secret')
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    fireEvent.keyDown(document.body, { key: 'Delete' })
+
+    await waitFor(() => expect(pushModal).toHaveBeenCalled())
+    const [deleteConfirm] = pushModal.mock.calls[0]
+    const trashedIds = deleteConfirm.props.files.map(({ _id }) => _id)
+    expect(trashedIds).toContain('photo')
+    expect(trashedIds).not.toContain('gone')
+  })
+
+  it('offers no write action on the items of a drive the user can only read', async () => {
+    useSharingContext.mockReturnValue({
+      byDocId: {},
+      allLoaded: true,
+      refresh: jest.fn(),
+      hasWriteAccess: (docId, driveId) => driveId !== 'drive-1'
+    })
+    const { pushModal } = setup()
+
+    await screen.findByText('spec')
+    fireEvent.click(
+      within(
+        screen.getByText('spec').closest('.fil-content-row')
+      ).getByLabelText('More')
+    )
+    await screen.findByText('Download')
+    expect(screen.queryByText('Rename')).toBe(null)
+    expect(screen.queryByText('Move to…')).toBe(null)
+    expect(screen.queryByText('Remove')).toBe(null)
+
+    fireEvent.keyDown(document.body, { key: 'Escape' })
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    fireEvent.keyDown(document.body, { key: 'Delete' })
+    expect(pushModal).not.toHaveBeenCalled()
+  })
+
+  it('downloads the selected items after selecting all', async () => {
+    const { client } = setup({ pages: [page(['one', 'two'])] })
+
+    await screen.findByText('two')
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    fireEvent.click(await screen.findByText('Download'))
+
+    await waitFor(() =>
+      expect(client.stackClient.fetchJSON).toHaveBeenCalledWith(
+        'POST',
+        '/files/archive',
+        expect.objectContaining({
+          data: expect.objectContaining({
+            attributes: expect.objectContaining({ ids: ['one', 'two'] })
+          })
+        })
       )
-      return result
+    )
+  })
+
+  it('drops a selected file that a refresh shows as unreadable', async () => {
+    const unreadableTwo = {
+      ...page(['one', 'two']),
+      data: [recent('one'), recent('two', { readable: false })],
+      included: [file('one', { name: 'one.txt', path: '/one.txt' })]
     }
-
-    it('does not ask to trash it on Delete', async () => {
-      const { pushModal } = await selectPhoto()
-      fireEvent.keyDown(document.body, { key: 'Delete' })
-
-      expect(pushModal).not.toHaveBeenCalled()
+    const { client, pushModal } = setup({
+      pages: [page(['one', 'two']), unreadableTwo]
     })
 
-    it('does not rename it on F2', async () => {
-      await selectPhoto()
-      fireEvent.keyDown(document.body, { key: 'F2' })
+    await screen.findByText('two')
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    const { definition, options } = buildPersonalRecentsQuery()
+    await act(() =>
+      client.query(definition(), { ...options, fetchPolicy: null })
+    )
+    await screen.findByText('old-two')
+    fireEvent.keyDown(document.body, { key: 'Delete' })
 
-      expect(screen.queryByDisplayValue('photo.jpg')).toBe(null)
+    await waitFor(() => expect(pushModal).toHaveBeenCalled())
+    const [deleteConfirm] = pushModal.mock.calls[0]
+    expect(deleteConfirm.props.files.map(({ _id }) => _id)).toEqual(['one'])
+  })
+
+  it('selects all again after a refresh brought a recent', async () => {
+    const { client, pushModal } = setup({
+      pages: [page(['one']), page(['new', 'one'])]
     })
+
+    await screen.findByText('one')
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    const { definition, options } = buildPersonalRecentsQuery()
+    await act(() =>
+      client.query(definition(), { ...options, fetchPolicy: null })
+    )
+    await screen.findByText('new')
+    fireEvent.keyDown(document.body, { key: 'a', ctrlKey: true })
+    fireEvent.keyDown(document.body, { key: 'Delete' })
+
+    await waitFor(() => expect(pushModal).toHaveBeenCalled())
+    const [deleteConfirm] = pushModal.mock.calls[0]
+    expect(deleteConfirm.props.files.map(({ _id }) => _id)).toEqual([
+      'new',
+      'one'
+    ])
+  })
+
+  it('adds the file of a recent to favorites, not the recent', async () => {
+    const { client } = setup()
+
+    await screen.findByText('photo')
+    const photoRow = screen.getByText('photo').closest('.fil-content-row')
+    fireEvent.click(within(photoRow).getByLabelText('More'))
+    fireEvent.click(await screen.findByText('Add to favorites'))
+
+    await waitFor(() =>
+      expect(client.stackClient.fetchJSON).toHaveBeenCalledWith(
+        'PATCH',
+        '/files/photo',
+        expect.objectContaining({
+          data: expect.objectContaining({
+            attributes: expect.objectContaining({
+              name: 'photo.jpg',
+              cozyMetadata: expect.objectContaining({ favorite: true })
+            })
+          })
+        }),
+        expect.anything()
+      )
+    )
   })
 
   it('loads the next page instead of showing an empty first page', async () => {

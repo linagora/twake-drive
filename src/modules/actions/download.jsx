@@ -52,11 +52,15 @@ export const download = ({
       ) {
         return false
       }
-      return files.length > 0
+      // An archive is built in the drive of its first file only.
+      const isFromOneDrive = files.every(
+        file => file.driveId === files[0].driveId
+      )
+      return files.length > 0 && isFromOneDrive
     },
     action: files => {
       let selectedFiles = files
-      if (isSelectAll) {
+      if (isSelectAll && displayedFolder) {
         selectedFiles = [displayedFolder]
       }
       return downloadFiles(client, selectedFiles, { showAlert, t })
