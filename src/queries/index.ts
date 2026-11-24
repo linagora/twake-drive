@@ -88,8 +88,8 @@ export const buildRecentQuery: QueryBuilder = () => ({
   }
 })
 
-// Nothing updates the recents in the store yet: coming back to the view
-// refetches them.
+// Realtime does not reach the files of shared drives, nor the recents written
+// with an older activity: coming back to the view refetches them.
 const RECENTS_CACHE_TIMEOUT = 10 * 1000
 
 // The stack sorts by last activity and puts the file of each recent in
@@ -104,6 +104,10 @@ export const buildPersonalRecentsQuery: QueryBuilder = () => ({
     backgroundFetching: true
   }
 })
+
+export const buildLatestPersonalRecentsDefinition = (
+  limit: number
+): QueryDefinition => Q(DOCTYPE_FILES_RECENTS).limitBy(limit)
 
 export const buildParentsByIdsQuery: QueryBuilder<string[]> = ids => ({
   definition: () => Q('io.cozy.files').getByIds(ids),
