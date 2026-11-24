@@ -27,7 +27,7 @@ describe('RenameInput', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     mockCollection = {
-      update: jest.fn()
+      update: jest.fn(async doc => ({ data: doc }))
     }
     mockSharingsCollection = {
       renameSharedDrive: jest.fn()
@@ -147,6 +147,20 @@ describe('RenameInput', () => {
         _rev: '3',
         driveId: 'special-drive-123'
       })
+    )
+  })
+
+  it('puts the renamed file in the store', async () => {
+    setup({ file: { ...file, id: 'file123', driveId: 'drive-1' } })
+    const inputNode = document.getElementsByTagName('input')[0]
+
+    fireEvent.change(inputNode, { target: { value: 'renamed.pdf' } })
+    fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
+
+    await waitFor(() =>
+      expect(
+        client.store.getState().cozy.documents['io.cozy.files']?.file123?.name
+      ).toBe('renamed.pdf')
     )
   })
 

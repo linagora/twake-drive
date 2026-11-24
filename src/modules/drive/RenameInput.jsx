@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
+import { receiveQueryResult } from 'cozy-client/dist/store'
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
@@ -12,13 +13,18 @@ import { abortRenaming } from './rename'
 import FilenameInput from '@/modules/filelist/FilenameInput'
 
 // If we set the _rev then CozyClient tries to update. Else
-// it tries to create
+// it tries to create. A collection bypasses the store, and the file of a
+// shared drive gets no realtime event: the store takes the response.
 export const updateFileNameQuery = async (client, file, newName) => {
-  return client.collection('io.cozy.files', { driveId: file.driveId }).update({
-    ...file,
-    name: newName,
-    _rev: file._rev || file.meta.rev
-  })
+  const response = await client
+    .collection('io.cozy.files', { driveId: file.driveId })
+    .update({
+      ...file,
+      name: newName,
+      _rev: file._rev || file.meta.rev
+    })
+  client.store.dispatch(receiveQueryResult(null, { data: response.data }))
+  return response
 }
 
 export const RenameInput = ({
