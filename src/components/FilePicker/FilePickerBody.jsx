@@ -76,11 +76,14 @@ const CurrentFolderContent = ({
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
-  const handleOpenFolder = (item, event) => {
-    // The second click can hit a replacement row or chevron after navigation.
-    if (!isMobile && event.detail > 1) return
-    if (isDirectory(item)) navigateTo(item)
-  }
+  const handleOpenFolder = useCallback(
+    (item, event) => {
+      // The second click can hit a replacement row or chevron after navigation.
+      if (!isMobile && event.detail > 1) return
+      if (isDirectory(item)) navigateTo(item)
+    },
+    [isMobile, navigateTo]
+  )
 
   return (
     <PickerView
