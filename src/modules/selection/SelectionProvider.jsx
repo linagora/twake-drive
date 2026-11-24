@@ -10,7 +10,13 @@ import React, {
 } from 'react'
 import { useLocation } from 'react-router-dom'
 
+import { isUnreadableRecent } from '@/modules/filelist/helpers'
 import { useOptionalNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
+
+const omitUnreadableRecents = selection =>
+  Object.fromEntries(
+    Object.entries(selection).filter(([, item]) => !isUnreadableRecent(item))
+  )
 
 /**
  * @typedef TSelectionContext
@@ -51,7 +57,10 @@ const SelectionProvider = ({
   const [internalSelectedItems, setInternalSelectedItems] = useState({})
   const [isSelectionBarOpen, setSelectionBarOpen] = useState(false)
   const [isSelectAll, setIsSelectAll] = useState(false)
-  const selectedItems = selection ?? internalSelectedItems
+  const selectedItems = useMemo(
+    () => omitUnreadableRecents(selection ?? internalSelectedItems),
+    [selection, internalSelectedItems]
+  )
   const selectedItemsRef = useRef(selectedItems)
   const isControlledRef = useRef(selection !== undefined)
   const onSelectionChangeRef = useRef(onSelectionChange)
@@ -62,15 +71,16 @@ const SelectionProvider = ({
   }, [selectedItems, selection, onSelectionChange])
 
   const setSelectedItems = useCallback(nextSelection => {
-    const resolvedSelection =
+    const resolvedSelection = omitUnreadableRecents(
       typeof nextSelection === 'function'
         ? nextSelection(selectedItemsRef.current)
         : nextSelection
+    )
 
     selectedItemsRef.current = resolvedSelection
 
     if (!isControlledRef.current) {
-      setInternalSelectedItems(nextSelection)
+      setInternalSelectedItems(resolvedSelection)
     }
     onSelectionChangeRef.current?.(Object.values(resolvedSelection))
   }, [])
@@ -95,12 +105,11 @@ const SelectionProvider = ({
   }
 
   const selectAll = items => {
-    const newSelectedItems = items.reduce((acc, item) => {
-      acc[item._id] = item
-      return acc
-    }, {})
-    setSelectedItems(newSelectedItems)
-    setIsSelectAll(true)
+    const selectableItems = omitUnreadableRecents(
+      Object.fromEntries(items.map(item => [item._id, item]))
+    )
+    setSelectedItems(selectableItems)
+    setIsSelectAll(Object.keys(selectableItems).length > 0)
   }
 
   const clearSelection = useCallback(() => {

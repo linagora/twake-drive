@@ -18,6 +18,7 @@ import styles from '@/styles/filelist.styl'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { isRenaming as isRenamingSelector } from '@/modules/drive/rename'
+import { isUnreadableRecent } from '@/modules/filelist/helpers'
 import Cell from '@/modules/filelist/virtualized/cells/Cell'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
@@ -91,7 +92,7 @@ const Table = forwardRef(
     // name cell's FileOpener, which does receive the real event.
     const handleRowSelect = useCallback(
       (row, column) => {
-        if (isRenamingActive) return
+        if (isRenamingActive || isUnreadableRecent(row)) return
         setSelectedItems({ [row._id]: row })
         onInteractWithFile?.(row?._id, column)
       },

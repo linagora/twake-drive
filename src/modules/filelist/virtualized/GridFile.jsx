@@ -29,6 +29,7 @@ import {
 } from '@/modules/drive/rename'
 import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import FileOpener from '@/modules/filelist/FileOpener'
+import { canInteractWithItem } from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
@@ -89,8 +90,7 @@ const GridFile = ({
   const updatedAt = getFileLastUpdatedAt(attributes)
   const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
-  let canInteractWithFile =
-    attributes._id && !attributes._id.endsWith('.trash-dir')
+  let canInteractWithFile = canInteractWithItem(attributes)
   if (typeof canInteractWith === 'function') {
     canInteractWithFile &&= canInteractWith(attributes)
   }
