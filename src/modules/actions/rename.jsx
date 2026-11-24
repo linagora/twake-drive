@@ -5,6 +5,7 @@ import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuIte
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import { hasWriteAccessToItems } from '@/modules/actions/helpers'
 import { startRenamingAsync } from '@/modules/drive/rename'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
@@ -27,6 +28,7 @@ const makeComponent = (label, icon) => {
 export const rename = ({
   t,
   hasWriteAccess,
+  hasItemWriteAccess,
   dispatch,
   shouldHideIfSharedDriveRecipient
 }) => {
@@ -42,7 +44,12 @@ export const rename = ({
       const isAllowedForSharedDrive = shouldHideIfSharedDriveRecipient
         ? !isSharedDriveDoc(selection[0])
         : true
-      return selection.length === 1 && hasWriteAccess && isAllowedForSharedDrive
+      return (
+        selection.length === 1 &&
+        hasWriteAccess &&
+        hasWriteAccessToItems(selection, hasItemWriteAccess) &&
+        isAllowedForSharedDrive
+      )
     },
     action: files => {
       // Use setTimeout to defer dispatch until after click event completes

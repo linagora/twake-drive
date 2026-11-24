@@ -5,12 +5,16 @@ import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuIte
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
-import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
+import {
+  hasWriteAccessToItems,
+  navigateToModalWithMultipleFile
+} from '@/modules/actions/helpers'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const moveTo = ({
   t,
   canMove,
+  hasItemWriteAccess,
   pathname,
   navigate,
   isMobile,
@@ -45,6 +49,7 @@ const moveTo = ({
       return (
         docs.length > 0 &&
         canMove &&
+        hasWriteAccessToItems(docs, hasItemWriteAccess) &&
         isAllowedForSharedDrive &&
         isFromSameFolder
       )

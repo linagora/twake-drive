@@ -5,6 +5,7 @@ import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuIte
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import { hasWriteAccessToItems } from '@/modules/actions/helpers'
 import DeleteConfirm from '@/modules/drive/DeleteConfirm'
 
 const makeComponent = ({ icon, t, byDocId, isOwner }) => {
@@ -42,6 +43,7 @@ export const trash = ({
   pushModal,
   popModal,
   hasWriteAccess,
+  hasItemWriteAccess,
   refresh,
   byDocId,
   isOwner,
@@ -54,7 +56,10 @@ export const trash = ({
     icon,
     allowInfectedFiles: true,
     allowNotScannedFiles: true,
-    displayCondition: files => files.length > 0 && hasWriteAccess,
+    displayCondition: files =>
+      files.length > 0 &&
+      hasWriteAccess &&
+      hasWriteAccessToItems(files, hasItemWriteAccess),
     action: files => {
       return pushModal(
         <DeleteConfirm

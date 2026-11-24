@@ -18,6 +18,21 @@ const omitUnreadableRecents = selection =>
     Object.entries(selection).filter(([, item]) => !isUnreadableRecent(item))
   )
 
+const isEveryItemSelected = (items, selection) =>
+  items.every(
+    item => isUnreadableRecent(item) || selection[item._id] !== undefined
+  )
+
+const replaceSelectedItems = (selection, items) => {
+  const itemsById = new Map(items.map(item => [item._id, item]))
+  return Object.fromEntries(
+    Object.entries(selection).map(([id, item]) => [
+      id,
+      itemsById.get(id) ?? item
+    ])
+  )
+}
+
 /**
  * @typedef TSelectionContext
  * @property {Function} showSelectionBar Show the SelectionBar
@@ -30,6 +45,7 @@ const omitUnreadableRecents = selection =>
  * @property {Function} toggleSelectAllItems Toggle selects all items
  * @property {Function} selectAll Select all items
  * @property {Function} clearSelection Clear all the selected items
+ * @property {Function} refreshSelectedItems Replace the selected items with their refreshed version among the given items
  */
 
 /** @type {import('react').Context<TSelectionContext>} */
@@ -84,6 +100,22 @@ const SelectionProvider = ({
     }
     onSelectionChangeRef.current?.(Object.values(resolvedSelection))
   }, [])
+
+  // A refresh can turn a selected file into a recent the user can no longer
+  // read, which leaves the selection, or bring a row that is not selected.
+  const refreshSelectedItems = useCallback(
+    items => {
+      const refreshedSelection = omitUnreadableRecents(
+        replaceSelectedItems(selectedItemsRef.current, items)
+      )
+      setIsSelectAll(
+        wasSelectAll =>
+          wasSelectAll && isEveryItemSelected(items, refreshedSelection)
+      )
+      setSelectedItems(refreshedSelection)
+    },
+    [setSelectedItems]
+  )
 
   const newItemHighlightContext = useOptionalNewItemHighlightContext()
 
@@ -149,7 +181,8 @@ const SelectionProvider = ({
         isSelectAll,
         toggleSelectAllItems,
         setSelectedItems,
-        setIsSelectAll
+        setIsSelectAll,
+        refreshSelectedItems
       }}
     >
       {clearOnLocationChange && (
