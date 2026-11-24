@@ -1,8 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { useEffect, useCallback, useState } from 'react'
 
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
-
+import Loader from '@/components/Loader'
 import FallbackViewer from '@/modules/views/OnlyOffice/FallbackViewer'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
@@ -56,11 +55,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   return (
     <>
-      {!isEditorReady && (
-        <div className="u-flex u-flex-items-center u-flex-justify-center u-flex-grow-1">
-          <Spinner size="xxlarge" />
-        </div>
-      )}
+      {!isEditorReady && <Loader />}
       <div className="u-flex u-flex-grow-1">
         <div id="onlyOfficeEditor" />
         <OnlyOfficeAIAssistantPanel />

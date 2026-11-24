@@ -4,7 +4,7 @@ import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 /**
  * Centered, full-height loading spinner shared by the full-screen editor views
- * (PDF, Excalidraw).
+ * (PDF, Excalidraw, OnlyOffice).
  */
 const Loader = () => (
   <div className="u-flex u-flex-items-center u-flex-justify-center u-flex-grow-1">

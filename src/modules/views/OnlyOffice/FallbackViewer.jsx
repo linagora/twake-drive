@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 
 import { isQueryLoading, useQuery } from 'cozy-client'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Viewer, {
   FooterActionButtons,
   ForwardOrDownloadButton,
@@ -12,6 +11,7 @@ import Viewer, {
 import { useI18n } from 'twake-i18n'
 
 import Oops from '@/components/Error/Oops'
+import Loader from '@/components/Loader'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { buildFileOrFolderByIdQuery } from '@/queries'
@@ -26,12 +26,7 @@ const FallbackViewer = () => {
   const files = useMemo(() => [fileResult.data], [fileResult])
 
   if (isQueryLoading(fileResult)) {
-    return (
-      <Spinner
-        className="u-flex u-flex-items-center u-flex-justify-center u-flex-grow-1"
-        size="xxlarge"
-      />
-    )
+    return <Loader />
   }
 
   if (fileResult.fetchStatus === 'failed') {
