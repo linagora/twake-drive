@@ -30,8 +30,7 @@ const removeFromFavorites = ({
     allowInfectedFiles: false,
     displayCondition: docs =>
       docs.length > 0 &&
-      docs.every(doc => doc.cozyMetadata?.favorite) &&
-      !docs[0]?.driveId,
+      docs.every(doc => doc.cozyMetadata?.favorite && !doc.driveId),
     action: async (files): Promise<void> => {
       try {
         for (const file of files) {
