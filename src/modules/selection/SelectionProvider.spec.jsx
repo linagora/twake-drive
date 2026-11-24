@@ -1,4 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  fireEvent,
+  waitFor
+} from '@testing-library/react'
 import React from 'react'
 import { Provider } from 'react-redux'
 import {
@@ -13,6 +20,7 @@ import { createStore } from 'redux'
 import { generateFile } from 'test/generate'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+import { DOCTYPE_FILES_RECENTS } from '@/lib/doctypes'
 import {
   SelectionProvider,
   useSelectionContext
@@ -186,6 +194,47 @@ describe('SelectionProvider', () => {
       expect(await screen.findByText('Item file-foobar1')).toBeInTheDocument()
       expect(await screen.findByText('Item file-foobar2')).toBeInTheDocument()
       expect(screen.queryByText('Hide selection bar')).toBeNull()
+    })
+  })
+
+  describe('with recents the user can no longer read', () => {
+    const unreadableRecent = {
+      _id: 'recent-1',
+      _type: DOCTYPE_FILES_RECENTS,
+      name: 'gone.txt'
+    }
+
+    const setupHook = ({ selection } = {}) =>
+      renderHook(() => useSelectionContext(), {
+        wrapper: ({ children }) => (
+          <Provider store={mockStore}>
+            <MemoryRouter future={ROUTER_FUTURE_FLAGS}>
+              <SelectionProvider selection={selection}>
+                {children}
+              </SelectionProvider>
+            </MemoryRouter>
+          </Provider>
+        )
+      })
+
+    it('does not flag the selection as all selected when none is selectable', () => {
+      const { result } = setupHook()
+
+      act(() => result.current.selectAll([unreadableRecent]))
+
+      expect(result.current.selectedItems).toEqual([])
+      expect(result.current.isSelectAll).toBe(false)
+    })
+
+    it('leaves them out of a selection controlled by the parent', () => {
+      const { result } = setupHook({
+        selection: {
+          [item1._id]: item1,
+          [unreadableRecent._id]: unreadableRecent
+        }
+      })
+
+      expect(result.current.selectedItems).toEqual([item1])
     })
   })
 })

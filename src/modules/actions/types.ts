@@ -22,6 +22,8 @@ export interface ActionPolicyContext {
   hasSharedFile: boolean
   /** Whether all files are in the trash */
   allInTrash: boolean
+  /** Whether any file is a recent the user can no longer read */
+  hasUnreadableRecent: boolean
 }
 
 /**

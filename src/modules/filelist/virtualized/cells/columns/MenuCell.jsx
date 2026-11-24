@@ -5,9 +5,8 @@ import { useIsInSyncFromSharing } from './useIsInSyncFromSharing'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
 import { filterActionsByPolicy } from '@/modules/actions/policies'
+import { canInteractWithItem } from '@/modules/filelist/helpers'
 import FileAction from '@/modules/filelist/virtualized/cells/FileAction'
-
-const canInteractWithRow = row => row._id && !row._id.endsWith('.trash-dir')
 
 const MenuCell = ({ row, actions }) => {
   const filerowMenuToggleRef = useRef()
@@ -17,7 +16,7 @@ const MenuCell = ({ row, actions }) => {
   )
   const isInSyncFromSharing = useIsInSyncFromSharing(row)
 
-  if (!actions?.length || !canInteractWithRow(row)) return null
+  if (!actions?.length || !canInteractWithItem(row)) return null
 
   const contextMenuActions = getContextMenuActions(
     filterActionsByPolicy(actions, [row])

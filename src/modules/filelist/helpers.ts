@@ -17,6 +17,12 @@ export const isDriveBackedFile = (file: File): boolean => !!file.driveId
 export const isUnreadableRecent = (file: { _type?: string }): boolean =>
   file._type === DOCTYPE_FILES_RECENTS
 
+export const canInteractWithItem = (file: {
+  _id?: string
+  _type?: string
+}): boolean =>
+  !!file._id && !file._id.endsWith('.trash-dir') && !isUnreadableRecent(file)
+
 export const makeFileMetadata = (
   formattedUpdatedAt?: string,
   formattedSize?: string

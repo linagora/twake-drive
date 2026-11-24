@@ -9,7 +9,11 @@ import type {
   DriveActionPolicyFlags
 } from './types'
 
-import { isInfected, isNotScanned } from '@/modules/filelist/helpers'
+import {
+  isInfected,
+  isNotScanned,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 
 /**
  * Builds the policy context from the selected files.
@@ -27,8 +31,11 @@ export const buildPolicyContext = (
   let hasFolder = false
   let hasSharedFile = false
   let allInTrash = files.length > 0
+  let hasUnreadableRecent = false
 
   for (const file of files) {
+    if (!hasUnreadableRecent && isUnreadableRecent(file))
+      hasUnreadableRecent = true
     if (!hasInfected && isInfected(file)) hasInfected = true
     if (!hasNotScanned && isNotScanned(file)) hasNotScanned = true
     if (!hasFolder && isDirectory(file)) hasFolder = true
@@ -49,7 +56,8 @@ export const buildPolicyContext = (
     hasMultipleFiles: files.length > 1,
     hasFolder,
     hasSharedFile,
-    allInTrash
+    allInTrash,
+    hasUnreadableRecent
   }
 }
 
@@ -112,6 +120,18 @@ const trashedPolicy: ActionPolicyDefinition = {
 }
 
 /**
+ * Policy for recents the user can no longer read.
+ * They have no file to act upon, so no action is allowed.
+ */
+const unreadableRecentPolicy: ActionPolicyDefinition = {
+  name: 'unreadableRecent',
+  allows: (
+    _action: DriveActionPolicyFlags,
+    ctx: ActionPolicyContext
+  ): boolean => !ctx.hasUnreadableRecent
+}
+
+/**
  * All registered policies that will be checked for each action.
  * Add new policies here to have them automatically applied.
  */
@@ -120,7 +140,8 @@ export const ACTION_POLICIES: ActionPolicyDefinition[] = [
   notScannedPolicy,
   multipleFilesPolicy,
   foldersPolicy,
-  trashedPolicy
+  trashedPolicy,
+  unreadableRecentPolicy
 ]
 
 /**
