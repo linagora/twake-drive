@@ -294,14 +294,11 @@ export const useKeyboardShortcuts = ({
       return
     }
 
-    const driveId = selectedItems[0]?.driveId
-
     pushModal(
       <DeleteConfirm
         files={selectedItems}
         afterConfirmation={refresh}
         onClose={popModal}
-        driveId={driveId}
       />
     )
   }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
