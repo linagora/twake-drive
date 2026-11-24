@@ -3,10 +3,10 @@ import React, { useState, useRef } from 'react'
 import { useClient, useQuery } from 'cozy-client'
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import ColorList, { COLORS } from 'cozy-ui/transpiled/react/ColorList'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Grid from 'cozy-ui/transpiled/react/Grid'
-import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
 import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
@@ -36,7 +36,11 @@ export const FolderCustomizerModal = ({ folderId, driveId, onClose }) => {
 
   return fetchStatus !== 'loaded' ? (
     <Backdrop isOver open>
-      <Spinner size="xxlarge" middle noMargin color="var(--white)" />
+      <CircularProgress
+        className="u-primaryContrastTextColor"
+        color="inherit"
+        size={80}
+      />
     </Backdrop>
   ) : (
     <DumbFolderCustomizer folder={folder} driveId={driveId} onClose={onClose} />

@@ -12,7 +12,7 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 
 import styles from '@/styles/filelist.styl'
 
@@ -212,9 +212,9 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
       )}
       {isInSyncFromSharing && (
         <span data-testid="fil-file-thumbnail--spinner">
-          <Spinner
-            size="large"
+          <CircularProgress
             className={styles['fil-file-thumbnail--spinner']}
+            size={24}
           />
         </span>
       )}

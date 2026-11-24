@@ -1,7 +1,7 @@
 import React, { type ReactElement } from 'react'
 import type Autosuggest from 'react-autosuggest'
 
-import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
 import styles from './ContactFilter.styl'
@@ -27,7 +27,7 @@ const ContactFilterSuggestionsContainer = ({
           className={`${styles.status} u-flex u-flex-items-center u-flex-justify-center u-ph-1 u-ta-center`}
           role="status"
         >
-          <Spinner size="small" />
+          <CircularProgress className="u-mh-half" size={12} />
           <span className="u-ml-half">{loadingMessage}</span>
         </div>
       </div>

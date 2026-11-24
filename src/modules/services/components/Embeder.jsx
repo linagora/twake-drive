@@ -1,7 +1,7 @@
 import React from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
@@ -41,7 +41,13 @@ class Embeder extends React.Component {
     return (
       <div>
         {this.state.loading && (
-          <Spinner size="xxlarge" middle noMargin color="white" />
+          <div className="u-pos-absolute u-top-0 u-bottom-0 u-left-0 u-right-0 u-flex u-flex-items-center u-flex-justify-center">
+            <CircularProgress
+              className="u-primaryContrastTextColor"
+              color="inherit"
+              size={80}
+            />
+          </div>
         )}
         {this.state.error && (
           <pre className="u-error">{this.state.error.toString()}</pre>

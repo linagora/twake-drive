@@ -1,13 +1,13 @@
 import React from 'react'
 
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { DialogContent } from 'cozy-ui/transpiled/react/Dialog'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 const Loading = () => {
   return (
     <DialogContent className="u-flex u-flex-items-center u-flex-justify-center">
       <span data-testid="onlyoffice-content-spinner">
-        <Spinner size="xxlarge" />
+        <CircularProgress size={80} />
       </span>
     </DialogContent>
   )

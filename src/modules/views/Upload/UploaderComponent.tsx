@@ -2,8 +2,8 @@ import React from 'react'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useI18n } from 'twake-i18n'
 
 import { FolderPicker } from '@/components/FolderPicker/FolderPicker'
@@ -70,7 +70,11 @@ const UploaderComponent = (): JSX.Element | null => {
       className="u-p-0"
       open
       size="large"
-      content={<Spinner size="xxlarge" noMargin middle />}
+      content={
+        <div className="u-pos-absolute u-top-0 u-bottom-0 u-left-0 u-right-0 u-flex u-flex-items-center u-flex-justify-center">
+          <CircularProgress size={80} />
+        </div>
+      }
     />
   )
 }

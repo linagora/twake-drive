@@ -1,8 +1,10 @@
 import React from 'react'
 import { useNavigate, useParams, Navigate } from 'react-router-dom'
 
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import Dialog, { DialogContent } from 'cozy-ui/transpiled/react/Dialog'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useI18n } from 'twake-i18n'
 
 import Oops from '@/components/Error/Oops'
 import {
@@ -12,6 +14,7 @@ import {
 import useCreateFile from '@/modules/views/OnlyOffice/useCreateFile'
 
 const Create = ({ isPublic = false }) => {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { folderId, fileClass, driveId = undefined } = useParams()
   const { status, fileId } = useCreateFile(folderId, fileClass, driveId)
@@ -50,13 +53,10 @@ const Create = ({ isPublic = false }) => {
   return (
     <Dialog open={true} fullScreen transitionDuration={0}>
       <DialogContent className="u-flex u-flex-column u-flex-items-center u-flex-justify-center">
-        <>
-          <Spinner
-            size="xxlarge"
-            middle={true}
-            loadingType="onlyOfficeCreateInProgress"
-          />
-        </>
+        <CircularProgress size={80} />
+        <Typography className="u-mt-1" variant="body1" color="textSecondary">
+          {t('loading.onlyOfficeCreateInProgress')}
+        </Typography>
       </DialogContent>
     </Dialog>
   )

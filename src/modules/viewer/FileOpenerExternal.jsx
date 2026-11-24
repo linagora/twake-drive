@@ -10,7 +10,7 @@ import { RemoveScroll } from 'react-remove-scroll'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Viewer, {
@@ -99,7 +99,15 @@ const FileOpener = props => {
 
   return (
     <div className="u-pos-absolute u-w-100 u-h-100 u-bg-charcoalGrey">
-      {loading && <Spinner size="xxlarge" middle noMargin color="white" />}
+      {loading && (
+        <div className="u-pos-absolute u-top-0 u-bottom-0 u-left-0 u-right-0 u-flex u-flex-items-center u-flex-justify-center">
+          <CircularProgress
+            className="u-primaryContrastTextColor"
+            color="inherit"
+            size={80}
+          />
+        </div>
+      )}
       {fileNotFound && <FileNotFoundError />}
       {!loading && !fileNotFound && (
         <RemoveScroll>

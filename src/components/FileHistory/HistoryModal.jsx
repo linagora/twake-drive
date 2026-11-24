@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom'
 import { useClient, useCapabilities } from 'cozy-client'
 import { generateFileNameForRevision } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import List from 'cozy-ui/transpiled/react/List'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
@@ -100,7 +100,7 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
             </List>
             {revisionsFetchStatus === 'loading' && (
               <div className={styles.HistoryRowRevisionLoader}>
-                <Spinner size="xxlarge" />
+                <CircularProgress className="u-mh-half" size={80} />
               </div>
             )}
           </>

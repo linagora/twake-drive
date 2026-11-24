@@ -4,8 +4,8 @@ import { useLocation, useParams } from 'react-router-dom'
 import { Icon, SadCozy } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import { fetchURL } from 'cozy-client/dist/models/note'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import Empty from 'cozy-ui/transpiled/react/Empty'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useI18n } from 'twake-i18n'
 
 import { joinPath } from '@/lib/path'
@@ -72,7 +72,11 @@ const PublicNoteRedirect: FC = () => {
           text={t('PublicNoteRedirect.error.subtitle')}
         />
       )}
-      {fetchStatus !== 'failed' && <Spinner size="xxlarge" middle noMargin />}
+      {fetchStatus !== 'failed' && (
+        <div className="u-pos-absolute u-top-0 u-bottom-0 u-left-0 u-right-0 u-flex u-flex-items-center u-flex-justify-center">
+          <CircularProgress size={80} />
+        </div>
+      )}
     </DummyLayout>
   )
 }

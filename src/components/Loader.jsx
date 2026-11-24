@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 
 /**
  * Centered, full-height loading spinner shared by the full-screen editor views
@@ -8,7 +8,7 @@ import Spinner from 'cozy-ui/transpiled/react/Spinner'
  */
 const Loader = () => (
   <div className="u-flex u-flex-items-center u-flex-justify-center u-flex-grow-1">
-    <Spinner size="xxlarge" />
+    <CircularProgress size={80} />
   </div>
 )
 
