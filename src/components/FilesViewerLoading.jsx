@@ -1,11 +1,15 @@
 import React from 'react'
 
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 
 const FilesViewerLoading = () => (
   <Backdrop isOver open>
-    <Spinner size="xxlarge" middle noMargin color="var(--white)" />
+    <CircularProgress
+      className="u-primaryContrastTextColor"
+      color="inherit"
+      size={80}
+    />
   </Backdrop>
 )
 

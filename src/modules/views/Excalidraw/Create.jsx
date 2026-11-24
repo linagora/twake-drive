@@ -1,8 +1,8 @@
 import React from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import Dialog, { DialogContent } from 'cozy-ui/transpiled/react/Dialog'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 import Oops from '@/components/Error/Oops'
 import { makeExcalidrawFileRoute } from '@/modules/views/Excalidraw/helpers'
@@ -30,7 +30,7 @@ const Create = ({ isPublic = false }) => {
   return (
     <Dialog open={true} fullScreen transitionDuration={0}>
       <DialogContent className="u-flex u-flex-column u-flex-items-center u-flex-justify-center">
-        <Spinner size="xxlarge" middle={true} />
+        <CircularProgress size={80} />
       </DialogContent>
     </Dialog>
   )

@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react'
 
 import { Icon } from '@linagora/twake-icons'
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import GridList from 'cozy-ui/transpiled/react/GridList'
 import GridListTile from 'cozy-ui/transpiled/react/GridListTile'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
@@ -77,7 +77,11 @@ export const IconPicker = ({
   if (!recentIcons) {
     return (
       <Backdrop isOver open>
-        <Spinner size="xxlarge" middle noMargin color="var(--white)" />
+        <CircularProgress
+          className="u-primaryContrastTextColor"
+          color="inherit"
+          size={80}
+        />
       </Backdrop>
     )
   }

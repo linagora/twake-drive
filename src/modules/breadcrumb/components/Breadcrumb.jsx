@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 
 import { Icon, Right } from '@linagora/twake-icons'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'
 
@@ -91,7 +91,9 @@ const Breadcrumb = ({
                   <span className={styles['fil-path-down']} />
                 )}
 
-                {opening && <Spinner />}
+                {opening && (
+                  <CircularProgress className="u-mh-half" size={16} />
+                )}
               </span>
             )
           }

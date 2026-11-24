@@ -24,3 +24,17 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Bobpodvalnyi (product owner), [#4637](https://github.com/linagora/twake-drive/issues/4637).
 - Why: use the same gesture on desktop and mobile while keeping the open destination explicit before confirmation.
 - Scope: new MoveTo dialog and MOVE intent on desktop and mobile; legacy, public, and PICK flows are unchanged.
+
+## 2026-11-24, [Tech] Loaders use the CircularProgress of cozy-ui, with props twake-mui shares
+
+- Decision: a loader is a `CircularProgress` from `cozy-ui/transpiled/react/CircularProgress`, never the cozy-ui `Spinner`; it only takes `size`, `color` (`primary` or `inherit`), `className`, and utility classes that twake-css also ships, so the switch to twake-mui only rewrites the import.
+- Decided by: Julien Ficheux, in a session with an agent (Claude Code), 2026-11-24, [linagora/twake-drive#4449](https://github.com/linagora/twake-drive/issues/4449)
+- Why: twake-mui leaves the `Spinner` out, and `sx`, inline styles or `classes` would not survive the move from MUI v4 to v9.
+- Scope: desktop and mobile, every loader of Drive.
+
+## 2026-11-24, [UI] Full-screen loaders stay at 80px
+
+- Decision: a full-screen or full-view loader is an 80px `CircularProgress`, the size of the former `xxlarge` Spinner.
+- Decided by: Julien Ficheux, in a session with an agent (Claude Code), 2026-11-24, to be confirmed by Swann Maillard (design)
+- Why: keeps the layout of the loading states unchanged while the spinner icon becomes the MUI ring.
+- Scope: desktop and mobile, the loaders of the viewer, OnlyOffice, Excalidraw, file history, folder customizer, icon picker, upload and public notes.

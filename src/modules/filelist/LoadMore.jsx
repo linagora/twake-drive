@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { TableRow } from 'cozy-ui/transpiled/react/deprecated/Table'
 import { translate } from 'twake-i18n'
 
@@ -16,7 +16,7 @@ const LoadMore = ({ onClick, isLoading, text }) => (
     <Buttons
       variant="secondary"
       onClick={onClick}
-      label={isLoading ? <Spinner noMargin /> : text}
+      label={isLoading ? <CircularProgress size={16} /> : text}
     />
   </TableRow>
 )

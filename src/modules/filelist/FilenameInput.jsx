@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 
 import { isDirectory, splitFilename } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
+import CircularProgress from 'cozy-ui/transpiled/react/CircularProgress'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { translate } from 'twake-i18n'
 
 import styles from '@/styles/filenameinput.styl'
@@ -198,7 +198,7 @@ const FilenameInput = ({
           {errorMessage}
         </span>
       )}
-      {working && <Spinner />}
+      {working && <CircularProgress className="u-mh-half" size={16} />}
       <Dialog
         onClose={abort}
         open={isModalOpened}
