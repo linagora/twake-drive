@@ -18,7 +18,7 @@ import RecentView from './index'
 import AppLike from 'test/components/AppLike'
 import { setupStore } from 'test/setup'
 
-import { ROOT_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { schema } from '@/lib/doctypes'
 import { buildPersonalRecentsQuery } from '@/queries'
 
@@ -151,6 +151,35 @@ const sharedDrives = {
   ]
 }
 
+const trashPage = {
+  data: [
+    recent('old-file'),
+    recent('old-folder', { type: 'directory' }),
+    recent('drive-trashed')
+  ],
+  included: [
+    file('old-file', {
+      name: 'report.txt',
+      dir_id: TRASH_DIR_ID,
+      trashed: true,
+      path: '/.cozy_trash/report.txt'
+    }),
+    file('old-folder', {
+      type: 'directory',
+      name: 'Old',
+      dir_id: TRASH_DIR_ID,
+      path: '/.cozy_trash/Old'
+    }),
+    file('drive-trashed', {
+      name: 'hello.txt',
+      dir_id: 'owner-old-folder',
+      driveId: 'drive-1',
+      trashed: true,
+      path: '/.cozy_trash/Old/hello.txt'
+    })
+  ]
+}
+
 const setup = ({ pages = [firstPage] } = {}) => {
   const client = new CozyClient({ useCustomStore: true, schema })
   client.getStackClient().setUri('http://test.cloud')
@@ -165,6 +194,10 @@ const setup = ({ pages = [firstPage] } = {}) => {
         : remainingPages[0]
     }
     if (path === '/sharings/drives') return sharedDrives
+    if (method === 'POST' && path.includes('/trash/')) {
+      const id = path.split('/').pop()
+      return { data: file(id, { trashed: false }) }
+    }
     if (path.startsWith('/settings/')) {
       return { data: { type: 'io.cozy.settings', id: path, attributes: {} } }
     }
@@ -552,6 +585,77 @@ describe('Recent view with the personal recents of the stack', () => {
     )
     expect(requestedPaths(client)).not.toContainEqual(
       expect.stringContaining('old-cursor')
+    )
+  })
+
+  it('shows the Bin as the parent folder of trashed items', async () => {
+    setup({ pages: [trashPage] })
+
+    await screen.findByText('hello')
+    await waitFor(() =>
+      expect(
+        [...document.querySelectorAll('.fil-file-path')].map(node =>
+          removeNonASCII(node.textContent)
+        )
+      ).toEqual(['Bin', 'Bin', 'Bin'])
+    )
+  })
+
+  it('opens a local trashed item as the Bin view does, and not a drive one', async () => {
+    setup({ pages: [trashPage] })
+
+    await screen.findByText('hello')
+    expect(linkOf('report').getAttribute('href')).toMatch(/file\/old-file$/)
+    expect(linkOf('Old').getAttribute('href')).toBe('#/trash/old-folder')
+    expect(linkOf('hello')).toBe(null)
+  })
+
+  it.each([
+    ['report', '/files/trash/old-file'],
+    ['hello', '/sharings/drives/drive-1/trash/drive-trashed']
+  ])('restores the trashed %s through its own route', async (name, route) => {
+    const { client } = setup({ pages: [trashPage] })
+
+    await screen.findByText(name)
+    const row = screen.getByText(name).closest('.fil-content-row')
+    const parentFolderOf = () => row.querySelector('.fil-file-path')
+    expect(removeNonASCII(parentFolderOf().textContent)).toBe('Bin')
+    fireEvent.click(within(row).getByLabelText('More'))
+    const restoreItem = await screen.findByRole('menuitem', { name: 'Restore' })
+    expect(screen.queryByRole('menuitem', { name: 'Share' })).toBe(null)
+    fireEvent.click(restoreItem)
+
+    await waitFor(() =>
+      expect(client.stackClient.fetchJSON).toHaveBeenCalledWith('POST', route)
+    )
+    await waitFor(() => expect(parentFolderOf()).toBe(null))
+  })
+
+  it('shows a restored folder in its new parent folder', async () => {
+    const { client } = setup({ pages: [trashPage] })
+    const fetchJSON = client.stackClient.fetchJSON.getMockImplementation()
+    client.stackClient.fetchJSON.mockImplementation((method, path, ...args) =>
+      method === 'POST' && path === '/files/trash/old-folder'
+        ? {
+            data: file('old-folder', {
+              type: 'directory',
+              name: 'Old',
+              dir_id: 'work',
+              path: '/Work/Old'
+            })
+          }
+        : fetchJSON(method, path, ...args)
+    )
+
+    await screen.findByText('Old')
+    const row = screen.getByText('Old').closest('.fil-content-row')
+    fireEvent.click(within(row).getByLabelText('More'))
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Restore' }))
+
+    await waitFor(() =>
+      expect(
+        removeNonASCII(row.querySelector('.fil-file-path').textContent)
+      ).toBe('Work')
     )
   })
 })

@@ -106,6 +106,17 @@ describe('isTrashedDocument', () => {
     ).toBe(false)
   })
 
+  it('identifies a file of a trashed folder by its path', () => {
+    expect(
+      isTrashedDocument({
+        _id: 'report',
+        dir_id: 'trashed-folder',
+        trashed: false,
+        path: `${TRASH_DIR_PATH}/Old/report.txt`
+      })
+    ).toBe(true)
+  })
+
   it('returns false for healthy files and folders', () => {
     expect(
       isTrashedDocument({

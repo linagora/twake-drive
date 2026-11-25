@@ -57,6 +57,11 @@ const localFile = makeFile('local')
 const driveFile = makeFile('drive', { driveId: 'drive-1', dir_id: 'dir-1' })
 const folder = makeFile('folder', { type: 'directory', name: 'Projects' })
 const trashedFile = makeFile('trashed', { trashed: true })
+const trashedDriveFile = makeFile('trashed-drive', {
+  trashed: true,
+  driveId: 'drive-1',
+  dir_id: 'dir-1'
+})
 
 const recentOf = file => ({
   _id: file._id,
@@ -103,12 +108,13 @@ describe('FilesViewerRecent', () => {
       flag.mockImplementation(name => name === 'drive.recents.enabled')
     })
 
-    it('browses the readable files of the recents, in their order', () => {
+    it('browses the files of the recents it can open, in their order', () => {
       mockQueries({
         recents: [
           recentOf(driveFile),
           recentOf(folder),
           unreadable,
+          recentOf(trashedDriveFile),
           recentOf(trashedFile),
           recentOf(localFile)
         ]
@@ -116,8 +122,9 @@ describe('FilesViewerRecent', () => {
 
       render(<FilesViewerRecent />)
 
-      expect(viewerProps().files).toEqual([driveFile, localFile])
-      expect(viewerProps().filesQuery.data).toEqual([driveFile, localFile])
+      const viewableFiles = [driveFile, trashedFile, localFile]
+      expect(viewerProps().files).toEqual(viewableFiles)
+      expect(viewerProps().filesQuery.data).toEqual(viewableFiles)
     })
 
     it('stays in the Recent viewer when it closes or changes file', () => {

@@ -20,8 +20,8 @@ export interface ActionPolicyContext {
   hasFolder: boolean
   /** Whether any file is shared */
   hasSharedFile: boolean
-  /** Whether all files are in the trash */
-  allInTrash: boolean
+  /** Whether any file is in the trash */
+  hasTrashedFile: boolean
   /** Whether any file is a recent the user can no longer read */
   hasUnreadableRecent: boolean
 }

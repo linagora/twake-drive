@@ -26,7 +26,7 @@ import styles from '@/styles/filelist.styl'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
-import { getContextMenuActions } from '@/modules/actions/helpers'
+import { getItemContextMenuActions } from '@/modules/actions/helpers'
 import {
   isRenaming as isRenamingReducer,
   getRenamingFile
@@ -136,7 +136,7 @@ const File = ({
     canInteractWithFile &&= canInteractWith(attributes)
   }
 
-  const contextMenuActions = getContextMenuActions(actions)
+  const contextMenuActions = getItemContextMenuActions(actions, attributes)
 
   return (
     <FileWrapper

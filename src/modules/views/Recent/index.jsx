@@ -10,6 +10,7 @@ import {
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
+import { useI18n } from 'twake-i18n'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
@@ -32,7 +33,8 @@ import {
   hr,
   share,
   selectAllItems,
-  summariseByAI
+  summariseByAI,
+  restore
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
@@ -43,7 +45,10 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
 import { FileParentFolderProvider } from '@/modules/filelist/FileParentFolderContext'
-import { makeParentFolderName } from '@/modules/filelist/helpers'
+import {
+  isTrashedDocument,
+  makeParentFolderName
+} from '@/modules/filelist/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
@@ -115,6 +120,7 @@ const RecentViewContent = ({
       hr,
       versions,
       hr,
+      restore,
       trash
     ],
     actionsOptions
@@ -176,17 +182,21 @@ const DataProxyRecentView = () => {
 }
 
 const PersonalRecentView = () => {
+  const { t } = useI18n()
   const recentsResult = usePersonalRecents()
   const { sharedDrives } = useSharedDrives()
 
   const getParentFolderPath = useCallback(
     file =>
-      makeParentFolderName(
-        file,
-        driveId =>
-          sharedDrives.find(drive => drive._id === driveId)?.description ?? null
-      ),
-    [sharedDrives]
+      isTrashedDocument(file)
+        ? t('Nav.item_trash')
+        : makeParentFolderName(
+            file,
+            driveId =>
+              sharedDrives.find(drive => drive._id === driveId)?.description ??
+              null
+          ),
+    [sharedDrives, t]
   )
 
   return (

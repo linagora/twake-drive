@@ -4,7 +4,10 @@ import React, { useRef } from 'react'
 import styles from './fileopener.styl'
 
 import { useLongPress } from '@/hooks/useOnLongPress'
-import { isUnreadableRecent } from '@/modules/filelist/helpers'
+import {
+  isTrashedDriveItem,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 import { FileLink } from '@/modules/navigation/components/FileLink'
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
 
@@ -28,7 +31,7 @@ const FileOpener = ({
     onInteractWithFile
   })
 
-  if (isRenaming || isUnreadableRecent(file)) {
+  if (isRenaming || isUnreadableRecent(file) || isTrashedDriveItem(file)) {
     return children
   }
 

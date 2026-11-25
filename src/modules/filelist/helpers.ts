@@ -36,6 +36,9 @@ export const isTrashedDocument = (item?: TrashableItem | null): boolean => {
   return false
 }
 
+export const isTrashedDriveItem = (file: File): boolean =>
+  isDriveBackedFile(file) && isTrashedDocument(file)
+
 // A recent whose file the user can no longer read is listed as the recent
 // itself, with only its last known name and type.
 export const isUnreadableRecent = (file: { _type?: string }): boolean =>
