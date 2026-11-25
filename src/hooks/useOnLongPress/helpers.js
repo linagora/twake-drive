@@ -1,3 +1,5 @@
+import { isUnreadableRecent } from '@/modules/filelist/helpers'
+
 const DOUBLECLICKDELAY = 400
 
 export const handleClick = ({
@@ -22,6 +24,12 @@ export const handleClick = ({
 
   const currentTime = Date.now()
   const isDoubleClick = currentTime - lastClickTime < DOUBLECLICKDELAY
+
+  if (isUnreadableRecent(file)) {
+    if (isDoubleClick) openLink(event)
+    setLastClickTime(currentTime)
+    return
+  }
 
   if (isDoubleClick) {
     openLink(event)
@@ -80,6 +88,7 @@ export const makeDesktopHandlers = ({
 
 export const handlePress = ({
   event,
+  file,
   disabled,
   selectionModeActive,
   isLongPress,
@@ -100,16 +109,17 @@ export const handlePress = ({
     return
   }
 
-  if (selectionModeActive) {
-    toggle(event)
-  } else {
+  if (!selectionModeActive) {
     openLink(event)
+  } else if (!isUnreadableRecent(file)) {
+    toggle(event)
   }
 
   clearHighlightedItems?.()
 }
 
 export const makeMobileHandlers = ({
+  file,
   timerId,
   disabled,
   selectionModeActive,
@@ -127,7 +137,7 @@ export const makeMobileHandlers = ({
     isLongPress.current = false
     timerId.current = setTimeout(() => {
       isLongPress.current = true
-      if (!isRenaming) {
+      if (!isRenaming && !isUnreadableRecent(file)) {
         toggle(e)
       }
     }, 250)
@@ -164,6 +174,7 @@ export const makeMobileHandlers = ({
     onClick: event =>
       handlePress({
         event,
+        file,
         disabled,
         selectionModeActive,
         isLongPress,

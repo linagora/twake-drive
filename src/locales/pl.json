@@ -248,5 +248,9 @@
       "DOCUMENTS_FAILED": "Nie udało się pobrać wybranych dokumentów i ich ścieżek.",
       "DESTINATION_UNAVAILABLE": "Nie udało się wczytać folderu docelowego."
     }
+  },
+  "RecentNoAccess": {
+    "file_title": "Nie masz już dostępu do tego pliku",
+    "folder_title": "Nie masz już dostępu do tego folderu"
   }
 }

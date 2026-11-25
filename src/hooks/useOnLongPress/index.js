@@ -47,6 +47,7 @@ export const useLongPress = ({
 
   // eslint-disable-next-line react-hooks/refs
   return makeMobileHandlers({
+    file,
     timerId,
     disabled,
     selectionModeActive,

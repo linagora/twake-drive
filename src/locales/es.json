@@ -791,6 +791,10 @@
     "title": "No se encuentra el elemento",
     "text": "No hemos encontrado nada en esta dirección. Puede que se trate de un error tipográfico."
   },
+  "RecentNoAccess": {
+    "file_title": "Ya no tiene acceso a este archivo",
+    "folder_title": "Ya no tiene acceso a esta carpeta"
+  },
   "NextcloudBreadcrumb": {
     "root": "Unidades compartidas",
     "trash": "Papelera"

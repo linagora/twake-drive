@@ -2,17 +2,19 @@ import MockDate from 'mockdate'
 
 import flag from 'cozy-flags'
 
-import { handlePress, handleClick } from './helpers'
+import { handlePress, handleClick, makeMobileHandlers } from './helpers'
 
 jest.mock('cozy-flags', () => jest.fn())
 
 const mockToggle = jest.fn()
 const mockOpenLink = jest.fn()
 const ev = { preventDefault: jest.fn() }
+const unreadableRecent = { _id: 'recent-1', _type: 'io.cozy.files.recents' }
 
 describe('handlePress', () => {
   const setup = ({
     event = ev,
+    file = { _id: 'file-1' },
     disabled = false,
     selectionModeActive = false,
     isLongPress = { current: false },
@@ -21,6 +23,7 @@ describe('handlePress', () => {
     return {
       params: {
         event,
+        file,
         disabled,
         selectionModeActive,
         isLongPress,
@@ -49,6 +52,39 @@ describe('handlePress', () => {
 
     expect(mockToggle).not.toHaveBeenCalledWith()
     expect(mockOpenLink).toHaveBeenCalledWith(ev)
+  })
+
+  it('should leave an unreadable recent alone in selection mode', () => {
+    const { params } = setup({
+      selectionModeActive: true,
+      file: unreadableRecent
+    })
+    handlePress(params)
+
+    expect(mockToggle).not.toHaveBeenCalled()
+    expect(mockOpenLink).not.toHaveBeenCalled()
+  })
+
+  it('should neither toggle nor open an unreadable recent on a long press', () => {
+    jest.useFakeTimers()
+    const { onMouseDown, onMouseUp, onClick } = makeMobileHandlers({
+      file: unreadableRecent,
+      timerId: { current: null },
+      disabled: false,
+      selectionModeActive: false,
+      isRenaming: false,
+      isLongPress: { current: false },
+      openLink: mockOpenLink,
+      toggle: mockToggle
+    })
+    onMouseDown({ persist: jest.fn() })
+    jest.advanceTimersByTime(250)
+    onMouseUp()
+    onClick(ev)
+    jest.useRealTimers()
+
+    expect(mockToggle).not.toHaveBeenCalled()
+    expect(mockOpenLink).not.toHaveBeenCalled()
   })
 
   describe('should do nothing if', () => {
@@ -176,6 +212,15 @@ describe('handleClick', () => {
         [file._id]: file
       })
       expect(mockToggle).not.toHaveBeenCalled()
+    })
+
+    it('should leave the selection alone on a simple click on an unreadable recent', () => {
+      const { params } = setupDoubleClick()
+      handleClick({ ...params, file: unreadableRecent })
+
+      expect(mockSetSelectedItems).not.toHaveBeenCalled()
+      expect(mockOnInteractWithFile).not.toHaveBeenCalled()
+      expect(mockOpenLink).not.toHaveBeenCalled()
     })
 
     it('should toggle item on Ctrl+Click', () => {

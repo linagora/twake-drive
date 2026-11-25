@@ -791,6 +791,10 @@
     "title": "Impossibile trovare l'elemento",
     "text": "Non abbiamo trovato nulla a questo indirizzo. Potrebbe trattarsi di un errore di battitura."
   },
+  "RecentNoAccess": {
+    "file_title": "Non hai più accesso a questo file",
+    "folder_title": "Non hai più accesso a questa cartella"
+  },
   "NextcloudBreadcrumb": {
     "root": "Drive condivisi",
     "trash": "Cestino"

@@ -8,12 +8,14 @@ import {
   within
 } from '@testing-library/react'
 import React from 'react'
+import { Route, Routes } from 'react-router-dom'
 
 import CozyClient from 'cozy-client'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 
 import { removeNonASCII } from '../testUtils'
+import RecentNoAccessView from './RecentNoAccessView'
 import RecentView from './index'
 import AppLike from 'test/components/AppLike'
 import { setupStore } from 'test/setup'
@@ -222,7 +224,10 @@ const setup = ({ pages = [firstPage] } = {}) => {
       store={store}
       modalContextValue={modalContextValue}
     >
-      <RecentView />
+      <Routes>
+        <Route path="recent/*" element={<RecentView />} />
+        <Route path="recent/no-access/:type" element={<RecentNoAccessView />} />
+      </Routes>
     </AppLike>
   )
   return { client, pushModal: modalContextValue.pushModal }
@@ -324,11 +329,33 @@ describe('Recent view with the personal recents of the stack', () => {
     expect(fileRequests).toEqual([])
   })
 
-  it('shows an unreadable item with its last known name, without opening it', async () => {
-    setup()
+  it.each([
+    ['secret', 'You no longer have access to this file'],
+    ['Archives', 'You no longer have access to this folder']
+  ])('opens the no-access page from the unreadable %s', async (name, title) => {
+    setup({
+      pages: [
+        {
+          data: [
+            recent('gone', { name: 'secret.jpg', readable: false }),
+            recent('gone-dir', {
+              name: 'Archives',
+              type: 'directory',
+              readable: false
+            })
+          ],
+          included: []
+        }
+      ]
+    })
 
-    await screen.findByText('secret')
-    expect(linkOf('secret')).toBe(null)
+    await screen.findByText(name)
+    fireEvent.click(linkOf(name))
+    fireEvent.click(linkOf(name))
+    await screen.findByText(title)
+
+    fireEvent.click(screen.getByText('Recent'))
+    expect(await screen.findByText(name)).toBeInTheDocument()
   })
 
   it('offers item actions on readable items only', async () => {

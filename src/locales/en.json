@@ -791,6 +791,10 @@
     "title": "The element cannot be found",
     "text": "We have not found anything at this address. This may be a typing error."
   },
+  "RecentNoAccess": {
+    "file_title": "You no longer have access to this file",
+    "folder_title": "You no longer have access to this folder"
+  },
   "NextcloudBreadcrumb": {
     "root": "Shared Drives",
     "trash": "Trash"
