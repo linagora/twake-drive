@@ -16,8 +16,7 @@ import {
 } from './FilePicker/constraints'
 import {
   isWithinPickerRoot,
-  fetchPickerDocumentWithPath,
-  isTrashedDocument
+  fetchPickerDocumentWithPath
 } from './FilePicker/documents'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
@@ -29,6 +28,7 @@ import {
 import { canNavigateToPickerFolder } from './pickerNavigation'
 
 import logger from '@/lib/logger'
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 import {
   buildFileOrFolderByIdQuery,
   buildSharedDriveFileOrFolderByIdQuery
