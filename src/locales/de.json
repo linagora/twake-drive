@@ -791,6 +791,10 @@
     "title": "Das Element wurde nicht gefunden",
     "text": "Unter dieser Adresse wurde nichts gefunden. Vielleicht handelt es sich um einen Tippfehler."
   },
+  "RecentNoAccess": {
+    "file_title": "Sie haben keinen Zugriff mehr auf diese Datei",
+    "folder_title": "Sie haben keinen Zugriff mehr auf diesen Ordner"
+  },
   "NextcloudBreadcrumb": {
     "root": "Geteilte Drives",
     "trash": "Papierkorb"

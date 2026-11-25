@@ -562,5 +562,9 @@
       "DOCUMENTS_FAILED": "選択したドキュメントとそのパスを取得できませんでした。",
       "DESTINATION_UNAVAILABLE": "移動先フォルダーを読み込めませんでした。"
     }
+  },
+  "RecentNoAccess": {
+    "file_title": "このファイルにはアクセスできなくなりました",
+    "folder_title": "このフォルダーにはアクセスできなくなりました"
   }
 }

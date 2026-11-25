@@ -337,5 +337,9 @@
       "DOCUMENTS_FAILED": "無法取得所選文件及其路徑。",
       "DESTINATION_UNAVAILABLE": "無法載入目的地資料夾。"
     }
+  },
+  "RecentNoAccess": {
+    "file_title": "您已無法存取此檔案",
+    "folder_title": "您已無法存取此資料夾"
   }
 }

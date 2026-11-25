@@ -791,6 +791,10 @@
     "title": "L’élément est introuvable",
     "text": "Nous n’avons trouvé aucun élément à cette adresse. Il s’agit peut-être d’une erreur de frappe."
   },
+  "RecentNoAccess": {
+    "file_title": "Vous n'avez plus accès à ce fichier",
+    "folder_title": "Vous n'avez plus accès à ce dossier"
+  },
   "NextcloudBreadcrumb": {
     "root": "Drive partagés",
     "trash": "Corbeille"

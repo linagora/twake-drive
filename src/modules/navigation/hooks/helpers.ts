@@ -12,7 +12,10 @@ import flag from 'cozy-flags'
 import type { File } from '@/components/FolderPicker/types'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { joinPath } from '@/lib/path'
-import { isTrashedDocument } from '@/modules/filelist/helpers'
+import {
+  isTrashedDocument,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 import { isGrist } from '@/modules/grist/helpers'
 import {
   isNextcloudShortcut,
@@ -69,7 +72,9 @@ export const computeFileType = (
     cozyUrl = ''
   }: ComputeFileTypeOptions = {}
 ): string => {
-  if (file._id === TRASH_DIR_ID) {
+  if (isUnreadableRecent(file)) {
+    return 'unreadable-recent'
+  } else if (file._id === TRASH_DIR_ID) {
     return 'trash'
   } else if (file._id === 'io.cozy.remote.nextcloud.files.trash-dir') {
     return 'nextcloud-trash'
@@ -196,6 +201,8 @@ export const computePath = (
   }
 
   switch (type) {
+    case 'unreadable-recent':
+      return `/recent/no-access/${file.type}`
     case 'trash':
       return '/trash'
     case 'note':

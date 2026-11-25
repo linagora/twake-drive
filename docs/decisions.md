@@ -52,3 +52,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Julien Ficheux, in a session with an agent (Claude Code), 2026-11-24, to be confirmed by Swann Maillard (design)
 - Why: keeps the layout of the loading states unchanged while the spinner icon becomes the MUI ring.
 - Scope: desktop and mobile, the loaders of the viewer, OnlyOffice, Excalidraw, file history, folder customizer, icon picker, upload and public notes.
+
+## 2026-11-25, [Product] Unreadable personal recents stay listed and open a no-access page
+
+- Decision: a personal recent whose item the user can no longer read stays in Recents with the same look as the others, cannot be selected or acted on, and opens Drive's empty page titled "You no longer have access to this file" (or "this folder"); the stack keeps returning these recents unchanged.
+- Decided by: Bobpodvalnyi (product owner) with shepilov (lead dev), [comment](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7164698093) and [comment](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7164966089), summed up in [#4598](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7165610564).
+- Why: the user once saw or edited the item, and a later "request access" page will build on this placeholder.
+- Scope: desktop and mobile web, Recent view with `drive.recents.enabled`; the mobile app follows in linagora/twake-drive-mobile#655.

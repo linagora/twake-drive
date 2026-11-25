@@ -791,6 +791,10 @@
     "title": "Không tìm thấy mục",
     "text": "Không có nội dung nào tại địa chỉ này. Có thể bạn đã nhập sai liên kết."
   },
+  "RecentNoAccess": {
+    "file_title": "Bạn không còn quyền truy cập tệp này",
+    "folder_title": "Bạn không còn quyền truy cập thư mục này"
+  },
   "NextcloudBreadcrumb": {
     "root": "Ổ đĩa được chia sẻ",
     "trash": "Thùng rác"

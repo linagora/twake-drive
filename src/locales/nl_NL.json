@@ -647,5 +647,9 @@
       "DOCUMENTS_FAILED": "De geselecteerde documenten en hun paden konden niet worden opgehaald.",
       "DESTINATION_UNAVAILABLE": "De bestemmingsmap kon niet worden geladen."
     }
+  },
+  "RecentNoAccess": {
+    "file_title": "Je hebt geen toegang meer tot dit bestand",
+    "folder_title": "Je hebt geen toegang meer tot deze map"
   }
 }
