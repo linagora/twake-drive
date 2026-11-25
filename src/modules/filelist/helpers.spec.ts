@@ -1,6 +1,6 @@
-import { makeParentFolderName } from './helpers'
+import { isTrashedDocument, makeParentFolderName } from './helpers'
 
-import { ROOT_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
 
 type ParentFolderFile = Parameters<typeof makeParentFolderName>[0]
 
@@ -56,5 +56,79 @@ describe('makeParentFolderName', () => {
     })
 
     expect(makeParentFolderName(file, findDriveName)).toBe('')
+  })
+})
+
+describe('isTrashedDocument', () => {
+  it('returns false for null or undefined input', () => {
+    expect(isTrashedDocument(null)).toBe(false)
+    expect(isTrashedDocument(undefined)).toBe(false)
+  })
+
+  it('identifies the trash root directory by _id or id', () => {
+    expect(isTrashedDocument({ _id: TRASH_DIR_ID })).toBe(true)
+    expect(isTrashedDocument({ id: TRASH_DIR_ID })).toBe(true)
+  })
+
+  it('identifies items directly in trash by dir_id', () => {
+    expect(isTrashedDocument({ _id: 'doc-1', dir_id: TRASH_DIR_ID })).toBe(true)
+  })
+
+  it('identifies files marked with trashed: true', () => {
+    expect(isTrashedDocument({ _id: 'file-1', trashed: true })).toBe(true)
+  })
+
+  it('identifies folders by exact trash path or descendants under trash path', () => {
+    expect(isTrashedDocument({ _id: 'trash-dir', path: TRASH_DIR_PATH })).toBe(
+      true
+    )
+    expect(
+      isTrashedDocument({
+        _id: 'folder-1',
+        path: `${TRASH_DIR_PATH}/Project`
+      })
+    ).toBe(true)
+    expect(
+      isTrashedDocument({
+        _id: 'folder-2',
+        path: `${TRASH_DIR_PATH}/Project/Sub`
+      })
+    ).toBe(true)
+  })
+
+  it('does not falsely match folders whose name happens to start with trash prefix', () => {
+    expect(
+      isTrashedDocument({
+        _id: 'archive',
+        path: '/.cozy_trash_backup',
+        dir_id: ROOT_DIR_ID
+      })
+    ).toBe(false)
+  })
+
+  it('returns false for healthy files and folders', () => {
+    expect(
+      isTrashedDocument({
+        _id: 'root',
+        path: '/',
+        dir_id: null
+      })
+    ).toBe(false)
+    expect(
+      isTrashedDocument({
+        _id: 'projects',
+        type: 'directory',
+        path: '/Projects',
+        dir_id: ROOT_DIR_ID
+      })
+    ).toBe(false)
+    expect(
+      isTrashedDocument({
+        _id: 'invoice',
+        type: 'file',
+        dir_id: 'projects',
+        trashed: false
+      })
+    ).toBe(false)
   })
 })

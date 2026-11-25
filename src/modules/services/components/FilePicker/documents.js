@@ -1,7 +1,7 @@
 import { fetchPolicies, models } from 'cozy-client'
 
 import { buildCurrentFolderQuery } from '@/components/FilePicker/queries'
-import { TRASH_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 
 export async function fetchPickerDocument(client, fileId, driveId = null) {
   const query = buildCurrentFolderQuery(fileId, driveId)
@@ -10,21 +10,6 @@ export async function fetchPickerDocument(client, fileId, driveId = null) {
     options: { ...query.options, fetchPolicy: fetchPolicies.olderThan(0) }
   })
   return data ?? null
-}
-
-export function isTrashedDocument(item) {
-  if (!item) return false
-  const id = item._id ?? item.id
-  if (id === TRASH_DIR_ID) return true
-  if (item.dir_id === TRASH_DIR_ID) return true
-  if (item.trashed === true) return true
-  if (
-    typeof item.path === 'string' &&
-    (item.path === TRASH_DIR_PATH || item.path.startsWith(`${TRASH_DIR_PATH}/`))
-  ) {
-    return true
-  }
-  return false
 }
 
 function isLocalPickerDocument(item) {

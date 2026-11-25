@@ -3,12 +3,13 @@ import React, { useCallback, useEffect } from 'react'
 
 import useFlag from 'cozy-flags/dist/useFlag'
 
-import { isTrashedDocument } from './documents'
-
 import { isItemTypeDisplayed } from '@/components/FilePicker/helpers'
 import { usePersonalRecents } from '@/hooks/usePersonalRecents'
 import useRecentFiles from '@/hooks/useRecentFiles'
-import { isUnreadableRecent } from '@/modules/filelist/helpers'
+import {
+  isTrashedDocument,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const RecentsContent = ({

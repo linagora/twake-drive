@@ -1,11 +1,7 @@
 import { models } from 'cozy-client'
 import logger from 'cozy-logger'
 
-import {
-  fetchPickerDocument,
-  isTrashedDocument,
-  isWithinPickerRoot
-} from './FilePicker/documents'
+import { fetchPickerDocument, isWithinPickerRoot } from './FilePicker/documents'
 
 import {
   filePickerSections,
@@ -14,6 +10,7 @@ import {
 } from '@/components/FilePicker/constants'
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 import { ROOT_DIR_ID } from '@/constants/config'
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 
 function getFilePickerTabs(config) {
   const sections = config.restrictToDefaultDir

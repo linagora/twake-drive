@@ -4,6 +4,7 @@ import type { IOCozyFile } from 'cozy-client/types/types'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import {
   TRASH_DIR_ID,
+  TRASH_DIR_PATH,
   ROOT_DIR_ID,
   SHARINGS_VIEW_ROUTE
 } from '@/constants/config'
@@ -11,6 +12,29 @@ import { DOCTYPE_FILES_RECENTS } from '@/lib/doctypes'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 export const isDriveBackedFile = (file: File): boolean => !!file.driveId
+
+export interface TrashableItem {
+  _id?: string
+  id?: string
+  dir_id?: string | null
+  trashed?: boolean
+  path?: string
+}
+
+export const isTrashedDocument = (item?: TrashableItem | null): boolean => {
+  if (!item) return false
+  const id = item._id ?? item.id
+  if (id === TRASH_DIR_ID) return true
+  if (item.dir_id === TRASH_DIR_ID) return true
+  if (item.trashed === true) return true
+  if (
+    typeof item.path === 'string' &&
+    (item.path === TRASH_DIR_PATH || item.path.startsWith(`${TRASH_DIR_PATH}/`))
+  ) {
+    return true
+  }
+  return false
+}
 
 // A recent whose file the user can no longer read is listed as the recent
 // itself, with only its last known name and type.
