@@ -94,8 +94,38 @@ export const trashFiles = async (client, files, { showAlert, t, driveId }) => {
   }
 }
 
-export const restoreFiles = async (client, files) => {
-  for (const file of files) {
-    await client.collection(DOCTYPE_FILES).restore(file.id)
+const isInFolders = ({ item, folders }) =>
+  folders.some(
+    folder =>
+      folder.driveId === item.driveId &&
+      Boolean(item.path?.startsWith(`${folder.path}/`))
+  )
+
+const clearTrashPaths = ({ client, items }) => {
+  for (const item of items) {
+    client.store.dispatch(
+      receiveQueryResult(null, { data: { ...item, path: null } })
+    )
   }
+}
+
+export const restoreFiles = async (client, files) => {
+  const folders = files.filter(isDirectory)
+  // A restored folder brings back what it holds: their own restore would fail.
+  const itemsInFolders = files.filter(item => isInFolders({ item, folders }))
+  const itemsToRestore = files.filter(item => !itemsInFolders.includes(item))
+
+  for (const file of itemsToRestore) {
+    const collection = client.collection(DOCTYPE_FILES, {
+      driveId: file.driveId
+    })
+    const { data: restoredItem } = await collection.restore(file.id)
+    // The stack returns a restored file without its path, and the store would
+    // keep the one it had in the trash.
+    const restoredDoc = isDirectory(restoredItem)
+      ? restoredItem
+      : { ...restoredItem, path: null }
+    client.store.dispatch(receiveQueryResult(null, { data: restoredDoc }))
+  }
+  clearTrashPaths({ client, items: itemsInFolders })
 }
