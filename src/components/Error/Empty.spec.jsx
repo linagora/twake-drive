@@ -6,6 +6,7 @@ import { EmptyDrive, EmptyTrash } from './Empty'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
+import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 
 jest.mock('@linagora/twake-icons', () => ({
   Icon: ({ icon, size }) => (
@@ -43,7 +44,7 @@ jest.mock('@/hooks', () => ({
   useDisplayedFolder: () => ({ displayedFolder: mockDisplayedFolder })
 }))
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
-  useSharedDriveFolder: () => ({ sharedDriveResult: null })
+  useSharedDriveFolder: jest.fn(() => ({ sharedDriveResult: null }))
 }))
 jest.mock('@/hooks/useCurrentFolderWriteAccess', () => jest.fn())
 jest.mock('@/modules/upload/UploadButton', () => ({
@@ -115,10 +116,7 @@ describe('Empty', () => {
     'targets %s at the displayed folder document',
     testId => {
       mockDisplayedFolder = { id: 'folder-id', driveId: 'drive-id' }
-      renderAt(
-        '/sharings/drive-id/folder-id',
-        <EmptyDrive driveId="drive-id" />
-      )
+      renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
       const button = screen.getByTestId(testId)
 
       expect(button).toHaveAttribute('data-displayed-folder-id', 'folder-id')
@@ -136,9 +134,15 @@ describe('Empty', () => {
 
   it('does not offer the file upload before the folder document loads', () => {
     mockDisplayedFolder = null
-    renderAt('/sharings/drive-id/folder-id', <EmptyDrive driveId="drive-id" />)
+    renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
 
     expect(screen.queryByTestId('upload-file')).toBe(null)
+  })
+
+  it('leaves the shared drive folder fetch to the folder view', () => {
+    renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
+
+    expect(useSharedDriveFolder).not.toHaveBeenCalled()
   })
 
   it('shows the folder illustration at 160 px in a 10 rem container in Drive', () => {

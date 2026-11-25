@@ -16,7 +16,6 @@ import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { isSpacePath } from '@/modules/routeUtils'
-import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import { UploadButton } from '@/modules/upload/UploadButton'
 import { isSharingsTabRootRoute } from '@/modules/views/Sharings/routes'
 
@@ -25,16 +24,13 @@ const EmptyCanvas = ({
   canUpload,
   localeKey,
   hasTextMobileVersion,
-  onUploaded,
-  driveId
+  onUploaded
 }) => {
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
   const folderId = useCurrentFolderId()
   const canWriteToCurrentFolder = useCurrentFolderWriteAccess()
   const { displayedFolder } = useDisplayedFolder()
-  const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
-  const displayedSharedFolder = sharedDriveResult?.data
 
   const { pathname } = useLocation()
   const isInSpace = isSpacePath(pathname)
@@ -83,7 +79,7 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
-                displayedFolder={displayedSharedFolder || displayedFolder}
+                displayedFolder={displayedFolder}
                 onUploaded={onUploaded}
               />
               <UploadButton
@@ -94,7 +90,7 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload_folder')}
-                displayedFolder={displayedSharedFolder || displayedFolder}
+                displayedFolder={displayedFolder}
                 onUploaded={onUploaded}
               />
             </span>
@@ -118,21 +114,16 @@ export const EmptyTrash = props => (
 export const EmptyWrapper = ({
   currentFolderId,
   canUpload,
-  refreshFolderContent,
-  driveId
+  refreshFolderContent
 }) => {
   const { pathname } = useLocation()
 
   if (isSharingsTabRootRoute(pathname)) {
-    return <EmptyCanvas type="sharing" driveId={driveId} />
+    return <EmptyCanvas type="sharing" />
   }
   if (currentFolderId !== TRASH_DIR_ID) {
     return (
-      <EmptyDrive
-        canUpload={canUpload}
-        onUploaded={refreshFolderContent}
-        driveId={driveId}
-      />
+      <EmptyDrive canUpload={canUpload} onUploaded={refreshFolderContent} />
     )
   }
 

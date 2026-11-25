@@ -46,7 +46,7 @@ const FolderBody = ({
   withFilePath,
   isInSyncFromSharing,
   renderEmptyComponent = () => {
-    return <EmptyDrive driveId={driveId} />
+    return <EmptyDrive />
   },
   canInteractWith,
   driveId

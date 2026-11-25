@@ -50,8 +50,7 @@ const FolderViewBody = ({
   canUpload = true,
   withFilePath = false,
   refreshFolderContent = null,
-  orderProps,
-  driveId
+  orderProps
 }) => {
   const { isDesktop } = useBreakpoints()
   const { viewType, switchView } = useViewSwitcherContext()
@@ -120,7 +119,6 @@ const FolderViewBody = ({
             <EmptyWrapper
               currentFolderId={currentFolderId}
               canUpload={canUpload}
-              driveId={driveId}
             />
           )}
           {hasDataToShow && !needsToWait && (
