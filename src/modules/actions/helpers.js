@@ -1,4 +1,5 @@
 import { joinPath } from '@/lib/path'
+import { filterActionsByPolicy } from '@/modules/actions/policies'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 // Views whose routes carry no driveId (Recents) list shared drive items next to
@@ -63,6 +64,19 @@ export const navigateToModalWithMultipleFile = ({
 export const getContextMenuActions = (actions = []) =>
   actions.filter(
     action => Object.values(action)[0]?.displayInContextMenu !== false
+  )
+
+/**
+ * Returns the context menu actions that the policies and their display
+ * conditions allow on an item
+ *
+ * @param {Object[]} actions - the list of actions
+ * @param {Object} item - the item of the menu
+ * @returns {Object[]} - the list of actions to be displayed
+ */
+export const getItemContextMenuActions = (actions, item) =>
+  getContextMenuActions(filterActionsByPolicy(actions, [item])).filter(
+    action => Object.values(action)[0]?.displayCondition?.([item]) !== false
   )
 
 /**

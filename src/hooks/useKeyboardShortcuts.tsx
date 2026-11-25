@@ -18,6 +18,7 @@ import { useDisplayedFolder } from '@/hooks'
 import { hasWriteAccessToItems } from '@/modules/actions/helpers'
 import DeleteConfirm from '@/modules/drive/DeleteConfirm'
 import { startRenamingAsync } from '@/modules/drive/rename'
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 import { useNextcloudCurrentFolder } from '@/modules/nextcloud/hooks/useNextcloudCurrentFolder'
 import { handlePasteOperation } from '@/modules/paste'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
@@ -52,6 +53,13 @@ interface UseKeyboardShortcutsProps {
   popModal?: () => void
   refresh?: () => void
 }
+
+const canChangeItems = (
+  items: IOCozyFile[],
+  hasItemWriteAccess?: (docId: string, driveId?: string) => boolean
+): boolean =>
+  !items.some(item => isTrashedDocument(item)) &&
+  hasWriteAccessToItems(items, hasItemWriteAccess)
 
 export const useKeyboardShortcuts = ({
   onPaste = null,
@@ -133,10 +141,7 @@ export const useKeyboardShortcuts = ({
   const handleCut = useCallback(() => {
     if (!selectedItems.length) return
 
-    if (
-      !allowCut ||
-      !hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
-    ) {
+    if (!allowCut || !canChangeItems(selectedItems, hasItemWriteAccess)) {
       showAlert({
         message: t('alert.cut_not_allowed'),
         severity: 'secondary'
@@ -282,7 +287,7 @@ export const useKeyboardShortcuts = ({
   const handleRename = useCallback(() => {
     if (
       selectedItems.length === 1 &&
-      hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
+      canChangeItems(selectedItems, hasItemWriteAccess)
     ) {
       dispatch(startRenamingAsync(selectedItems[0]))
     }
@@ -296,10 +301,7 @@ export const useKeyboardShortcuts = ({
   const handleDelete = useCallback(() => {
     if (!selectedItems.length || !pushModal || !popModal || !refresh) return
 
-    if (
-      !allowDelete ||
-      !hasWriteAccessToItems(selectedItems, hasItemWriteAccess)
-    ) {
+    if (!allowDelete || !canChangeItems(selectedItems, hasItemWriteAccess)) {
       showAlert({
         message: t('alert.delete_not_allowed'),
         severity: 'secondary'

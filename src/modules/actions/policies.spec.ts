@@ -75,7 +75,7 @@ describe('policies', () => {
       expect(ctx.hasFolder).toBe(true)
     })
 
-    it('should detect all trashed files', () => {
+    it('should detect trashed files', () => {
       const files = [
         createMockFile('file1', { trashed: true }),
         createMockFile('file2', { trashed: true })
@@ -83,10 +83,21 @@ describe('policies', () => {
 
       const ctx = buildPolicyContext(files)
 
-      expect(ctx.allInTrash).toBe(true)
+      expect(ctx.hasTrashedFile).toBe(true)
     })
 
-    it('should not mark allInTrash if some files are not trashed', () => {
+    it('should detect a folder under the trash', () => {
+      const folder = {
+        ...createMockFile('folder1', { type: 'directory' }),
+        path: '/.cozy_trash/Old'
+      } as IOCozyFile
+
+      const ctx = buildPolicyContext([folder])
+
+      expect(ctx.hasTrashedFile).toBe(true)
+    })
+
+    it('should detect a trashed file among live ones', () => {
       const files = [
         createMockFile('file1', { trashed: true }),
         createMockFile('file2', { trashed: false })
@@ -94,7 +105,15 @@ describe('policies', () => {
 
       const ctx = buildPolicyContext(files)
 
-      expect(ctx.allInTrash).toBe(false)
+      expect(ctx.hasTrashedFile).toBe(true)
+    })
+
+    it('should not mark hasTrashedFile when no file is trashed', () => {
+      const files = [createMockFile('file1')] as IOCozyFile[]
+
+      const ctx = buildPolicyContext(files)
+
+      expect(ctx.hasTrashedFile).toBe(false)
     })
   })
 
@@ -209,21 +228,21 @@ describe('policies', () => {
 
       it('should allow action when files not in trash', () => {
         const action = {}
-        const ctx = { allInTrash: false } as ActionPolicyContext
+        const ctx = { hasTrashedFile: false } as ActionPolicyContext
 
         expect(trashedPolicy.allows(action, ctx)).toBe(true)
       })
 
       it('should block action when files in trash and not allowed', () => {
         const action = {}
-        const ctx = { allInTrash: true } as ActionPolicyContext
+        const ctx = { hasTrashedFile: true } as ActionPolicyContext
 
         expect(trashedPolicy.allows(action, ctx)).toBe(false)
       })
 
       it('should allow action when files in trash and explicitly allowed', () => {
         const action = { allowTrashed: true }
-        const ctx = { allInTrash: true } as ActionPolicyContext
+        const ctx = { hasTrashedFile: true } as ActionPolicyContext
 
         expect(trashedPolicy.allows(action, ctx)).toBe(true)
       })

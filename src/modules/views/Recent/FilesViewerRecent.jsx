@@ -9,13 +9,15 @@ import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import useHead from '@/components/useHead'
 import { useCurrentFileId } from '@/hooks'
 import { usePersonalRecents } from '@/hooks/usePersonalRecents'
-import { isUnreadableRecent } from '@/modules/filelist/helpers'
-import { isTrashedDocument } from '@/modules/services/components/FilePicker/documents'
+import {
+  isTrashedDriveItem,
+  isUnreadableRecent
+} from '@/modules/filelist/helpers'
 import FilesViewer from '@/modules/viewer/FilesViewer'
 import { buildRecentQuery } from '@/queries'
 
 const isViewableRecent = item =>
-  !isUnreadableRecent(item) && item.type === 'file' && !isTrashedDocument(item)
+  !isUnreadableRecent(item) && item.type === 'file' && !isTrashedDriveItem(item)
 
 const RecentFilesViewer = ({ files, filesQuery, viewerProps }) => {
   const navigate = useNavigate()

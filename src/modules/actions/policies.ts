@@ -12,6 +12,7 @@ import type {
 import {
   isInfected,
   isNotScanned,
+  isTrashedDocument,
   isUnreadableRecent
 } from '@/modules/filelist/helpers'
 
@@ -30,7 +31,7 @@ export const buildPolicyContext = (
   let hasNotScanned = false
   let hasFolder = false
   let hasSharedFile = false
-  let allInTrash = files.length > 0
+  let hasTrashedFile = false
   let hasUnreadableRecent = false
 
   for (const file of files) {
@@ -44,7 +45,7 @@ export const buildPolicyContext = (
         file.referenced_by?.some(ref => ref.type === 'io.cozy.sharings') ??
         false
     }
-    if (allInTrash && !file.trashed) allInTrash = false
+    if (!hasTrashedFile && isTrashedDocument(file)) hasTrashedFile = true
   }
 
   return {
@@ -56,7 +57,7 @@ export const buildPolicyContext = (
     hasMultipleFiles: files.length > 1,
     hasFolder,
     hasSharedFile,
-    allInTrash,
+    hasTrashedFile,
     hasUnreadableRecent
   }
 }
@@ -116,7 +117,7 @@ const foldersPolicy: ActionPolicyDefinition = {
 const trashedPolicy: ActionPolicyDefinition = {
   name: 'trashed',
   allows: (action: DriveActionPolicyFlags, ctx: ActionPolicyContext): boolean =>
-    !ctx.allInTrash || action.allowTrashed === true
+    !ctx.hasTrashedFile || action.allowTrashed === true
 }
 
 /**

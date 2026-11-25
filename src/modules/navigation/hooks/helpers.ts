@@ -12,6 +12,7 @@ import flag from 'cozy-flags'
 import type { File } from '@/components/FolderPicker/types'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { joinPath } from '@/lib/path'
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 import { isGrist } from '@/modules/grist/helpers'
 import {
   isNextcloudShortcut,
@@ -222,6 +223,9 @@ export const computePath = (
         ? `/external/${driveId}/${file._id}`
         : `/external/${file._id}`
     case 'directory':
+      if (isTrashedDocument(file)) {
+        return `/trash/${file._id}`
+      }
       if (isOwner && pathname.startsWith('/sharings/')) {
         return `/folder/${file._id}`
       }

@@ -30,6 +30,7 @@ export const selectAllItems = ({ t, selectAll, isSelectAll, isMobile }) => {
     name: 'selectAllItems',
     label,
     icon,
+    allowTrashed: true,
     displayInSelectionBar: true,
     displayInContextMenu: false,
     displayCondition: files => files.length > 0,

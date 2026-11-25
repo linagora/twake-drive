@@ -5,7 +5,10 @@ import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuIte
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import { hasWriteAccessToItems } from './helpers'
 import { restoreFiles } from './utils'
+
+import { isTrashedDocument } from '@/modules/filelist/helpers'
 
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
@@ -23,7 +26,7 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const restore = ({ t, refresh, client }) => {
+export const restore = ({ t, refresh, client, hasItemWriteAccess }) => {
   const label = t('SelectionBar.restore')
   const icon = Restore
 
@@ -32,6 +35,9 @@ export const restore = ({ t, refresh, client }) => {
     label,
     icon,
     allowTrashed: true,
+    displayCondition: files =>
+      files.every(isTrashedDocument) &&
+      hasWriteAccessToItems(files, hasItemWriteAccess),
     action: async files => {
       await restoreFiles(client, files)
       refresh()

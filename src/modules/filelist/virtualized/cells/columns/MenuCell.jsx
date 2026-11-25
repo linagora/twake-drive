@@ -3,8 +3,7 @@ import React, { useReducer, useRef } from 'react'
 import { useIsInSyncFromSharing } from './useIsInSyncFromSharing'
 
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
-import { getContextMenuActions } from '@/modules/actions/helpers'
-import { filterActionsByPolicy } from '@/modules/actions/policies'
+import { getItemContextMenuActions } from '@/modules/actions/helpers'
 import { canInteractWithItem } from '@/modules/filelist/helpers'
 import FileAction from '@/modules/filelist/virtualized/cells/FileAction'
 
@@ -18,9 +17,8 @@ const MenuCell = ({ row, actions }) => {
 
   if (!actions?.length || !canInteractWithItem(row)) return null
 
-  const contextMenuActions = getContextMenuActions(
-    filterActionsByPolicy(actions, [row])
-  )
+  const contextMenuActions = getItemContextMenuActions(actions, row)
+  if (contextMenuActions.length === 0) return null
 
   return (
     <>
@@ -30,7 +28,7 @@ const MenuCell = ({ row, actions }) => {
         disabled={isInSyncFromSharing}
         onClick={toggleShowActionMenu}
       />
-      {contextMenuActions && showActionMenu && (
+      {showActionMenu && (
         <ActionMenuWithHeader
           file={row}
           anchorElRef={filerowMenuToggleRef}

@@ -673,6 +673,44 @@ describe('useKeyboardShortcuts', () => {
       )
     })
 
+    it('should not show delete confirmation when a selected item is trashed', () => {
+      useSelectionContext.mockReturnValue({
+        selectedItems: [
+          ...mockSelectedItems,
+          { _id: 'trashed', type: 'file', trashed: true }
+        ],
+        selectAll: mockSelectAll,
+        hideSelectionBar: mockHideSelectionBar,
+        clearSelection: mockClearSelection,
+        isSelectAll: false
+      })
+      const mockPushModal = jest.fn()
+
+      const wrapper = createWrapper()
+      renderHook(
+        () =>
+          useKeyboardShortcuts({
+            client: mockClient,
+            items: mockItems,
+            pushModal: mockPushModal,
+            popModal: jest.fn(),
+            refresh: jest.fn()
+          }),
+        { wrapper }
+      )
+
+      act(() => {
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', { key: 'Delete', bubbles: true })
+        )
+      })
+
+      expect(mockPushModal).not.toHaveBeenCalled()
+      expect(mockShowAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'alert.delete_not_allowed' })
+      )
+    })
+
     it('should not show delete confirmation when no items are selected', () => {
       useSelectionContext.mockReturnValue({
         selectedItems: [],
