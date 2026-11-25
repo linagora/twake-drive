@@ -32,6 +32,8 @@ couchdb:
 office:
   default:
     onlyoffice_url: "http://onlyoffice.{{if .Env.COZY_E2E_ROOT_DOMAIN}}{{.Env.COZY_E2E_ROOT_DOMAIN}}{{else}}cozy.localhost{{end}}:{{if .Env.COZY_E2E_ONLYOFFICE_PORT}}{{.Env.COZY_E2E_ONLYOFFICE_PORT}}{{else}}18081{{end}}"
+    onlyoffice_inbox_secret: twake-e2e-office-secret
+    onlyoffice_outbox_secret: twake-e2e-office-secret
 
 mail:
   disable_tls: true

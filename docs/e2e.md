@@ -173,8 +173,8 @@ they share the same saved configuration file.
 The Compose project provides Docs on
 `http://onlyoffice.<root-domain>:<office-port>`. The browser and Stack reach
 Docs through that origin; Docs reaches the three Stack instance domains for
-source downloads and save callbacks. JWT is disabled in this local E2E
-runtime, so the suite does not validate JWT authentication.
+source downloads and save callbacks, signed with a fixed JWT secret that the
+Stack requires.
 `e2e/tests/onlyoffice-edit.spec.ts` checks that an edit reaches the stored file
 through the save callback. Published ports bind to host loopback;
 this configuration is intended for disposable tests, not deployment.

@@ -68,7 +68,9 @@ services:
     image: onlyoffice/documentserver:9.4@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
     network_mode: "service:coredns"
     environment:
-      JWT_ENABLED: "false"
+      # the secret of office.default.onlyoffice_inbox_secret / outbox_secret (e2e/cozy.yml)
+      JWT_ENABLED: "true"
+      JWT_SECRET: twake-e2e-office-secret
       ALLOW_PRIVATE_IP_ADDRESS: "true"
       ALLOW_META_IP_ADDRESS: "false"
     volumes:
