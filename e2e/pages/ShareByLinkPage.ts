@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Download, Locator, Page } from '@playwright/test'
 
 import { escapeRegExp, expect } from '../helpers/fixtures'
 import { t } from '../helpers/i18n'
@@ -23,9 +23,17 @@ export class ShareByLinkPage {
   /** The status of the "Public access" row once a link exists. It reads
    * "Only users added via email can open it" while there is no link. */
   private get linkRow(): Locator {
-    const statuses = ['view', 'edit', 'password']
+    const statuses = [
+      'view',
+      'edit',
+      'password',
+      'expires',
+      'passwordAndExpires'
+    ]
       .map(status =>
-        escapeRegExp(t(`cozy-sharing:Share.publicAccess.status.${status}`))
+        escapeRegExp(
+          t(`cozy-sharing:Share.publicAccess.status.${status}`, { date: '' })
+        )
       )
       .join('|')
     return this.page.getByText(new RegExp(`^(${statuses})`))
@@ -131,6 +139,36 @@ export class ShareByLinkPage {
     await this.restrictionModal.waitFor({ state: 'visible' })
   }
 
+  get activityReportCheckbox(): Locator {
+    return this.restrictionModal.getByRole('checkbox', {
+      name: t('cozy-sharing:ActivityReport.label')
+    })
+  }
+
+  get expirationCheckbox(): Locator {
+    return this.restrictionModal.getByRole('checkbox', {
+      name: t('cozy-sharing:BoxDate.text')
+    })
+  }
+
+  get expirationInput(): Locator {
+    return this.restrictionModal.locator('input[inputmode="numeric"]')
+  }
+
+  get downloadReportButton(): Locator {
+    return this.restrictionModal.getByRole('button', {
+      name: t('cozy-sharing:ActivityReport.download')
+    })
+  }
+
+  async downloadReport(): Promise<Download> {
+    const [download] = await Promise.all([
+      this.page.waitForEvent('download'),
+      this.downloadReportButton.click()
+    ])
+    return download
+  }
+
   /** Toggle password protection on and fill the password field. */
   async enablePassword(password: string): Promise<void> {
     const modal = this.restrictionModal
@@ -146,11 +184,8 @@ export class ShareByLinkPage {
    * English); the cozy-ui DatePicker has `enableKeyboard`, so we type it
    * rather than navigating the calendar popup. */
   async enableExpiration(date: string): Promise<void> {
-    const modal = this.restrictionModal
-    await modal.getByText(t('cozy-sharing:BoxDate.text')).click()
-    // The DatePicker's label "Deadline" is also the icon button's aria-label,
-    // so match the date input by its numeric inputmode (the only one here).
-    await modal.locator('input[inputmode="numeric"]').fill(date)
+    await this.expirationCheckbox.check()
+    await this.expirationInput.fill(date)
   }
 
   async allowEditing(): Promise<void> {
