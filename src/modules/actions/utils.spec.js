@@ -1,7 +1,7 @@
 import { createMockClient } from 'cozy-client'
 import { initQuery, receiveQueryResult } from 'cozy-client/dist/store'
 
-import { trashFiles, downloadFiles } from './utils'
+import { trashFiles, downloadFiles, restoreFiles } from './utils'
 import { generateFile } from 'test/generate'
 
 import { TRASH_DIR_ID } from '@/constants/config'
@@ -86,6 +86,41 @@ describe('trashFiles', () => {
     expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
       driveId: 'drive-2'
     })
+  })
+})
+
+describe('restoreFiles', () => {
+  it('restores a folder without what it holds, and the other items', async () => {
+    const client = createMockClient({})
+    const restore = jest.fn(id =>
+      Promise.resolve({ data: { _id: id, _type: 'io.cozy.files' } })
+    )
+    client.collection = jest.fn(() => ({ restore }))
+    const folder = {
+      _id: 'old',
+      _type: 'io.cozy.files',
+      id: 'old',
+      type: 'directory',
+      path: '/.cozy_trash/Old'
+    }
+    const fileInFolder = {
+      _id: 'report',
+      _type: 'io.cozy.files',
+      id: 'report',
+      type: 'file',
+      path: '/.cozy_trash/Old/report.txt'
+    }
+    const otherFile = {
+      _id: 'other',
+      _type: 'io.cozy.files',
+      id: 'other',
+      type: 'file',
+      path: '/.cozy_trash/Older/other.txt'
+    }
+
+    await restoreFiles(client, [fileInFolder, folder, otherFile])
+
+    expect(restore.mock.calls.map(([id]) => id)).toEqual(['old', 'other'])
   })
 })
 
