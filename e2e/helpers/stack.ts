@@ -21,6 +21,7 @@ interface PermissionDoc {
   id: string
   attributes: {
     expires_at?: string
+    activity_report_enabled?: boolean
     permissions?: Record<string, { values?: string[]; verbs?: string[] }>
   }
 }

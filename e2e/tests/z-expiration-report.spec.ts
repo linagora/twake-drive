@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises'
 
+import type { Page } from '@playwright/test'
+
 import { USERS } from '../helpers/config'
 import { expect, stamp, test } from '../helpers/fixtures'
 import { setFlags } from '../helpers/flags'
@@ -10,7 +12,10 @@ import { ShareModalPage } from '../pages/ShareModalPage'
 const REPORT_FLAG = 'drive.public_link_events.enabled'
 const ROOT = `${USERS.alice.appUrl}/#/folder`
 
-async function formatExpirationDate(page, timestamp) {
+async function formatExpirationDate(
+  page: Page,
+  timestamp: number
+): Promise<string> {
   return page.evaluate(value => {
     return new Intl.DateTimeFormat('en-US', {
       month: '2-digit',
@@ -20,7 +25,7 @@ async function formatExpirationDate(page, timestamp) {
   }, timestamp)
 }
 
-async function openRestrictions(page) {
+async function openRestrictions(page: Page): Promise<ShareByLinkPage> {
   await new ShareModalPage(page).waitForOpen()
   const link = new ShareByLinkPage(page)
   await link.waitForLinkRow()
@@ -53,11 +58,11 @@ test.describe('Expiration activity report', () => {
             })
       const url = kind === 'folder' ? `${ROOT}/${id}` : ROOT
       await alicePage.goto(url)
-      const openShare = () =>
-        kind === 'folder'
-          ? aliceDrive.openShareModal()
-          : aliceDrive.row(name).share()
-      await openShare()
+      if (kind === 'folder') {
+        await aliceDrive.openShareModal()
+      } else {
+        await aliceDrive.row(name).share()
+      }
       let link = new ShareByLinkPage(alicePage)
       await link.openRestrictions()
       await expect(link.activityReportCheckbox).toBeVisible()
@@ -133,8 +138,7 @@ test.describe('Expiration activity report', () => {
       name: `Flag report ${stamp()}`
     })
     await alicePage.goto(`${ROOT}/${id}`)
-    const openShare = () => aliceDrive.openShareModal()
-    await openShare()
+    await aliceDrive.openShareModal()
     const link = new ShareByLinkPage(alicePage)
     await link.openRestrictions()
     await expect(link.activityReportCheckbox).toBeVisible()
