@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate, Outlet, useLocation } from 'react-router-dom'
+import { useNavigate, Navigate, Outlet, useLocation } from 'react-router-dom'
 
 import { useQuery, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -14,22 +14,25 @@ import FolderViewBody from '../Folder/FolderViewBody'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
+import Oops from '@/components/Error/Oops'
 import useHead from '@/components/useHead'
 import { SORT_BY_UPDATE_DATE } from '@/config/sort'
 import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
 import { restore, selectAllItems } from '@/modules/actions'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
+import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { TrashBreadcrumb } from '@/modules/trash/components/TrashBreadcrumb'
 import { TrashToolbar } from '@/modules/trash/components/TrashToolbar'
 import { destroy } from '@/modules/trash/components/actions/destroy'
+import { isInTrashDir } from '@/modules/trash/helpers'
 import { buildTrashQuery } from '@/queries'
 
 export const TrashFolderView = () => {
   const { isMobile } = useBreakpoints()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const { isSelectionBarVisible, toggleSelectAllItems, isSelectAll } =
     useSelectionContext()
   const currentFolderId = useCurrentFolderId()
@@ -38,7 +41,8 @@ export const TrashFolderView = () => {
   const client = useClient()
   useHead()
 
-  const { displayedFolder, isNotFound } = useDisplayedFolder()
+  const { displayedFolder, isNotFound, isLoading } = useDisplayedFolder()
+  const isTrashFolder = isInTrashDir(displayedFolder?.path)
 
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -64,8 +68,14 @@ export const TrashFolderView = () => {
     limit: 50
   })
 
-  const foldersResult = useQuery(folderQuery.definition, folderQuery.options)
-  const filesResult = useQuery(fileQuery.definition, fileQuery.options)
+  const foldersResult = useQuery(folderQuery.definition, {
+    ...folderQuery.options,
+    enabled: isTrashFolder
+  })
+  const filesResult = useQuery(fileQuery.definition, {
+    ...fileQuery.options,
+    enabled: isTrashFolder
+  })
 
   const actions = makeActions([selectAllItems, restore, destroy], {
     client,
@@ -79,6 +89,27 @@ export const TrashFolderView = () => {
       ),
     isSelectAll
   })
+
+  if (displayedFolder?.path && !isTrashFolder) {
+    const childPath = pathname.slice(`/trash/${currentFolderId}`.length)
+    const filePath = /^\/file\/[^/]+(?:\/revision)?\/?$/.test(childPath)
+      ? childPath
+      : ''
+    return (
+      <Navigate
+        to={{ pathname: `/folder/${displayedFolder.id}${filePath}`, search }}
+        replace
+      />
+    )
+  }
+
+  if (!isTrashFolder) {
+    return (
+      <FolderView isNotFound={isNotFound}>
+        {isLoading ? <FileListRowsPlaceholder /> : <Oops />}
+      </FolderView>
+    )
+  }
 
   return (
     <FolderView isNotFound={isNotFound}>

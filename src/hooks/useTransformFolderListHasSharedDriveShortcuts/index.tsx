@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 import { IOCozyFile } from 'cozy-client/types/types'
 import { useSharingContext } from 'cozy-sharing'
 
-import { TRASH_DIR_PATH } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
@@ -12,6 +11,7 @@ import type {
   SharedDriveFile,
   SharingRule
 } from '@/modules/shareddrives/types'
+import { isInTrashDir } from '@/modules/trash/helpers'
 
 interface SharedDrive {
   id: string
@@ -163,7 +163,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           sharedDriveIds.has(ref.id)
         )
         return (
-          !item.path?.startsWith(TRASH_DIR_PATH) &&
+          !isInTrashDir(item.path) &&
           !isReferencedBySharedDrive &&
           (!showNextcloudFolder ? !isNextcloudShortcut(item) : true)
         )
