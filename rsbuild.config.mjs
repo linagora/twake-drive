@@ -2,6 +2,8 @@ import { defineConfig, mergeRsbuildConfig } from '@rsbuild/core'
 import { RsdoctorRspackPlugin } from '@rsdoctor/core'
 import { getRsbuildConfig } from 'rsbuild-config-cozy-app'
 
+import { preloadLocalesPlugin } from './plugins/preload-locales/index.mjs'
+
 const config = getRsbuildConfig({
   title: 'Twake Drive',
   hasServices: true,
@@ -186,39 +188,6 @@ config.environments = {
     }
   },
   services
-}
-
-// src/locales/index.js loads the current locale and the English fallback as
-// async chunks once the main bundle runs, a round trip before the first
-// render. cozy-stack renders index.html as a Go template, so preload English
-// and, through `{{if eq .Locale}}`, the instance locale while the main bundle
-// downloads. On the public page, anonymous visitors use their browser locale,
-// so for them the instance locale preload can be unused.
-const preloadLocalesPlugin = {
-  name: 'preload-locales',
-  setup(api) {
-    api.modifyHTML((html, { compilation }) => {
-      const { publicPath } = compilation.outputOptions
-      const preloads = []
-      for (const [name, chunk] of compilation.namedChunks) {
-        const locale = name.match(/^locale-(.+)-json$/)?.[1]
-        if (!locale) continue
-        const link = [...chunk.files]
-          .filter(file => file.endsWith('.js'))
-          .map(
-            file =>
-              `<link rel="preload" as="script" href="${publicPath}${file}" />`
-          )
-          .join('')
-        if (locale === 'en') {
-          preloads.push(link)
-        } else {
-          preloads.push(`{{if eq .Locale "${locale}"}}${link}{{end}}`)
-        }
-      }
-      return html.replace('</head>', `${preloads.join('\n')}\n</head>`)
-    })
-  }
 }
 
 const mergedConfig = mergeRsbuildConfig(config, {
