@@ -88,6 +88,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: preserve context that the code cannot express without repeating the code or its history.
 - Scope: Twake Drive web application code and its reviews.
 
+## 2026-11-26, [Tech] Test non-trivial business logic
+
+- Decision: Drive tests cover non-trivial business logic, not framework behavior, trivial guards or rendering choices, pass-through components or callbacks, or cases already covered by a helper or library test.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677738396).
+- Why: focus review and test coverage on behavior owned by Drive without duplicating existing coverage.
+- Scope: Twake Drive web tests, including tests carried over or moved with code.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.

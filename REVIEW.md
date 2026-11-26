@@ -104,3 +104,13 @@ the change in the commit message.
   function creation on each render is not a justification on its own. Other
   measured performance needs remain governed by `AGENTS.md` and the guidelines;
   do not duplicate their general memoization rules here.
+
+## Tests
+
+- Only test non-trivial business logic: permissions, roles, ordering, URL
+  building, data normalisation.
+- Trust the tools (React, MUI, cozy-ui, cozy-client): never test that they work.
+- No test for a guard like `if (!x) return null`, an `if` that only picks what
+  to render, a component that only forwards props, a callback passed through,
+  or a case already covered by the helper's or the library's own tests. This
+  applies to tests carried over or moved with code too.
