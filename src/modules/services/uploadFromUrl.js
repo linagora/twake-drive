@@ -3,6 +3,10 @@ import { getIllegalCharacters } from 'cozy-stack-client/dist/getIllegalCharacter
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import { UPLOAD_MAGIC_FOLDER_IDS } from '@/lib/magicFolders'
 import {
+  addUploadReference,
+  getUploadReference
+} from '@/modules/services/uploadReference'
+import {
   isConflictError,
   uploadWithRenamedFile
 } from '@/modules/upload/conflictResolution'
@@ -63,7 +67,8 @@ function getUploadConfig(data) {
   return {
     url: getUploadSourceUrl(url),
     folderId: validatedFolderId,
-    name: validatedName
+    name: validatedName,
+    reference: getUploadReference(data.reference)
   }
 }
 
@@ -136,6 +141,11 @@ export async function uploadFileFromUrl(client, data, signal) {
     })
     return response.data
   }
+  const document = await createFileOrRenamed(client, config, dirId, createFile)
+  return addUploadReference(client, document, config.reference)
+}
+
+async function createFileOrRenamed(client, config, dirId, createFile) {
   try {
     return await createFile(config.name)
   } catch (error) {

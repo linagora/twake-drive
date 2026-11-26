@@ -44,6 +44,25 @@ On success, the caller receives the created file's metadata through the normal `
 
 The document contains the final stored name and destination. A name collision is resolved by keeping both files with an automatically adjusted name.
 
+### Reference
+
+Add `reference` to record where the file comes from, so that the calling app finds it again:
+
+```json
+{
+  "url": "https://jmap.example/unauthenticatedDownload/a1/b1?token=t1",
+  "folderId": "io.cozy.apps/mail",
+  "name": "report.pdf",
+  "reference": { "type": "io.cozy.mails.attachments", "id": "a1:e1:b1" }
+}
+```
+
+- Drive adds it to the `referenced_by` of the stored file. The app lists the files of a reference with `GET /data/:type/:id/relationships/references` (`include=files` gives their documents, `trashed` included), with a `GET` permission on `type` only.
+- `type` must be `io.cozy.mails.attachments` (an attachment of an email: `<accountId>:<emailId>:<blobId>`). Other doctypes are refused, so that an app cannot put a file in a list it does not own, such as a photo album.
+- `id` has the shape of its doctype: `<accountId>:<emailId>:<blobId>`, three nonempty parts without `:` or `/`, 256 characters at most.
+- The returned document carries the revision and the references of that write (`_rev`, `relationships.referenced_by`).
+- A reference that fails to be added is logged: the file stays stored and the intent still succeeds.
+
 ### Limitations
 
 - The Stack must be able to reach the URL and pass its network-safety checks. Browser CORS does not apply, but Stack DNS, connectivity, TLS and egress restrictions do. `localhost` refers to the Stack host, not the browser.
@@ -69,6 +88,7 @@ The stack keeps intent data as JSON, which cannot hold a `File`. Send the data i
 - `folderId`: ID of a folder in the user's Drive, with the same rules as the URL shape's `folderId`.
 - `driveId`: ID of the shared drive. The files go to its root folder.
 - `files`: one or more `File` objects.
+- `references` (optional): one entry per file, in the order of `files`: a reference as in the URL shape, or `null`. It needs `folderId`: the stack keeps no references on the files of a shared drive.
 
 Pass exactly one of `folderId` and `driveId`.
 
