@@ -10,6 +10,15 @@ also follow [e2e/AGENTS.md](e2e/AGENTS.md).
 Review the changed code and its affected callers, not unrelated legacy code. These
 rules are not a request for repository-wide rewrites or changes to external APIs.
 
+## Writing remarks
+
+- Lead with the issue. Skip opening thanks or pleasantries.
+- State the concrete fix directly, with a snippet or GitHub suggestion when
+  useful. Do not phrase a finding as a question.
+- Do not flag a branch solely for being behind the default branch.
+- When a review remark becomes an agreed rule, add it here and record the
+  decision in [docs/decisions.md](docs/decisions.md).
+
 ## JSX and component APIs
 
 - Do not store JSX elements in local variables (`const actions = <Actions />`).
