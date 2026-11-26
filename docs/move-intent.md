@@ -81,6 +81,14 @@ interface MoveIntentConfig {
    * Ignore duplicates and display in Drive's usual order, not the supplied order.
    */
   tabs?: Array<'drive' | 'sharings'>
+
+  /**
+   * Label of the confirmation button, already translated by the caller,
+   * e.g. "Save to" for a file just saved. Defaults to Drive's "Move".
+   * An empty or non-string value, or one over 256 characters, keeps the
+   * default.
+   */
+  confirmLabel?: string
 }
 ```
 

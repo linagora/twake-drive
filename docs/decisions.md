@@ -66,3 +66,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Crash-- (CTO), 2026-11-26, [Crash--/twake-mail-frontend#1203](https://github.com/Crash--/twake-mail-frontend/pull/1203)
 - Why: Twake Mail shows "See in Drive" on an attachment already saved, reading the references of the attachment with a permission on that doctype only, not on the whole of `io.cozy.files`.
 - Scope: the UPLOAD intent (`docs/upload-intent.md`).
+
+## 2026-11-26, [UI] The MOVE intent takes the label of its confirmation button
+
+- Decision: the MOVE intent takes an optional `confirmLabel`, the label of its confirmation button, translated by the caller; without it the button says "Move".
+- Decided by: Crash-- (CTO), 2026-11-26
+- Why: Twake Mail and Twake Calendar open the MOVE intent to organize a file they just saved, where the mockups say "Save to".
+- Scope: the MOVE intent (`docs/move-intent.md`).

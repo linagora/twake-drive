@@ -16,7 +16,8 @@ export function MoveDestinationActions({
   hasConfirmHandler,
   canConfirm,
   isBusy,
-  isValidatingDestination
+  isValidatingDestination,
+  confirmLabel = null
 }) {
   const { t } = useI18n()
   return (
@@ -39,7 +40,11 @@ export function MoveDestinationActions({
       />
       <Buttons
         className="u-ml-1"
-        label={onRetryResult ? t('Viewer.loading.retry') : t('Move.action')}
+        label={
+          onRetryResult
+            ? t('Viewer.loading.retry')
+            : (confirmLabel ?? t('Move.action'))
+        }
         onClick={onRetryResult || onConfirm}
         disabled={
           isBrowserBusy ||

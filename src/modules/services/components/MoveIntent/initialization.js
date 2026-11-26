@@ -8,12 +8,22 @@ import { initializePickerNavigation } from '../pickerNavigation'
 import { isNextcloudFile } from '@/modules/nextcloud/helpers'
 
 const MOVE_TABS = ['drive', 'sharings']
+const MAX_CONFIRM_LABEL_LENGTH = 256
+
+function isConfirmLabel(label) {
+  return (
+    typeof label === 'string' &&
+    label.trim() !== '' &&
+    label.length <= MAX_CONFIRM_LABEL_LENGTH
+  )
+}
 
 export function getMoveIntentConfig(intent, serviceData = null) {
   const data = getIntentData(intent, serviceData) || {}
   return {
     ...getPickerNavigationConfig(data, MOVE_TABS),
-    fileIds: data.fileIds ?? null
+    fileIds: data.fileIds ?? null,
+    confirmLabel: isConfirmLabel(data.confirmLabel) ? data.confirmLabel : null
   }
 }
 

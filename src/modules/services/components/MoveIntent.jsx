@@ -66,6 +66,7 @@ export function MoveIntent({ service, moveIntentConfig, onReadyToUse }) {
     initialLocation: moveIntentConfig.initialLocation,
     availableSections: moveIntentConfig.tabs,
     restrictedRoot: moveIntentConfig.restrictedRoot,
+    confirmLabel: moveIntentConfig.confirmLabel,
     canNavigateTo,
     onReadyToUse,
     onClose: operation.onClose,
