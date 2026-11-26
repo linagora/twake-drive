@@ -56,8 +56,10 @@ rules are not a request for repository-wide rewrites or changes to external APIs
 - Group callback props (`on*`) last, consistently in parameter destructuring,
   JSDoc, `propTypes` and JSX call sites.
 - Use semantic styling utilities rather than palette-specific classes such as
-  `u-bg-paleGrey`. Follow the existing design-system constraints in `AGENTS.md`;
-  a missing semantic variant is not permission to introduce an inline style.
+  `u-bg-paleGrey`, and semantic colour variables (`var(--primaryContrastTextColor)`)
+  rather than raw ones (`var(--white)`, a hex code). Follow the existing
+  design-system constraints in `AGENTS.md`; a missing semantic variant is not
+  permission to introduce an inline style.
 
 ## Logic and responsibilities
 

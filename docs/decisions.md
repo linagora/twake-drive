@@ -116,6 +116,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: keep component boundaries clear and reuse the design system's existing behavior and styling.
 - Scope: changed Twake Drive web components and their code reviews, not a repository-wide rewrite.
 
+## 2026-11-26, [Tech] Use semantic colour variables for UI styles
+
+- Decision: Drive UI styles use semantic colour variables rather than raw palette variables or hex codes, without bypassing the design-system constraints in `AGENTS.md`.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630978).
+- Why: make the intended colour role explicit so it can follow the active theme.
+- Scope: Twake Drive web UI styling and its code reviews.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
