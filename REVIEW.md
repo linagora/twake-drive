@@ -26,14 +26,20 @@ rules are not a request for repository-wide rewrites or changes to external APIs
   in two places. This does not prohibit variables holding component types.
 - Custom hooks return state and handlers, never JSX. The component owns the
   conditional rendering.
-- For conditional rendering, use an actual boolean named `is…` or `has…`, not
-  the truthiness of an object, string or number. Keep the rendering condition
+- For conditional rendering, use an actual boolean, not the truthiness of an
+  object, string or number. Keep trivial comparisons inline and put non-trivial
+  conditions in named `is…` or `has…` booleans. Keep the rendering condition
   separate from the data passed to the rendered component:
 
   ```jsx
-  const hasSelectedFile = selectedFile !== null;
+  const isPreviewable = isImage(file) && !file.trashed
 
-  return <>{hasSelectedFile && <FileDetails file={selectedFile} />}</>;
+  return (
+    <>
+      {isPreviewable && <FilePreview file={file} />}
+      {folderId !== null && <FolderItem folderId={folderId} />}
+    </>
+  )
   ```
 
 - Keep the JSX return focused on rendering. Compute derived data, helper results

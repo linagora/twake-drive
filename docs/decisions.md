@@ -95,6 +95,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: focus review and test coverage on behavior owned by Drive without duplicating existing coverage.
 - Scope: Twake Drive web tests, including tests carried over or moved with code.
 
+## 2026-11-26, [Tech] Keep trivial JSX conditions inline
+
+- Decision: JSX rendering guards use booleans, with trivial comparisons inline and non-trivial conditions in named `is…` or `has…` variables, separate from the props they guard.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630940).
+- Why: keep simple checks readable at the call site without relying on implicit truthiness or hiding complex conditions in JSX.
+- Scope: Twake Drive web JSX and its code reviews.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
