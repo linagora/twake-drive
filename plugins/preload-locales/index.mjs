@@ -4,21 +4,24 @@
 // and, through `{{if eq .Locale}}`, the instance locale while the main bundle
 // downloads. On the public page, anonymous visitors use their browser locale,
 // so for them the instance locale preload can be unused.
+// cozy-flagship-app serves index.html itself and only substitutes `{{.Key}}`:
+// the condition stays inside the rel attribute so that, left unrendered, it
+// gives an inert link instead of visible text. Backquotes keep the attribute
+// quotes balanced.
 export const addLocalePreloads = (html, { namedChunks, publicPath }) => {
   const preloads = []
   for (const [name, chunk] of namedChunks) {
     const locale = name.match(/^locale-(.+)-json$/)?.[1]
     if (!locale) continue
-    const link = [...chunk.files]
-      .filter(file => file.endsWith('.js'))
-      .map(
-        file => `<link rel="preload" as="script" href="${publicPath}${file}" />`
+    const rel =
+      locale === 'en'
+        ? 'preload'
+        : `{{if eq .Locale \`${locale}\`}}preload{{end}}`
+    for (const file of chunk.files) {
+      if (!file.endsWith('.js')) continue
+      preloads.push(
+        `<link rel="${rel}" as="script" href="${publicPath}${file}" />`
       )
-      .join('')
-    if (locale === 'en') {
-      preloads.push(link)
-    } else {
-      preloads.push(`{{if eq .Locale "${locale}"}}${link}{{end}}`)
     }
   }
   return html.replace('</head>', `${preloads.join('\n')}\n</head>`)
