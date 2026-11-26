@@ -8,12 +8,12 @@ import React, {
 } from 'react'
 
 import VirtualizedGridList from 'cozy-ui/transpiled/react/GridList/Virtualized'
-import virtuosoComponents from 'cozy-ui/transpiled/react/GridList/Virtualized/Dnd/virtuosoComponents'
-import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
 
+import GridItem from './GridItem'
 import GridWrapper from './GridWrapper'
+import CustomDragLayer from './dnd/CustomDragLayer'
+import GridScroller from './dnd/GridScroller'
 
-import styles from '@/styles/filelist.styl'
 import gridStyles from '@/styles/folder-view.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
@@ -21,29 +21,10 @@ import AddFolder from '@/modules/filelist/AddFolder'
 import { GridFileWithSelection as GridFile } from '@/modules/filelist/virtualized/GridFile'
 import useScrollToHighlightedItem from '@/modules/views/Folder/virtualized/useScrollToHighlightedItem'
 
-const GridItem = forwardRef(({ item, context, ...props }, ref) => {
-  const { componentProps } = context
-  const DefaultItem = virtuosoComponents.Item
-
-  return (
-    <DefaultItem
-      ref={ref}
-      item={item}
-      context={context}
-      {...props}
-      {...componentProps?.Item}
-    />
-  )
-})
-
-GridItem.displayName = 'GridItem'
-
-const GridItemMemo = React.memo(GridItem)
-
-const mergedComponents = {
-  ...virtuosoComponents,
+const components = {
+  Scroller: GridScroller,
   List: GridWrapper,
-  Item: GridItemMemo
+  Item: GridItem
 }
 
 const Grid = forwardRef(
@@ -72,15 +53,6 @@ const Grid = forwardRef(
     const internalVirtuosoRef = useRef(null)
     const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
-
-    const componentProps = useMemo(
-      () => ({
-        Item: {
-          className: cx(styles['fil-content-grid-item'])
-        }
-      }),
-      []
-    )
 
     const itemRenderer = useCallback(
       (file, { isOver }) => (
@@ -134,7 +106,6 @@ const Grid = forwardRef(
         dragProps,
         itemRenderer,
         itemsInDropProcess,
-        componentProps,
         setItemsInDropProcess,
         items
       }),
@@ -145,7 +116,6 @@ const Grid = forwardRef(
         dragProps,
         itemRenderer,
         itemsInDropProcess,
-        componentProps,
         items
       ]
     )
@@ -163,7 +133,7 @@ const Grid = forwardRef(
         <VirtualizedGridList
           ref={virtuosoRef}
           scrollerRef={scrollerRef}
-          components={mergedComponents}
+          components={components}
           items={items}
           endReached={fetchMore}
           context={gridContext}

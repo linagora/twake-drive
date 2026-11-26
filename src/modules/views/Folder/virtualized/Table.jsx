@@ -9,14 +9,14 @@ import React, {
 import { useSelector } from 'react-redux'
 
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
-import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
-import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
-import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
+import virtuosoComponents from 'cozy-ui/transpiled/react/Table/Virtualized/virtuosoComponents'
+
+import TableRow from './TableRow'
+import CustomDragLayer from './dnd/CustomDragLayer'
+import TableScroller from './dnd/TableScroller'
 
 import styles from '@/styles/filelist.styl'
 
-import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
-import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { isRenaming as isRenamingSelector } from '@/modules/drive/rename'
 import { isUnreadableRecent } from '@/modules/filelist/helpers'
 import Cell from '@/modules/filelist/virtualized/cells/Cell'
@@ -24,33 +24,10 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 import useScrollToHighlightedItem from '@/modules/views/Folder/virtualized/useScrollToHighlightedItem'
 
-const TableRow = forwardRef(({ item, context, children, ...props }, ref) => {
-  const { isItemCut } = useClipboardContext()
-  const isCut = isItemCut(item._id)
-  const { actions } = context
-
-  return (
-    <RightClickFileMenu doc={item} actions={actions} {...props}>
-      <TableRowDnD
-        ref={ref}
-        item={item}
-        context={context}
-        componentsProps={{ tableRow: { disabled: isCut } }}
-        data-file-id={item._id}
-      >
-        {children}
-      </TableRowDnD>
-    </RightClickFileMenu>
-  )
-})
-
-TableRow.displayName = 'TableRow'
-
-const TableRowMemo = React.memo(TableRow)
-
 const components = {
-  ...virtuosoComponentsDnd,
-  TableRow: TableRowMemo
+  ...virtuosoComponents,
+  Scroller: TableScroller,
+  TableRow
 }
 
 const Table = forwardRef(
