@@ -59,3 +59,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Bobpodvalnyi (product owner) with shepilov (lead dev), [comment](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7164698093) and [comment](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7164966089), summed up in [#4598](https://github.com/linagora/twake-drive/issues/4598#issuecomment-7165610564).
 - Why: the user once saw or edited the item, and a later "request access" page will build on this placeholder.
 - Scope: desktop and mobile web, Recent view with `drive.recents.enabled`; the mobile app follows in linagora/twake-drive-mobile#655.
+
+## 2026-11-26, [Architecture] The UPLOAD intent records where a file comes from
+
+- Decision: the UPLOAD intent takes an optional `reference` (from a URL) or `references` (one per local file) that Drive adds to the `referenced_by` of the stored file. Only `io.cozy.mails.attachments` is accepted, with an id `<accountId>:<emailId>:<blobId>`; a reference that fails is logged and the upload still succeeds.
+- Decided by: Crash-- (CTO), 2026-11-26, [Crash--/twake-mail-frontend#1203](https://github.com/Crash--/twake-mail-frontend/pull/1203)
+- Why: Twake Mail shows "See in Drive" on an attachment already saved, reading the references of the attachment with a permission on that doctype only, not on the whole of `io.cozy.files`.
+- Scope: the UPLOAD intent (`docs/upload-intent.md`).

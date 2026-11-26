@@ -4,6 +4,10 @@ import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 import logger from '@/lib/logger'
 import { makeFilePickerFileEntry } from '@/modules/services/components/FilePicker/payload'
 import { getLocalDirId } from '@/modules/services/uploadFromUrl'
+import {
+  addUploadReference,
+  getUploadReference
+} from '@/modules/services/uploadReference'
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
 import { buildSharedDriveIdQuery } from '@/queries'
 
@@ -31,7 +35,21 @@ function getFilesConfig(data) {
   if (sharingLink && driveId) {
     throw new Error('sharingLink needs a folderId')
   }
-  return { driveId, folderId, files, sharingLink }
+  const references = getUploadReferences(data.references, files.length)
+  // The stack keeps no references on the files of a shared drive
+  if (references && driveId) {
+    throw new Error('references needs a folderId')
+  }
+  return { driveId, folderId, files, sharingLink, references }
+}
+
+// One reference or null per file, in the order of `files`
+function getUploadReferences(references, count) {
+  if (references === undefined || references === null) return null
+  if (!Array.isArray(references) || references.length !== count) {
+    throw new Error('references must hold one entry per file')
+  }
+  return references.map(getUploadReference)
 }
 
 function isFileList(files) {
@@ -85,7 +103,8 @@ export async function uploadFilesToDrive(
   signal,
   onProgress = null
 ) {
-  const { driveId, folderId, files, sharingLink } = getFilesConfig(data)
+  const { driveId, folderId, files, sharingLink, references } =
+    getFilesConfig(data)
   signal.throwIfAborted()
   const dirId = driveId
     ? await getRootId(client, driveId)
@@ -98,7 +117,7 @@ export async function uploadFilesToDrive(
       ? ({ loaded, total }) => onProgress({ index, loaded, total })
       : null
     try {
-      const { data: document } = await uploadFileWithConflictStrategy(
+      const { data: created } = await uploadFileWithConflictStrategy(
         client,
         file,
         {
@@ -108,6 +127,11 @@ export async function uploadFilesToDrive(
           conflictStrategy: 'rename',
           onUploadProgress
         }
+      )
+      const document = await addUploadReference(
+        client,
+        created,
+        references?.[index] ?? null
       )
       results.push({
         document: await makeResultDocument(

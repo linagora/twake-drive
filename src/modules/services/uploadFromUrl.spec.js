@@ -8,6 +8,9 @@ import { errorSerializer as errors } from 'cozy-interapp/dist/helpers'
 import { normalizeUrlUploadError, uploadFileFromUrl } from './uploadFromUrl'
 
 import { schema } from '@/lib/doctypes'
+import logger from '@/lib/logger'
+
+jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 
 const sourceUrl = 'https://source.example/file?signature=a%2Bb%25&key=secret'
 const config = { url: sourceUrl, folderId: 'folder', name: 'report.bin' }
@@ -20,7 +23,12 @@ function jsonResponse(data, status = 200) {
   })
 }
 
-function makeFixture({ folder = {}, status = null, onCreate = null } = {}) {
+function makeFixture({
+  folder = {},
+  status = null,
+  onCreate = null,
+  referenceStatus = 200
+} = {}) {
   const stored = new Map()
   const requests = []
   const client = new CozyClient({
@@ -42,6 +50,14 @@ function makeFixture({ folder = {}, status = null, onCreate = null } = {}) {
         }
       })
     }
+    if (endpoint.pathname.endsWith('/relationships/referenced_by')) {
+      return referenceStatus === 200
+        ? jsonResponse({
+            data: JSON.parse(options.body).data,
+            meta: { rev: '2-referenced', count: 1 }
+          })
+        : jsonResponse({ errors: [{ status: '500' }] }, 500)
+    }
     if (options.method !== 'POST') throw new Error('Unexpected mutation')
     onCreate?.()
     const name = endpoint.searchParams.get('Name')
@@ -62,7 +78,7 @@ function makeFixture({ folder = {}, status = null, onCreate = null } = {}) {
       }
     }
     stored.set(name, document)
-    return jsonResponse({ data: document }, 201)
+    return jsonResponse({ data: document, meta: { rev: '1-created' } }, 201)
   }
   return { client, stored, requests }
 }
@@ -277,5 +293,68 @@ describe('uploadFileFromUrl through the real CozyClient creation boundary', () =
         server.close(error => (error ? reject(error) : resolve()))
       )
     }
+  })
+
+  it('references the stored file from the attachment it comes from', async () => {
+    const { client, requests } = makeFixture()
+    const reference = { type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }
+
+    const result = await uploadFileFromUrl(
+      client,
+      { ...config, reference },
+      new AbortController().signal
+    )
+
+    const request = requests.at(-1)
+    expect(new URL(request.url).pathname).toBe(
+      `/files/${result._id}/relationships/referenced_by`
+    )
+    expect(JSON.parse(request.options.body)).toEqual({
+      data: [{ id: 'a1:e1:b1', type: 'io.cozy.mails.attachments' }]
+    })
+    // The revision and the references of the write, without a new read
+    expect(result._rev).toBe('2-referenced')
+    expect(result.relationships.referenced_by.data).toEqual([
+      { id: 'a1:e1:b1', type: 'io.cozy.mails.attachments' }
+    ])
+  })
+
+  it('keeps the stored file when its reference fails', async () => {
+    const { client } = makeFixture({ referenceStatus: 500 })
+
+    const result = await uploadFileFromUrl(
+      client,
+      {
+        ...config,
+        reference: { type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }
+      },
+      new AbortController().signal
+    )
+
+    expect(result).toMatchObject({ _id: 'created-0', name: 'report.bin' })
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Upload intent could not reference a stored file',
+      expect.anything()
+    )
+  })
+
+  it.each([
+    { type: 'io.cozy.photos.albums', id: 'album' },
+    { type: 'io.cozy.mails.attachments', id: '' },
+    { type: 'io.cozy.mails.attachments', id: 'a1/e1' },
+    { type: 'io.cozy.mails.attachments', id: 'a1:e1' },
+    { type: 'io.cozy.mails.attachments', id: 'a1::b1' },
+    { type: 'io.cozy.mails.attachments', id: `a1:e1:${'b'.repeat(256)}` }
+  ])('refuses the reference %j before storing anything', async reference => {
+    const { client, requests } = makeFixture()
+
+    await expect(
+      uploadFileFromUrl(
+        client,
+        { ...config, reference },
+        new AbortController().signal
+      )
+    ).rejects.toThrow('Unsupported reference')
+    expect(requests).toEqual([])
   })
 })

@@ -7,6 +7,10 @@ import { FetchError } from 'cozy-stack-client/dist/errors'
 
 import { isFilesUpload, uploadFilesToDrive } from './uploadFiles'
 
+import logger from '@/lib/logger'
+
+jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
+
 /**
  * The error as the caller of the intent gets it: serialized by the service,
  * posted (a structured clone, which refuses a `Response`), deserialized
@@ -365,5 +369,123 @@ describe('uploadFilesToDrive', () => {
       { document: { _id: 'id-a.txt' } },
       { error: { status: 413 } }
     ])
+  })
+
+  it('references each stored file from its attachment', async () => {
+    uploadFileWithConflictStrategy
+      .mockResolvedValueOnce({ data: { _id: 'stored-a', _rev: '1-created' } })
+      .mockResolvedValueOnce({ data: { _id: 'stored-b', _rev: '1-created' } })
+    // As cozy-stack-client gives the answer of the write
+    const addReferencedBy = jest.fn().mockResolvedValue({
+      data: [{ _id: 'a1:e1:b1', _type: 'io.cozy.mails.attachments' }],
+      meta: { rev: '2-referenced', count: 1 }
+    })
+    const client = {
+      ...fakeClient({ _id: 'f1', type: 'directory' }),
+      collection: jest.fn(() => ({ addReferencedBy }))
+    }
+    const reference = { type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }
+
+    const stored = await uploadFilesToDrive(
+      client,
+      {
+        folderId: 'f1',
+        files: files.slice(0, 2),
+        references: [reference, null]
+      },
+      signal
+    )
+
+    expect(addReferencedBy).toHaveBeenCalledTimes(1)
+    expect(addReferencedBy).toHaveBeenCalledWith(
+      { _id: 'stored-a', _rev: '1-created' },
+      [{ _id: 'a1:e1:b1', _type: 'io.cozy.mails.attachments' }]
+    )
+    // The revision and the references of the write, without a new read
+    expect(stored).toEqual([
+      {
+        _id: 'stored-a',
+        _rev: '2-referenced',
+        relationships: {
+          referenced_by: {
+            data: [{ id: 'a1:e1:b1', type: 'io.cozy.mails.attachments' }]
+          }
+        }
+      },
+      { _id: 'stored-b', _rev: '1-created' }
+    ])
+  })
+
+  it('refuses references that do not match the files', async () => {
+    const client = fakeClient({ _id: 'f1', type: 'directory' })
+
+    await expect(
+      uploadFilesToDrive(
+        client,
+        { folderId: 'f1', files, references: [null] },
+        signal
+      )
+    ).rejects.toThrow('references must hold one entry per file')
+  })
+
+  it.each([
+    [{ type: 'io.cozy.photos.albums', id: 'album' }],
+    [{ type: 'io.cozy.mails.attachments', id: 'a1:e1' }]
+  ])('refuses the reference %j before storing anything', async reference => {
+    const client = fakeClient({ _id: 'f1', type: 'directory' })
+
+    await expect(
+      uploadFilesToDrive(
+        client,
+        { folderId: 'f1', files: files.slice(0, 1), references: [reference] },
+        signal
+      )
+    ).rejects.toThrow('Unsupported reference')
+    expect(uploadFileWithConflictStrategy).not.toHaveBeenCalled()
+  })
+
+  it('refuses references for a shared drive before storing anything', async () => {
+    const client = fakeClient()
+
+    await expect(
+      uploadFilesToDrive(
+        client,
+        {
+          driveId: 'd1',
+          files: files.slice(0, 1),
+          references: [{ type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }]
+        },
+        signal
+      )
+    ).rejects.toThrow('references needs a folderId')
+    expect(uploadFileWithConflictStrategy).not.toHaveBeenCalled()
+  })
+
+  it('keeps the stored file when its reference fails', async () => {
+    uploadFileWithConflictStrategy.mockResolvedValue({
+      data: { _id: 'stored-a' }
+    })
+    const client = {
+      ...fakeClient({ _id: 'f1', type: 'directory' }),
+      collection: jest.fn(() => ({
+        addReferencedBy: jest.fn().mockRejectedValue(new Error('500'))
+      }))
+    }
+
+    await expect(
+      uploadFilesToDrive(
+        client,
+        {
+          folderId: 'f1',
+          files: files.slice(0, 1),
+          references: [{ type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }]
+        },
+        signal
+      )
+    ).resolves.toEqual([{ _id: 'stored-a' }])
+    expect(logger.warn).toHaveBeenCalledWith(
+      'Upload intent could not reference a stored file',
+      expect.any(Error)
+    )
   })
 })
