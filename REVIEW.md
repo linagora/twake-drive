@@ -44,8 +44,10 @@ rules are not a request for repository-wide rewrites or changes to external APIs
 
 - Keep the JSX return focused on rendering. Compute derived data, helper results
   and data mappings in named variables before the return, rather than inline in
-  props. Rendering a list with `.map()` is still JSX, not a data transformation
-  that must be moved into a JSX variable.
+  props. An object literal that only shapes values already computed stays inline
+  (`viewerProps={{ panel: { sharing: { disabled: isSharingDisabled } } }}`).
+  Rendering a list with `.map()` inside the return is fine: only data mappings
+  move to named variables.
 - Pass props explicitly instead of using prop spreads, so the component contract
   is visible at the call site.
 - Group callback props (`on*`) last, consistently in parameter destructuring,

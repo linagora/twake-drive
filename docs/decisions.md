@@ -102,6 +102,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: keep simple checks readable at the call site without relying on implicit truthiness or hiding complex conditions in JSX.
 - Scope: Twake Drive web JSX and its code reviews.
 
+## 2026-11-26, [Tech] Separate data computation from JSX rendering
+
+- Decision: derive data before the JSX return, keep list rendering with `.map()` in JSX, and keep prop object literals inline when they only shape already-computed values.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630960).
+- Why: keep the rendering visible at the call site without mixing it with data transformations.
+- Scope: Twake Drive web JSX and its code reviews.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
