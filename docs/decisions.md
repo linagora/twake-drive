@@ -109,6 +109,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: keep the rendering visible at the call site without mixing it with data transformations.
 - Scope: Twake Drive web JSX and its code reviews.
 
+## 2026-11-26, [Tech] Keep one React component per file
+
+- Decision: Drive uses one React component per file and uses a design-system component instead of a raw HTML element when an equivalent exists.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630971).
+- Why: keep component boundaries clear and reuse the design system's existing behavior and styling.
+- Scope: changed Twake Drive web components and their code reviews, not a repository-wide rewrite.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.

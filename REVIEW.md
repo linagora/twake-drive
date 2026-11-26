@@ -50,6 +50,9 @@ rules are not a request for repository-wide rewrites or changes to external APIs
   move to named variables.
 - Pass props explicitly instead of using prop spreads, so the component contract
   is visible at the call site.
+- One component per file.
+- Use the design system's components rather than raw HTML elements when one
+  exists (`TextField` instead of `<input>`).
 - Group callback props (`on*`) last, consistently in parameter destructuring,
   JSDoc, `propTypes` and JSX call sites.
 - Use semantic styling utilities rather than palette-specific classes such as
