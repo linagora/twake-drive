@@ -63,7 +63,9 @@ solves the same problem, and vice versa.
   local files and styles.
 - Functional components, named exports. `React.memo`, `useMemo` and
   `useCallback` only when there is a measured or structural need.
-- Comments explain business "why" only.
+- Use comments only for public API JSDoc or to explain a constraint that remains
+  unclear even with good naming. Put the rationale for a change in the commit
+  message, not in the code.
 
 ## Tests
 

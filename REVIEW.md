@@ -82,6 +82,18 @@ rules are not a request for repository-wide rewrites or changes to external APIs
   Do not mix positional arguments and an options object (`fn(a, b, { c, d })`).
   Preserve signatures required by React, browser APIs and third-party libraries.
 
+## Comments
+
+Apply the comment rule in [AGENTS.md](AGENTS.md). If a comment just repeats what
+the code does, remove it and improve the naming if needed. Keep the history of
+the change in the commit message.
+
+```js
+// ❌ Increment the counter by one
+// ❌ Fixed an off-by-one error
+// ✅ The backend rejects requests less than 50 ms apart
+```
+
 ## Menus and reference stability
 
 - Build fixed menus explicitly with `ActionsMenuWrapper` and `ActionsMenuItem`.

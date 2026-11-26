@@ -81,6 +81,13 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Why: a shared format makes findings easier to act on and keeps agreed rules available for future reviews.
 - Scope: Twake Drive web code reviews.
 
+## 2026-11-26, [Tech] Reserve code comments for contracts and non-obvious constraints
+
+- Decision: code comments document public APIs with JSDoc or explain constraints that good naming cannot convey; commit messages record what changed and why.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677738385).
+- Why: preserve context that the code cannot express without repeating the code or its history.
+- Scope: Twake Drive web application code and its reviews.
+
 ## 2026-11-27, [Tech] Apply Drive-specific code review rules
 
 - Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
