@@ -143,7 +143,8 @@ export function useMoveDestinationPicker({
   canNavigateTo = null,
   onReadyToUse,
   resultError = null,
-  onRetryResult = null
+  onRetryResult = null,
+  confirmLabel = null
 }) {
   const { t } = useI18n()
   const client = useClient()
@@ -366,6 +367,7 @@ export function useMoveDestinationPicker({
         canConfirm={canConfirm}
         isBusy={isBusy}
         isValidatingDestination={isValidatingDestination}
+        confirmLabel={confirmLabel}
       />
     )
   }
