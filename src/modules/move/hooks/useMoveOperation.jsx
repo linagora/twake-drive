@@ -14,11 +14,74 @@ import { MoveOutsideSharedFolderModal } from '@/modules/move/MoveOutsideSharedFo
 import { MoveSharedFolderInsideAnotherModal } from '@/modules/move/MoveSharedFolderInsideAnotherModal'
 import {
   computeNextcloudMoveDirections,
-  getMoveWarningType
+  hasOneOfEntriesShared
 } from '@/modules/move/helpers'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { executeMove } from '@/modules/paste'
 import { buildFolderByPathQuery } from '@/queries'
+
+function isInsideSameSharedFolder({
+  folder,
+  sourceDriveId,
+  sharedParentPath,
+  targetPath,
+  isPublic
+}) {
+  return (
+    (!sourceDriveId &&
+      !folder.driveId &&
+      sharedParentPath &&
+      targetPath.startsWith(joinPath(sharedParentPath, ''))) ||
+    (!!folder.driveId && !!sourceDriveId && folder.driveId === sourceDriveId) ||
+    isPublic
+  )
+}
+
+function getMoveWarningType({
+  isOriginParentShared,
+  isTargetShared,
+  areMovedFilesShared
+}) {
+  if (isOriginParentShared && !isTargetShared) return 'outside'
+  if (!isTargetShared) return null
+  return areMovedFilesShared ? 'sharedInside' : 'inside'
+}
+
+function getMoveWarning({
+  folder,
+  entries,
+  sourceDriveId,
+  sharingContext,
+  isPublic
+}) {
+  const { byDocId, getSharedParentPath, hasSharedParent } = sharingContext
+  const sharedParentPath = entries[0].path
+    ? getSharedParentPath(entries[0].path)
+    : ''
+  const targetPath = joinPath(folder.path, entries[0].name)
+  const areMovedFilesShared = hasOneOfEntriesShared(entries, byDocId)
+  const isOriginParentShared =
+    hasSharedParent(entries[0].path || '') || !!sourceDriveId
+  const isTargetShared =
+    hasSharedParent(targetPath || '') ||
+    (!!folder.driveId && folder.driveId !== sourceDriveId)
+  if (
+    isInsideSameSharedFolder({
+      folder,
+      sourceDriveId,
+      sharedParentPath,
+      targetPath,
+      isPublic
+    })
+  )
+    return null
+  const type = getMoveWarningType({
+    isOriginParentShared,
+    isTargetShared,
+    areMovedFilesShared
+  })
+  return type ? { type, entries, driveId: sourceDriveId } : null
+}
 
 function groupMoveSourcesByParent(entries) {
   const groups = new Map()
@@ -106,16 +169,17 @@ export function useMoveOperation({
     const sourceGroups = onComplete
       ? groupMoveSourcesByParent(remainingEntries)
       : [remainingEntries]
-    const warnings = sourceGroups.flatMap(group => {
-      if (isPublic) return []
-      const sourceDriveId = onComplete ? (group[0].driveId ?? driveId) : driveId
-      const type = getMoveWarningType(group, sourceDriveId, destination, {
-        byDocId,
-        getSharedParentPath,
-        hasSharedParent
-      })
-      return type ? [{ type, entries: group, driveId: sourceDriveId }] : []
-    })
+    const warnings = sourceGroups
+      .map(group =>
+        getMoveWarning({
+          folder: destination,
+          entries: group,
+          sourceDriveId: onComplete ? (group[0].driveId ?? driveId) : driveId,
+          sharingContext: { byDocId, getSharedParentPath, hasSharedParent },
+          isPublic
+        })
+      )
+      .filter(Boolean)
     setConfirmedWarnings([])
     setPendingWarnings(warnings)
     if (warnings.length === 0) moveEntries(destination)
@@ -351,7 +415,7 @@ export function useMoveOperation({
     setPendingWarnings(pendingWarnings.slice(1))
     if (pendingWarnings.length === 1) {
       const sharingEntries = warnings
-        .filter(warning => warning.type === 'moveSharedInside')
+        .filter(warning => warning.type === 'sharedInside')
         .flatMap(warning => warning.entries)
       moveEntries(folderSelected, true, sharingEntries)
     }
@@ -368,7 +432,7 @@ export function useMoveOperation({
     onClose: handleClose,
     confirmationDialogs: (
       <>
-        {warning?.type === 'moveOutside' ? (
+        {warning?.type === 'outside' ? (
           <MoveOutsideSharedFolderModal
             entries={warning.entries}
             onCancel={handleCancelWarning}
@@ -376,7 +440,7 @@ export function useMoveOperation({
             driveId={warning.driveId}
           />
         ) : null}
-        {warning?.type === 'moveSharedInside' ? (
+        {warning?.type === 'sharedInside' ? (
           <MoveSharedFolderInsideAnotherModal
             entries={warning.entries}
             folderId={folderSelected._id}
@@ -385,7 +449,7 @@ export function useMoveOperation({
             onConfirm={handleConfirmWarning}
           />
         ) : null}
-        {warning?.type === 'moveInside' ? (
+        {warning?.type === 'inside' ? (
           <MoveInsideSharedFolderModal
             onCancel={handleCancelWarning}
             onConfirm={handleConfirmWarning}

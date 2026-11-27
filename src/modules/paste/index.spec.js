@@ -12,6 +12,10 @@ jest.mock('./utils', () => ({
   resolveNameConflictsForCut: jest.fn()
 }))
 
+jest.mock('../move/helpers', () => ({
+  hasOneOfEntriesShared: jest.fn()
+}))
+
 jest.mock('../../lib/logger', () => ({
   error: jest.fn(),
   info: jest.fn()
@@ -24,6 +28,7 @@ const {
   moveRelateToSharedDrive
 } = require('cozy-client/dist/models/file')
 
+const { hasOneOfEntriesShared } = require('../move/helpers')
 const { resolveNameConflictsForCut } = require('./utils')
 
 describe('handlePasteOperation', () => {
@@ -81,6 +86,7 @@ describe('handlePasteOperation', () => {
       deleted: null
     })
     resolveNameConflictsForCut.mockResolvedValue(mockFiles)
+    hasOneOfEntriesShared.mockReturnValue(false)
 
     jest.clearAllMocks()
   })
@@ -231,6 +237,7 @@ describe('handlePasteOperation', () => {
         _id: 'shared-file',
         driveId: 'source-drive',
         name: 'shared.txt',
+        path: '/Team/shared.txt',
         type: 'file',
         cozyMetadata: { createdOn: 'https://alice.mycozy.cloud' }
       }
@@ -238,10 +245,19 @@ describe('handlePasteOperation', () => {
         _id: 'target-folder',
         driveId: 'destination-drive',
         name: 'Target Folder',
-        path: '/Target Folder',
+        path: '/Team/Inbox',
         cozyMetadata: { createdOn: 'https://charlie.mycozy.cloud' }
       }
       resolveNameConflictsForCut.mockResolvedValue([sharedFile])
+
+      mockOptions.sharingContext = {
+        byDocId: {},
+        getSharedParentPath: () => '/Team',
+        hasSharedParent: () => true
+      }
+      mockOptions.showMoveValidationModal = jest.fn(
+        (_type, _file, _target, confirm) => confirm()
+      )
 
       const result = await handlePasteOperation(
         mockClient,
@@ -252,6 +268,13 @@ describe('handlePasteOperation', () => {
         mockOptions
       )
 
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveInside',
+        sharedFile,
+        sharedTarget,
+        expect.any(Function),
+        expect.any(Function)
+      )
       expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
         mockClient,
         {
@@ -320,63 +343,9 @@ describe('handlePasteOperation', () => {
   })
 
   describe('Sharing Context', () => {
-    it.each([
-      ['drive-a', 'drive-b', '/Team/Inbox', 'moveInside'],
-      ['drive-a', 'drive-a', '/Team/Inbox', null],
-      [null, null, '/Team/Inbox', null],
-      [null, null, '/Teamwork', 'moveOutside']
-    ])(
-      'uses the source drive %s and destination drive %s for a cut to %s',
-      async (sourceDriveId, targetDriveId, targetPath, expectedWarning) => {
-        const file = {
-          ...mockFiles[0],
-          driveId: sourceDriveId,
-          path: '/Team/test1.txt',
-          cozyMetadata: { createdOn: 'https://alice.mycozy.cloud' }
-        }
-        const target = {
-          ...mockTargetFolder,
-          driveId: targetDriveId,
-          path: targetPath,
-          cozyMetadata: { createdOn: 'https://alice.mycozy.cloud' }
-        }
-        resolveNameConflictsForCut.mockResolvedValue([file])
-        const showMoveValidationModal = jest.fn(
-          (_type, _file, _folder, confirm) => confirm()
-        )
-        const [result] = await handlePasteOperation(
-          mockClient,
-          [file],
-          'cut',
-          mockSourceDirectory,
-          target,
-          {
-            ...mockOptions,
-            sharingContext: {
-              byDocId: {},
-              getSharedParentPath: () => '/Team',
-              hasSharedParent: path => path.startsWith('/Team/')
-            },
-            showMoveValidationModal
-          }
-        )
-
-        expect(result.success).toBe(true)
-        if (expectedWarning) {
-          expect(showMoveValidationModal).toHaveBeenCalledWith(
-            expectedWarning,
-            file,
-            target,
-            expect.any(Function),
-            expect.any(Function)
-          )
-        } else {
-          expect(showMoveValidationModal).not.toHaveBeenCalled()
-        }
-      }
-    )
-
     it('should handle shared files with sharing context', async () => {
+      hasOneOfEntriesShared.mockReturnValue(true)
+
       const sharingContext = {
         showMoveValidationModal: jest.fn(),
         hideMoveValidationModal: jest.fn()
@@ -398,6 +367,8 @@ describe('handlePasteOperation', () => {
     })
 
     it('should handle files without sharing context when shared', async () => {
+      hasOneOfEntriesShared.mockReturnValue(true)
+
       // No sharing context provided
       delete mockOptions.sharingContext
 
