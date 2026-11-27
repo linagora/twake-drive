@@ -115,3 +115,100 @@ export const indexFiles = async (client, officeEnabled = false) => {
 
   return new FuzzyPathSearch(normalizedFiles)
 }
+
+// Set once the stack has answered that it cannot search
+let stackSearchUnavailable = false
+
+export const isStackSearchUnavailable = () => stackSearchUnavailable
+
+// For the tests
+export const resetStackSearchAvailability = () => {
+  stackSearchUnavailable = false
+}
+
+/**
+ * Normalize a hit of the stack search (POST /files/search) like
+ * makeNormalizedFile does for the local index.
+ *
+ * shortcut: the hits have no metadata, so a note is found by its name, a
+ * note of a shared drive opens without the link back to its folder, and a
+ * Nextcloud entry opens as a shortcut; add the fields to the hits if they
+ * need the exact routes.
+ *
+ * @param {object} file - a hit of FileCollection.search
+ * @param {boolean} officeEnabled - whether OnlyOffice is enabled
+ * @returns {object} the normalized file
+ */
+export const makeNormalizedStackHit = (file, officeEnabled = false) => {
+  const isDir = file.type === TYPE_DIRECTORY
+  const driveId = file.driveId
+  const folderUrl = id =>
+    driveId ? `/shareddrive/${driveId}/${id}` : `/folder/${id}`
+  const dirUrl = folderUrl(isDir ? file._id : file.dir_id)
+
+  let url = dirUrl
+  let openOn = 'drive'
+  if (isDir) {
+    // The folder itself
+  } else if (models.file.isShortcut(file)) {
+    url = driveId ? `/external/${driveId}/${file._id}` : `/external/${file._id}`
+  } else if (file.name?.endsWith('.cozy-note') && driveId) {
+    // Drive finds the note on the instance of the drive owner
+    url = `/note/${driveId}/${file._id}`
+  } else if (file.name?.endsWith('.cozy-note')) {
+    url = `/n/${file._id}`
+    openOn = 'notes'
+  } else if (shouldOpenWithOnlyOffice(file, officeEnabled)) {
+    url = makeOnlyOfficeFileRoute(file._id, { driveId, fromPathname: dirUrl })
+  } else {
+    url = `${dirUrl}/file/${file._id}`
+  }
+
+  return {
+    id: file._id,
+    type: file.type,
+    name: file.name,
+    mime: file.mime,
+    class: file.class,
+    // Like the local index: the path of a folder, the folder of a file
+    path: isDir
+      ? file.path
+      : file.path.slice(0, file.path.lastIndexOf('/')) || '/',
+    url,
+    parentUrl: isDir ? dirUrl : folderUrl(file.dir_id),
+    openOn
+  }
+}
+
+/**
+ * Searches the files with the stack.
+ *
+ * @param {CozyClient} client - cozy client instance
+ * @param {string} query - the searched text
+ * @param {object} options - limit, cursor and officeEnabled
+ * @returns {Promise<{files: Array<object>, cursor: string|null}|null>} a page of normalized files, or null when the stack cannot search
+ */
+export const searchFilesOnStack = async (
+  client,
+  query,
+  { limit, cursor, officeEnabled = false } = {}
+) => {
+  const collection = client.collection('io.cozy.files')
+  if (stackSearchUnavailable || typeof collection.search !== 'function') {
+    return null
+  }
+  try {
+    const resp = await collection.search(query, { limit, cursor })
+    return {
+      files: resp.data.map(file => makeNormalizedStackHit(file, officeEnabled)),
+      cursor: resp.cursor
+    }
+  } catch (err) {
+    // 404: the stack has no search route, 503: search is not configured
+    if (err?.status === 404 || err?.status === 503) {
+      stackSearchUnavailable = true
+      return null
+    }
+    throw err
+  }
+}
