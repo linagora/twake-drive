@@ -73,3 +73,66 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Crash-- (CTO), 2026-11-26
 - Why: Twake Mail and Twake Calendar open the MOVE intent to organize a file they just saved, where the mockups say "Save to".
 - Scope: the MOVE intent (`docs/move-intent.md`).
+
+## 2026-11-26, [Tech] Write direct and actionable review remarks
+
+- Decision: Drive review findings lead with the issue and state a concrete fix, omit remarks about a branch merely being behind the default branch, and become rules in `REVIEW.md` only once agreed and recorded here.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677738358).
+- Why: a shared format makes findings easier to act on and keeps agreed rules available for future reviews.
+- Scope: Twake Drive web code reviews.
+
+## 2026-11-26, [Tech] Reserve code comments for contracts and non-obvious constraints
+
+- Decision: code comments document public APIs with JSDoc or explain constraints that good naming cannot convey; commit messages record what changed and why.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677738385).
+- Why: preserve context that the code cannot express without repeating the code or its history.
+- Scope: Twake Drive web application code and its reviews.
+
+## 2026-11-26, [Tech] Test non-trivial business logic
+
+- Decision: Drive tests cover non-trivial business logic, not framework behavior, trivial guards or rendering choices, pass-through components or callbacks, or cases already covered by a helper or library test.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677738396).
+- Why: focus review and test coverage on behavior owned by Drive without duplicating existing coverage.
+- Scope: Twake Drive web tests, including tests carried over or moved with code.
+
+## 2026-11-26, [Tech] Keep trivial JSX conditions inline
+
+- Decision: JSX rendering guards use booleans, with trivial comparisons inline and non-trivial conditions in named `is…` or `has…` variables, separate from the props they guard.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630940).
+- Why: keep simple checks readable at the call site without relying on implicit truthiness or hiding complex conditions in JSX.
+- Scope: Twake Drive web JSX and its code reviews.
+
+## 2026-11-26, [Tech] Separate data computation from JSX rendering
+
+- Decision: derive data before the JSX return, keep list rendering with `.map()` in JSX, and keep prop object literals inline when they only shape already-computed values.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630960).
+- Why: keep the rendering visible at the call site without mixing it with data transformations.
+- Scope: Twake Drive web JSX and its code reviews.
+
+## 2026-11-26, [Tech] Keep one React component per file
+
+- Decision: Drive uses one React component per file and uses a design-system component instead of a raw HTML element when an equivalent exists.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630971).
+- Why: keep component boundaries clear and reuse the design system's existing behavior and styling.
+- Scope: changed Twake Drive web components and their code reviews, not a repository-wide rewrite.
+
+## 2026-11-26, [Tech] Use semantic colour variables for UI styles
+
+- Decision: Drive UI styles use semantic colour variables rather than raw palette variables or hex codes, without bypassing the design-system constraints in `AGENTS.md`.
+- Decided by: doubleface, in an agent session on 2026-11-26, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630978).
+- Why: make the intended colour role explicit so it can follow the active theme.
+- Scope: Twake Drive web UI styling and its code reviews.
+
+## 2026-11-27, [Tech] Apply Drive-specific code review rules
+
+- Decision: code reviews apply `REVIEW.md` alongside the applicable `twake-guidelines` skills; ordinary implementation, debugging and explanation tasks do not load `REVIEW.md`.
+- Decided by: doubleface, in an agent session on 2026-11-27, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630993).
+- Why: make Drive-specific review criteria available without duplicating shared guidelines or loading review-only rules for unrelated tasks.
+- Scope: Twake Drive web code reviews.
+
+## 2026-11-27, [Tech] Define module exports and direct imports
+
+- Decision: Drive uses default exports for components, separate default-exported files for styled sub-components, named arrow exports for helpers and hooks, and direct imports instead of sibling-only barrels.
+- Decided by: doubleface, in an agent session on 2026-11-27, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#pullrequestreview-6036439527).
+- Why: make the Drive convention explicit so reviews do not request the opposite based on the shared guidelines.
+- Scope: changed Twake Drive web code and its code reviews, not a repository-wide rewrite.

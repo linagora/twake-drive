@@ -12,6 +12,11 @@ conflict. E2E rules live in `e2e/AGENTS.md`.
 
 - Decisions: `docs/decisions.md`, mandatory. Search it before asking a question or proposing a change; record every decision there, in the commit that applies it (skill `twake-decisions`).
 
+**Code reviews only:** when asked to review code (a PR, branch, commit or
+working-tree changes), read and apply [REVIEW.md](REVIEW.md) in addition to
+the applicable `twake-guidelines` skills. Do not load `REVIEW.md` for ordinary
+implementation, debugging or explanation tasks.
+
 ## Core architecture principles
 
 **All data flows through `cozy-client`.** Queries are defined in
@@ -56,9 +61,18 @@ solves the same problem, and vice versa.
   `normalize`, `save`, `ensure`, `...AndForget`.
 - Imports in three groups: external libs, then `cozy-*` / `twake-*`, then
   local files and styles.
-- Functional components, named exports. `React.memo`, `useMemo` and
-  `useCallback` only when there is a measured or structural need.
-- Comments explain business "why" only.
+- Use functional components. Components use `export default` and are imported
+  without braces. Put styled sub-components in their own default-exported files.
+- Helpers and hooks keep named exports and use arrow declarations
+  (`export const fn = (args) => {}`), not `function` declarations. Use `<T,>` to
+  disambiguate a single type parameter in a generic arrow in `.tsx`.
+- Do not add barrel files that only re-export siblings. Import each symbol from
+  its defining file.
+- Use `React.memo`, `useMemo` and `useCallback` only when there is a measured or
+  structural need.
+- Use comments only for public API JSDoc or to explain a constraint that remains
+  unclear even with good naming. Put the rationale for a change in the commit
+  message, not in the code.
 
 ## Tests
 

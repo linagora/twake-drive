@@ -1,0 +1,129 @@
+# Review rules for twake-drive
+
+Read this file only when performing a code review, not for ordinary implementation,
+debugging or explanation tasks.
+
+These rules supplement the applicable `twake-guidelines` skills and [AGENTS.md](AGENTS.md).
+Repository-specific decisions take precedence over generic guidelines. E2E reviews
+also follow [e2e/AGENTS.md](e2e/AGENTS.md).
+
+Review the changed code and its affected callers, not unrelated legacy code. These
+rules are not a request for repository-wide rewrites or changes to external APIs.
+
+## Writing remarks
+
+- Lead with the issue. Skip opening thanks or pleasantries.
+- State the concrete fix directly, with a snippet or GitHub suggestion when
+  useful. Do not phrase a finding as a question.
+- Do not flag a branch solely for being behind the default branch.
+- When a review remark becomes an agreed rule, add it here and record the
+  decision in [docs/decisions.md](docs/decisions.md).
+
+## JSX and component APIs
+
+- Do not store JSX elements in local variables (`const actions = <Actions />`).
+  Write the JSX where it is rendered, even when the same small fragment appears
+  in two places. This does not prohibit variables holding component types.
+- Custom hooks return state and handlers, never JSX. The component owns the
+  conditional rendering.
+- For conditional rendering, use an actual boolean, not the truthiness of an
+  object, string or number. Keep trivial comparisons inline and put non-trivial
+  conditions in named `is…` or `has…` booleans. Keep the rendering condition
+  separate from the data passed to the rendered component:
+
+  ```jsx
+  const isPreviewable = isImage(file) && !file.trashed
+
+  return (
+    <>
+      {isPreviewable && <FilePreview file={file} />}
+      {folderId !== null && <FolderItem folderId={folderId} />}
+    </>
+  )
+  ```
+
+- Keep the JSX return focused on rendering. Compute derived data, helper results
+  and data mappings in named variables before the return, rather than inline in
+  props. An object literal that only shapes values already computed stays inline
+  (`viewerProps={{ panel: { sharing: { disabled: isSharingDisabled } } }}`).
+  Rendering a list with `.map()` inside the return is fine: only data mappings
+  move to named variables.
+- Pass props explicitly instead of using prop spreads, so the component contract
+  is visible at the call site.
+- One component per file.
+- Use the design system's components rather than raw HTML elements when one
+  exists (`TextField` instead of `<input>`).
+- Group callback props (`on*`) last, consistently in parameter destructuring,
+  JSDoc, `propTypes` and JSX call sites.
+- Use semantic styling utilities rather than palette-specific classes such as
+  `u-bg-paleGrey`, and semantic colour variables (`var(--primaryContrastTextColor)`)
+  rather than raw ones (`var(--white)`, a hex code). Follow the existing
+  design-system constraints in `AGENTS.md`; a missing semantic variant is not
+  permission to introduce an inline style.
+
+## Logic and responsibilities
+
+- Extract business decisions from hooks into pure helpers outside the hook,
+  unless doing so would require a long list of arguments. Keep React lifecycle
+  and state management in the hook.
+- Separate data loading from presentation: a `…Wrapper` component runs the
+  queries, handles loading states and passes data to a view component. The view
+  prepares what its UI needs, including callbacks required by library components.
+  Do not introduce a hook used by only one component merely to wrap the query API.
+  Query definitions still belong in `src/queries`; this rule does not move them
+  into wrappers or replace `cozy-client`.
+- Write transformation logic top to bottom, using named intermediate results
+  rather than nested helper calls. Do not introduce a local context-capturing
+  adapter just to pass it to `.map()` (such as
+  `const toMember = x => makeMember(x, { t })`). Instead:
+
+  ```js
+  const matchingContacts = contacts.filter(isMatchingContact)
+  return makeMembersFromContacts({
+    contacts: matchingContacts,
+    t,
+    instanceUri
+  })
+  ```
+
+  Prefer a plural helper taking the collection and its context explicitly.
+  Ordinary event handlers and callbacks remain valid; this is not a ban on all
+  closures.
+
+- For functions whose signature this repository owns, use a single object when
+  there are three or more arguments: `fn(a)`, `fn(a, b)` or `fn({ a, b, c })`.
+  Do not mix positional arguments and an options object (`fn(a, b, { c, d })`).
+  Preserve signatures required by React, browser APIs and third-party libraries.
+
+## Comments
+
+Apply the comment rule in [AGENTS.md](AGENTS.md). If a comment just repeats what
+the code does, remove it and improve the naming if needed. Keep the history of
+the change in the commit message.
+
+```js
+// ❌ Increment the counter by one
+// ❌ Fixed an off-by-one error
+// ✅ The backend rejects requests less than 50 ms apart
+```
+
+## Menus and reference stability
+
+- Build fixed menus explicitly with `ActionsMenuWrapper` and `ActionsMenuItem`.
+  Do not use `makeActions` or create component types during each render for a
+  fixed set of entries. This is not a ban on the existing dynamic action system.
+- For reference stability, justify `useCallback` / `useMemo` by their consumer:
+  a memoized child, an effect or hook dependency, or a context value. Avoiding
+  function creation on each render is not a justification on its own. Other
+  measured performance needs remain governed by `AGENTS.md` and the guidelines;
+  do not duplicate their general memoization rules here.
+
+## Tests
+
+- Only test non-trivial business logic: permissions, roles, ordering, URL
+  building, data normalisation.
+- Trust the tools (React, MUI, cozy-ui, cozy-client): never test that they work.
+- No test for a guard like `if (!x) return null`, an `if` that only picks what
+  to render, a component that only forwards props, a callback passed through,
+  or a case already covered by the helper's or the library's own tests. This
+  applies to tests carried over or moved with code too.
