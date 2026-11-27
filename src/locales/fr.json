@@ -454,7 +454,15 @@
     "item": {
       "pending": "En attente",
       "preparing": "En préparation",
-      "conflict": "En attente d'un choix"
+      "conflict": "En attente d'un choix",
+      "paused": "En pause",
+      "offline": "En attente du réseau",
+      "retrying": "Erreur du serveur, nouvel essai",
+      "gone": "Envoi expiré",
+      "pause": "Pause",
+      "resume": "Reprendre",
+      "send_again": "Renvoyer",
+      "cancel": "Annuler l'envoi"
     }
   },
   "Viewer": {

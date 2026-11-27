@@ -454,7 +454,15 @@
     "item": {
       "pending": "Pendiente",
       "preparing": "Preparando",
-      "conflict": "Esperando elección"
+      "conflict": "Esperando elección",
+      "paused": "En pausa",
+      "offline": "Esperando la red",
+      "retrying": "Error del servidor, reintentando",
+      "gone": "Subida caducada",
+      "pause": "Pausar",
+      "resume": "Reanudar",
+      "send_again": "Volver a enviar",
+      "cancel": "Cancelar la subida"
     }
   },
   "Viewer": {

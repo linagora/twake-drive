@@ -454,7 +454,15 @@
     "item": {
       "pending": "Pending",
       "preparing": "Preparing",
-      "conflict": "Waiting for choice"
+      "conflict": "Waiting for choice",
+      "paused": "Paused",
+      "offline": "Waiting for network",
+      "retrying": "Server error, retrying",
+      "gone": "Upload expired",
+      "pause": "Pause",
+      "resume": "Resume",
+      "send_again": "Send again",
+      "cancel": "Cancel upload"
     }
   },
   "Viewer": {

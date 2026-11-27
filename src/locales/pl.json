@@ -252,5 +252,17 @@
   "RecentNoAccess": {
     "file_title": "Nie masz już dostępu do tego pliku",
     "folder_title": "Nie masz już dostępu do tego folderu"
+  },
+  "UploadQueue": {
+    "item": {
+      "paused": "Wstrzymano",
+      "offline": "Oczekiwanie na sieć",
+      "retrying": "Błąd serwera, ponawianie",
+      "gone": "Przesyłanie wygasło",
+      "pause": "Wstrzymaj",
+      "resume": "Wznów",
+      "send_again": "Wyślij ponownie",
+      "cancel": "Anuluj przesyłanie"
+    }
   }
 }

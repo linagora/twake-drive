@@ -11,6 +11,7 @@ import {
   uploadConflictStrategies,
   type UploadConflictStrategy
 } from '@/modules/upload/constants'
+import { createFile, updateFile } from '@/modules/upload/resumable'
 
 type DriveId = string | null | undefined
 type UploadOptions = Record<string, unknown>
@@ -27,18 +28,10 @@ export type FileDoc = {
 
 type FilesCollection = {
   statByPath: (path: string) => Promise<{ data: FileDoc }>
-  createFile: (
-    file: File,
-    options: UploadOptions & { dirId: string; name: string }
-  ) => Promise<{ data: FileDoc }>
   createDirectory: (options: {
     name: string
     dirId: string
   }) => Promise<{ data: FileDoc }>
-  updateFile: (
-    file: File,
-    options: UploadOptions & { fileId: string }
-  ) => Promise<{ data: FileDoc }>
 }
 
 const CONFLICT_ERROR = 409
@@ -218,10 +211,11 @@ const createFileWithName = async (
   options: UploadOptions = {},
   driveId?: DriveId
 ): Promise<FileDoc> => {
-  const resp = await filesCollection(client, driveId).createFile(file, {
+  const resp = await createFile(client, file, {
     ...options,
     dirId: dirID,
-    name
+    name,
+    driveId
   })
   return resp.data
 }
@@ -267,9 +261,10 @@ export const replaceConflictingFile = async ({
   driveId = null
 }: ReplaceConflictingFileParams): Promise<ReplaceConflictResult> => {
   // Replace keeps the current versioning behavior through updateFile.
-  const resp = await filesCollection(client, driveId).updateFile(file, {
+  const resp = await updateFile(client, file, {
+    ...options,
     fileId,
-    ...options
+    driveId
   })
 
   return {
