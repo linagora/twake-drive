@@ -131,8 +131,9 @@ export const resetStackSearchAvailability = () => {
  * makeNormalizedFile does for the local index.
  *
  * shortcut: the hits have no metadata, so a note is found by its name, a
- * note of a shared drive opens in the viewer, and a Nextcloud entry opens as
- * a shortcut; add the fields to the hits if they need the exact routes.
+ * note of a shared drive opens without the link back to its folder, and a
+ * Nextcloud entry opens as a shortcut; add the fields to the hits if they
+ * need the exact routes.
  *
  * @param {object} file - a hit of FileCollection.search
  * @param {boolean} officeEnabled - whether OnlyOffice is enabled
@@ -151,7 +152,10 @@ export const makeNormalizedStackHit = (file, officeEnabled = false) => {
     // The folder itself
   } else if (models.file.isShortcut(file)) {
     url = driveId ? `/external/${driveId}/${file._id}` : `/external/${file._id}`
-  } else if (!driveId && file.name?.endsWith('.cozy-note')) {
+  } else if (file.name?.endsWith('.cozy-note') && driveId) {
+    // Drive finds the note on the instance of the drive owner
+    url = `/note/${driveId}/${file._id}`
+  } else if (file.name?.endsWith('.cozy-note')) {
     url = `/n/${file._id}`
     openOn = 'notes'
   } else if (shouldOpenWithOnlyOffice(file, officeEnabled)) {

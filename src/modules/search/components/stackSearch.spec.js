@@ -60,7 +60,7 @@ describe('makeNormalizedStackHit', () => {
     expect(dir.path).toBe('/Team/Specs')
   })
 
-  it('routes the shortcuts and the own notes like the local index', () => {
+  it('routes the shortcuts and the notes to their apps', () => {
     const shortcut = {
       _id: 'f1',
       type: 'file',
@@ -84,9 +84,10 @@ describe('makeNormalizedStackHit', () => {
       url: '/n/f2',
       openOn: 'notes'
     })
-    expect(makeNormalizedStackHit({ ...note, driveId: 's1' }).url).toBe(
-      '/shareddrive/s1/d1/file/f2'
-    )
+    expect(makeNormalizedStackHit({ ...note, driveId: 's1' })).toMatchObject({
+      url: '/note/s1/f2',
+      openOn: 'drive'
+    })
   })
 
   it('routes the OnlyOffice files to the editor', () => {
