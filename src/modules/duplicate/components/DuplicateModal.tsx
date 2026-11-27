@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useClient, models } from 'cozy-client'
+import { useClient } from 'cozy-client'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -11,6 +11,7 @@ import { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
+import { executeCopy } from '@/modules/paste'
 
 interface DuplicateModalProps {
   entries: FolderPickerEntry[]
@@ -42,11 +43,7 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
       setBusy(true)
       await Promise.all(
         entries.map(async entry => {
-          await registerCancelable(
-            models.file.copy(client, entry, folder, {
-              driveId: entry.driveId
-            })
-          )
+          await registerCancelable(executeCopy(client, entry, folder))
         })
       )
 
