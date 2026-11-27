@@ -65,6 +65,36 @@ describe('useSearch', () => {
     expect(result.current.hasMore).toBe(false)
   })
 
+  it('drops the results of an older search that come last', async () => {
+    isStackSearchUnavailable.mockReturnValue(false)
+    let resolveOld
+    searchFilesOnStack
+      .mockReturnValueOnce(new Promise(resolve => (resolveOld = resolve)))
+      .mockResolvedValueOnce({ files: [file('new')], cursor: null })
+
+    const { result, rerender } = renderHook(({ term }) => useSearch(term), {
+      initialProps: { term: 'ab' }
+    })
+    rerender({ term: 'abc' })
+    await waitFor(() => expect(result.current.query).toBe('abc'))
+    await act(async () => resolveOld({ files: [file('old')], cursor: 'c1' }))
+    expect(result.current.suggestions.map(s => s.id)).toEqual(['new'])
+    expect(result.current.hasMore).toBe(false)
+  })
+
+  it('has no next page once the stack cannot search', async () => {
+    isStackSearchUnavailable.mockReturnValue(false)
+    searchFilesOnStack
+      .mockResolvedValueOnce({ files: [file('a')], cursor: 'c1' })
+      .mockResolvedValueOnce(null)
+
+    const { result } = renderHook(() => useSearch('rep', { limit: 1 }))
+    await waitFor(() => expect(result.current.hasMore).toBe(true))
+    await act(() => result.current.fetchMore())
+    expect(result.current.hasMore).toBe(false)
+    expect(result.current.suggestions).toHaveLength(1)
+  })
+
   it('falls back on the local index when the stack cannot search', async () => {
     isStackSearchUnavailable.mockReturnValue(true)
     searchFilesOnStack.mockResolvedValue(null)

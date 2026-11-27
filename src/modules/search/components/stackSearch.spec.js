@@ -56,6 +56,28 @@ describe('makeNormalizedStackHit', () => {
     expect(dir.url).toBe('/shareddrive/s1/d2')
   })
 
+  it('routes the shortcuts and the own notes like the local index', () => {
+    const shortcut = {
+      _id: 'f1',
+      type: 'file',
+      class: 'shortcut',
+      dir_id: 'd1'
+    }
+    expect(makeNormalizedStackHit(shortcut).url).toBe('/external/f1')
+    expect(makeNormalizedStackHit({ ...shortcut, drive_id: 's1' }).url).toBe(
+      '/external/s1/f1'
+    )
+
+    const note = { _id: 'f2', type: 'file', name: 'a.cozy-note', dir_id: 'd1' }
+    expect(makeNormalizedStackHit(note)).toMatchObject({
+      url: '/n/f2',
+      openOn: 'notes'
+    })
+    expect(makeNormalizedStackHit({ ...note, drive_id: 's1' }).url).toBe(
+      '/shareddrive/s1/d1/file/f2'
+    )
+  })
+
   it('routes the OnlyOffice files to the editor', () => {
     models.file.shouldBeOpenedByOnlyOffice.mockReturnValueOnce(true)
     const file = makeNormalizedStackHit(

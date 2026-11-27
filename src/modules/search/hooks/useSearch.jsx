@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 
 import { useClient } from 'cozy-client'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import useDebounce from '@/hooks/useDebounce'
+import logger from '@/lib/logger'
 import {
   indexFiles,
   isStackSearchUnavailable,
@@ -42,6 +43,8 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
     delay: 500,
     ignore: searchTerm === ''
   })
+  // The results of an older search are dropped when they come after a newer one
+  const latestTerm = useRef('')
 
   // The local index downloads all the files: it is only built when the stack
   // cannot search
@@ -53,6 +56,8 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
   }
 
   useEffect(() => {
+    latestTerm.current = debouncedSearchTerm
+
     const searchLocally = async value => {
       let currentFuzzy =
         fuzzy?.officeEnabled === officeEnabled ? fuzzy.index : null
@@ -72,10 +77,11 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
           officeEnabled
         })
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('The search failed', err)
+        logger.error('The search failed', err)
         page = { files: [], cursor: null }
       }
+      const results = page ? null : await searchLocally(value)
+      if (latestTerm.current !== value) return
 
       setQuery(value)
       if (page) {
@@ -83,7 +89,6 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
         setStackCursor(page.cursor)
         setSuggestions(page.files.map(toSuggestion))
       } else {
-        const results = await searchLocally(value)
         setStackCursor(null)
         setAllSuggestions(results)
         setSuggestions(results.slice(0, limit))
@@ -117,13 +122,14 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
         cursor: stackCursor,
         officeEnabled
       })
+      if (latestTerm.current !== query) return
+      // null: the stack can no longer search, so there is no next page
+      setStackCursor(page?.cursor ?? null)
       if (page) {
-        setStackCursor(page.cursor)
-        setSuggestions([...suggestions, ...page.files.map(toSuggestion)])
+        setSuggestions(prev => [...prev, ...page.files.map(toSuggestion)])
       }
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('The search failed', err)
+      logger.error('The search failed', err)
     }
   }
 
