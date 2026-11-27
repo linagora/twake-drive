@@ -106,6 +106,7 @@
     "more": "Więcej"
   },
   "toolbar": {
+    "menu_upload_folder": "Prześlij folder",
     "menu_create_excalidraw": "Excalidraw",
     "item_more": "Więcej",
     "menu_select": "Wybierz elementy",
@@ -235,6 +236,11 @@
   "Viewer": {
     "loading": {
       "retry": "Spróbuj ponownie"
+    }
+  },
+  "upload": {
+    "alert": {
+      "no_files": "Ten folder nie zawiera plików, więc nic nie zostało przesłane."
     }
   },
   "FilePicker": {

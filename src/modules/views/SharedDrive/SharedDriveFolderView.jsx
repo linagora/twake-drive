@@ -77,6 +77,16 @@ function SharedDriveFolderActions({
             displayedFolder={displayedFolder}
             label={t('upload.label')}
           />
+          <UploadButton
+            isDirectory
+            className="u-mr-half"
+            variant="secondary"
+            disabled={!canWrite}
+            folderId={folderId}
+            driveId={driveId}
+            displayedFolder={displayedFolder}
+            label={t('toolbar.menu_upload_folder')}
+          />
           <AddMenuProvider
             canCreateFolder={true}
             canUpload={true}

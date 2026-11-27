@@ -79,7 +79,6 @@ const FolderViewBody = ({
         currentFolderId={currentFolderId}
         displayedFolder={displayedFolder}
         canUpload={canUpload}
-        driveId={driveId}
         refreshFolderContent={refreshFolderContent}
       />
     )

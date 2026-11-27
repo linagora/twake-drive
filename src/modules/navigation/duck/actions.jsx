@@ -105,6 +105,10 @@ export const uploadFiles =
 
     // Extract entries synchronously before browser clears dataTransfer
     const entries = extractFilesEntries(files)
+    if (entries.length === 0) {
+      showAlert({ message: t('upload.alert.no_files'), severity: 'info' })
+      return
+    }
     const openedUploadConflictBatchIds = new Set()
 
     const enqueueUpload = preflightConflictStrategy => {

@@ -5,6 +5,8 @@ import { MemoryRouter } from 'react-router-dom'
 import { EmptyDrive, EmptyTrash } from './Empty'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
+import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 
 jest.mock('@linagora/twake-icons', () => ({
   Icon: ({ icon, size }) => (
@@ -35,15 +37,32 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   default: () => ({ isDesktop: true })
 }))
 jest.mock('twake-i18n', () => ({ useI18n: () => ({ t: key => key }) }))
+let mockFolderId = 'folder-id'
+let mockDisplayedFolder = { id: 'folder-id' }
 jest.mock('@/hooks', () => ({
-  useCurrentFolderId: () => 'folder-id',
-  useDisplayedFolder: () => ({ displayedFolder: null })
+  useCurrentFolderId: () => mockFolderId,
+  useDisplayedFolder: () => ({ displayedFolder: mockDisplayedFolder })
 }))
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
-  useSharedDriveFolder: () => ({ sharedDriveResult: null })
+  useSharedDriveFolder: jest.fn(() => ({ sharedDriveResult: null }))
 }))
+jest.mock('@/hooks/useCurrentFolderWriteAccess', () => jest.fn())
 jest.mock('@/modules/upload/UploadButton', () => ({
-  UploadButton: () => null
+  UploadButton: ({
+    isDirectory,
+    disabled,
+    folderId,
+    driveId,
+    displayedFolder
+  }) =>
+    isDirectory && disabled ? null : (
+      <span
+        data-testid={isDirectory ? 'upload-folder' : 'upload-file'}
+        data-folder-id={String(folderId)}
+        data-drive-id={String(driveId)}
+        data-displayed-folder-id={String(displayedFolder?.id)}
+      />
+    )
 }))
 
 const renderAt = (pathname, ui) =>
@@ -57,6 +76,75 @@ const getIllustration = () => screen.getByTestId('illustration')
 const getContainer = () => getIllustration().parentElement
 
 describe('Empty', () => {
+  beforeEach(() => {
+    useCurrentFolderWriteAccess.mockReturnValue(true)
+    mockFolderId = 'folder-id'
+    mockDisplayedFolder = { id: 'folder-id' }
+  })
+
+  it('offers the folder upload with write access', () => {
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBeInTheDocument()
+  })
+
+  it('does not offer the folder upload in a view without a current folder', () => {
+    mockFolderId = null
+    renderAt('/nextcloud/account', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it('keeps the file upload on the root document in a view without a current folder', () => {
+    mockFolderId = null
+    renderAt('/nextcloud/account', <EmptyDrive />)
+
+    expect(screen.getByTestId('upload-file')).toHaveAttribute(
+      'data-folder-id',
+      'undefined'
+    )
+  })
+
+  it('does not offer the folder upload in a read-only folder', () => {
+    useCurrentFolderWriteAccess.mockReturnValue(false)
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it.each(['upload-file', 'upload-folder'])(
+    'targets %s at the displayed folder document',
+    testId => {
+      mockDisplayedFolder = { id: 'folder-id', driveId: 'drive-id' }
+      renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
+      const button = screen.getByTestId(testId)
+
+      expect(button).toHaveAttribute('data-displayed-folder-id', 'folder-id')
+      expect(button).toHaveAttribute('data-folder-id', 'undefined')
+      expect(button).toHaveAttribute('data-drive-id', 'undefined')
+    }
+  )
+
+  it('does not offer the folder upload before the folder document loads', () => {
+    mockDisplayedFolder = null
+    renderAt('/folder/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-folder')).toBe(null)
+  })
+
+  it('does not offer the file upload before the folder document loads', () => {
+    mockDisplayedFolder = null
+    renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
+
+    expect(screen.queryByTestId('upload-file')).toBe(null)
+  })
+
+  it('leaves the shared drive folder fetch to the folder view', () => {
+    renderAt('/sharings/drive-id/folder-id', <EmptyDrive />)
+
+    expect(useSharedDriveFolder).not.toHaveBeenCalled()
+  })
+
   it('shows the folder illustration at 160 px in a 10 rem container in Drive', () => {
     renderAt('/folder/folder-id', <EmptyDrive />)
 
