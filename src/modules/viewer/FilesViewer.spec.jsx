@@ -52,11 +52,14 @@ describe('FilesViewer', () => {
     totalCount,
     client = new CozyClient({}),
     useQueryResultAttributes,
-    viewerProps
+    viewerProps,
+    files
   } = {}) => {
-    const filesFixture = Array(nbFiles)
-      .fill(null)
-      .map((x, i) => generateFile({ i, type: 'file' }))
+    const filesFixture =
+      files ??
+      Array(nbFiles)
+        .fill(null)
+        .map((x, i) => generateFile({ i, type: 'file' }))
     const mockedUseQueryReturnedValues = {
       data: filesFixture,
       count: totalCount || filesFixture.length,
@@ -220,6 +223,22 @@ describe('FilesViewer', () => {
     const { componentsProps } = mockViewer.mock.calls[0][0]
     expect(componentsProps.PdfViewer.isPdfEditorEnabled).toBe(false)
     expect(componentsProps.OnlyOfficeViewer.isEnabled).toBe(true)
+  })
+
+  it('never offers OnlyOffice for a note, even without its mime', async () => {
+    isOfficeEnabled.mockReturnValue(true)
+    const note = {
+      ...generateFile({ i: 0, type: 'file' }),
+      class: 'text',
+      mime: undefined,
+      name: 'Journal.cozy-note'
+    }
+
+    setup({ files: [note], fileId: note._id })
+
+    await screen.findByText('Viewer')
+    const { componentsProps } = mockViewer.mock.calls[0][0]
+    expect(componentsProps.OnlyOfficeViewer.isEnabled).toBe(false)
   })
 
   it('enables OnlyOffice as PDF editor when PDF editing flag is explicitly on', async () => {

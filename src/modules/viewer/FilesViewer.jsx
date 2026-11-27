@@ -27,6 +27,7 @@ import MoreMenu from '@/modules/viewer/MoreMenu'
 import { resolveShouldHideSharingActions } from '@/modules/viewer/shouldHideSharingActions'
 import {
   canOpenPdfWithOnlyOffice,
+  canViewWithOnlyOffice,
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
@@ -40,6 +41,12 @@ import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
  * - If the file to show is not present in the query results, will call
  *   fetchMore() on the query
  */
+const makeOnlyOfficeViewerProps = (file, isDesktop, navigate) => ({
+  isEnabled: canViewWithOnlyOffice(file, isOfficeEnabled(isDesktop)),
+  opener: doc =>
+    navigate(makeOnlyOfficeFileRoute(doc.id, { driveId: doc.driveId }))
+})
+
 const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   const [currentFile, setCurrentFile] = useState(null)
   const [fetchingMore, setFetchingMore] = useState(false)
@@ -180,13 +187,11 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
           onCloseRequest={handleOnClose}
           renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
           componentsProps={{
-            OnlyOfficeViewer: {
-              isEnabled: isOfficeEnabled(isDesktop),
-              opener: file =>
-                navigate(
-                  makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })
-                )
-            },
+            OnlyOfficeViewer: makeOnlyOfficeViewerProps(
+              viewerFiles[viewerIndex],
+              isDesktop,
+              navigate
+            ),
             PdfViewer: {
               isPdfEditorEnabled:
                 canEditPdfWithOnlyOffice || isPdfEditorEnabled(),

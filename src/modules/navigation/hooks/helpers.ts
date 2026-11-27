@@ -3,7 +3,6 @@ import {
   isShortcut,
   isNote,
   isDocs,
-  shouldBeOpenedByOnlyOffice,
   isDirectory
 } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
@@ -38,7 +37,8 @@ import {
 } from '@/modules/views/Excalidraw/helpers'
 import {
   canOpenPdfWithOnlyOffice,
-  makeOnlyOfficeFileRoute
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
 } from '@/modules/views/OnlyOffice/helpers'
 import { isPdf } from '@/modules/views/Pdf/helpers'
 import {
@@ -53,6 +53,7 @@ interface ComputeFileTypeOptions {
   isExcalidrawEnabled?: boolean
   isPublic?: boolean
   cozyUrl?: string
+  isNotesInstalled?: boolean
 }
 
 interface ComputePathOptions {
@@ -69,7 +70,8 @@ export const computeFileType = (
     isOfficeEnabled = false,
     isExcalidrawEnabled = false,
     isPublic = false,
-    cozyUrl = ''
+    cozyUrl = '',
+    isNotesInstalled = true
   }: ComputeFileTypeOptions = {}
 ): string => {
   if (isUnreadableRecent(file)) {
@@ -82,7 +84,7 @@ export const computeFileType = (
     return 'shared-drive'
   } else if (file._type === 'io.cozy.remote.nextcloud.files') {
     return isDirectory(file) ? 'nextcloud-directory' : 'nextcloud-file'
-  } else if (isNote(file)) {
+  } else if (isNote(file) && isNotesInstalled) {
     // createdOn url ends with a trailing slash whereas cozyUrl does not joinPath fixes this
     const isSameInstance =
       joinPath(cozyUrl, '') === file.cozyMetadata?.createdOn
@@ -115,7 +117,7 @@ export const computeFileType = (
     // explicitly to avoid the `no-unsafe-assignment` lint on the access below.
     const targetClass: unknown = file.metadata?.target?.['class']
     const targetMime: unknown = file.metadata?.target?.['mime']
-    const isOfficeTarget = shouldBeOpenedByOnlyOffice({
+    const isOfficeTarget = shouldOpenWithOnlyOffice({
       ...file,
       class: targetClass as string,
       mime: targetMime as string
@@ -129,7 +131,7 @@ export const computeFileType = (
     return 'shared-drive-root-file'
   } else if (isPdf(file) && canOpenPdfWithOnlyOffice(isOfficeEnabled)) {
     return 'onlyoffice'
-  } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
+  } else if (shouldOpenWithOnlyOffice(file) && isOfficeEnabled) {
     // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
     // an Office file shared as a drive root routes through OnlyOffice (its own
     // viewer) rather than the generic shared-drive-root-file viewer. See the

@@ -77,9 +77,20 @@ export const isOfficeEditingEnabled = isDesktop => {
 export const canOpenPdfWithOnlyOffice = (officeEnabled = false) =>
   officeEnabled && flag('drive.onlyoffice.pdf-editing.enabled') === true
 
+// Unlike cozy-client's isNote, this does not need the note metadata, so a
+// note missing it is still kept away from OnlyOffice.
+export const isNoteFile = file =>
+  !!file?.name?.endsWith('.cozy-note') ||
+  file?.mime === 'text/vnd.cozy.note+markdown'
+
+// cozy-viewer would offer OnlyOffice for a note without a mime.
+export const canViewWithOnlyOffice = (file, officeEnabled) =>
+  officeEnabled && !isNoteFile(file)
+
 export const shouldOpenWithOnlyOffice = (file, officeEnabled = false) =>
-  shouldBeOpenedByOnlyOffice(file) ||
-  (canOpenPdfWithOnlyOffice(officeEnabled) && isPdf(file))
+  !isNoteFile(file) &&
+  (shouldBeOpenedByOnlyOffice(file) ||
+    (canOpenPdfWithOnlyOffice(officeEnabled) && isPdf(file)))
 
 /**
  * @typedef {Object} OnlyOfficeFileRouteOptions

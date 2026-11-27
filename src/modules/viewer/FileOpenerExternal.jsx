@@ -24,6 +24,7 @@ import { translate, useI18n } from 'twake-i18n'
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import Fallback from '@/modules/viewer/Fallback'
 import {
+  canViewWithOnlyOffice,
   isOfficeEnabled,
   makeOnlyOfficeFileRoute,
   shouldOpenWithOnlyOffice
@@ -119,7 +120,7 @@ const FileOpener = props => {
             renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
             componentsProps={{
               OnlyOfficeViewer: {
-                isEnabled: officeEnabled,
+                isEnabled: canViewWithOnlyOffice(file, officeEnabled),
                 opener: file =>
                   navigate(
                     makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })

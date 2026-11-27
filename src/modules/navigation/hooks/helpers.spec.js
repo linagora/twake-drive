@@ -386,6 +386,39 @@ describe('computeFileType', () => {
     ).toBe('public-note')
   })
 
+  it('should return "file" for a note without its metadata, even with Office enabled', () => {
+    const file = {
+      _type: 'io.cozy.files',
+      name: 'My journal.cozy-note',
+      type: 'file',
+      class: 'text'
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('file')
+  })
+
+  it.each([false, true])(
+    'should return "file" for a note when Notes is not installed (public: %s)',
+    isPublic => {
+      const file = {
+        _type: 'io.cozy.files',
+        name: 'My journal.cozy-note',
+        type: 'file',
+        class: 'text',
+        mime: 'text/vnd.cozy.note+markdown',
+        metadata: { title: '', version: '0' },
+        cozyMetadata: { createdOn: 'https://example.com/' }
+      }
+      expect(
+        computeFileType(file, {
+          isOfficeEnabled: true,
+          isPublic,
+          cozyUrl: 'https://example.com',
+          isNotesInstalled: false
+        })
+      ).toBe('file')
+    }
+  )
+
   it('should return "onlyoffice" for files opened by OnlyOffice when Office is enabled', () => {
     const file = {
       _type: 'io.cozy.files',

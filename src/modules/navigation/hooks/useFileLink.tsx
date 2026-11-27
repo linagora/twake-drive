@@ -7,6 +7,7 @@ import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import type { File } from '@/components/FolderPicker/types'
+import { useIsNotesInstalled } from '@/hooks/useIsNotesInstalled'
 import { joinPath } from '@/lib/path'
 import {
   computeFileType,
@@ -88,6 +89,7 @@ const useFileLink = (
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
   const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
+  const isNotesInstalled = useIsNotesInstalled()
   const sharingContext = useSharingContext() as
     SharingContextForFileLink | undefined
   const isSharingsOwner = computeIsSharingsOwner({
@@ -104,7 +106,9 @@ const useFileLink = (
     isOfficeEnabled,
     isExcalidrawEnabled,
     isPublic,
-    cozyUrl
+    cozyUrl,
+    // Until the stack has answered, Notes counts as missing.
+    isNotesInstalled: isNotesInstalled === true
   })
   const app = computeApp(type)
   const path = computePath(file, {

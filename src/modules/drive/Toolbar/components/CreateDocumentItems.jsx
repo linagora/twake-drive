@@ -8,6 +8,7 @@ import CreateExcalidrawItem from '@/modules/drive/Toolbar/components/CreateExcal
 import CreateGristItem from '@/modules/drive/Toolbar/components/CreateGristItem'
 import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
 import CreateOnlyOfficeItem from '@/modules/drive/Toolbar/components/CreateOnlyOfficeItem'
+import PublicCreateNoteItem from '@/modules/drive/Toolbar/components/PublicCreateNoteItem'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 // The "create a document" entries of the add menu (note, docs, excalidraw,
@@ -23,6 +24,12 @@ const CreateDocumentItems = ({
 
   return (
     <>
+      {isPublic && canUpload && (
+        <PublicCreateNoteItem
+          displayedFolder={displayedFolder}
+          onClick={onClick}
+        />
+      )}
       {!isPublic && (
         <CreateNoteItem
           displayedFolder={displayedFolder}
