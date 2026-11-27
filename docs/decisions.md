@@ -129,3 +129,10 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: doubleface, in an agent session on 2026-11-27, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#discussion_r4677630993).
 - Why: make Drive-specific review criteria available without duplicating shared guidelines or loading review-only rules for unrelated tasks.
 - Scope: Twake Drive web code reviews.
+
+## 2026-11-27, [Tech] Define module exports and direct imports
+
+- Decision: Drive uses default exports for components, separate default-exported files for styled sub-components, named arrow exports for helpers and hooks, and direct imports instead of sibling-only barrels.
+- Decided by: doubleface, in an agent session on 2026-11-27, accepting [JF-Cozy's review suggestion](https://github.com/linagora/twake-drive/pull/4505#pullrequestreview-6036439527).
+- Why: make the Drive convention explicit so reviews do not request the opposite based on the shared guidelines.
+- Scope: changed Twake Drive web code and its code reviews, not a repository-wide rewrite.

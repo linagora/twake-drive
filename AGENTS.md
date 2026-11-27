@@ -61,8 +61,15 @@ solves the same problem, and vice versa.
   `normalize`, `save`, `ensure`, `...AndForget`.
 - Imports in three groups: external libs, then `cozy-*` / `twake-*`, then
   local files and styles.
-- Functional components, named exports. `React.memo`, `useMemo` and
-  `useCallback` only when there is a measured or structural need.
+- Use functional components. Components use `export default` and are imported
+  without braces. Put styled sub-components in their own default-exported files.
+- Helpers and hooks keep named exports and use arrow declarations
+  (`export const fn = (args) => {}`), not `function` declarations. Use `<T,>` to
+  disambiguate a single type parameter in a generic arrow in `.tsx`.
+- Do not add barrel files that only re-export siblings. Import each symbol from
+  its defining file.
+- Use `React.memo`, `useMemo` and `useCallback` only when there is a measured or
+  structural need.
 - Use comments only for public API JSDoc or to explain a constraint that remains
   unclear even with good naming. Put the rationale for a change in the commit
   message, not in the code.
