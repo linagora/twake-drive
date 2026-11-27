@@ -25,7 +25,20 @@ export const DeleteVersionConfirm = ({ file, version, onClose }) => {
     try {
       setBusy(true)
       await destroyFileVersion({ client, driveId: file.driveId, version })
-      client.resetQuery(buildFileVersionsQuery(file._id).options.as)
+      if (file.driveId) {
+        // A member gets no realtime event for drive files and the history
+        // query is cached, so the store is updated rather than refetched.
+        client.dispatch(
+          file.old_versions.updateRelationshipData(relationship => ({
+            ...relationship,
+            data: (relationship?.data ?? []).filter(
+              ref => ref._id !== version._id
+            )
+          }))
+        )
+      } else {
+        client.resetQuery(buildFileVersionsQuery(file._id).options.as)
+      }
       // Only on success: a failed deletion leaves the dialog open so the user
       // can retry without reopening it from the version list.
       onClose()
