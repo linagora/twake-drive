@@ -78,12 +78,12 @@ rules are not a request for repository-wide rewrites or changes to external APIs
   `const toMember = x => makeMember(x, { t })`). Instead:
 
   ```js
-  const matchingContacts = contacts.filter(isMatchingContact);
+  const matchingContacts = contacts.filter(isMatchingContact)
   return makeMembersFromContacts({
     contacts: matchingContacts,
     t,
-    instanceUri,
-  });
+    instanceUri
+  })
   ```
 
   Prefer a plural helper taking the collection and its context explicitly.
