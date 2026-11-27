@@ -73,3 +73,7 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Crash-- (CTO), 2026-11-26
 - Why: Twake Mail and Twake Calendar open the MOVE intent to organize a file they just saved, where the mockups say "Save to".
 - Scope: the MOVE intent (`docs/move-intent.md`).
+
+## 2026-11-27, [UX] Keep sharing confirmations for cross-drive moves
+
+The Move dialog, MOVE intent, and cut-and-paste use the source and destination drive IDs to decide whether a move crosses drives. A matching folder path can suppress the sharing warning only within My Drive. Two different shared drives can both contain a folder named `/Team`. [Decision by shepilov](https://github.com/linagora/cozy-stack/pull/5342#issuecomment-7220425626)

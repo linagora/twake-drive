@@ -22,6 +22,38 @@ function isSameOrDescendantPath(candidatePath, ancestorPath) {
   )
 }
 
+export function getMoveWarningType(
+  entries,
+  sourceDriveId,
+  targetFolder,
+  sharingContext
+) {
+  const { getSharedParentPath, hasSharedParent, byDocId } = sharingContext
+  if (targetFolder.driveId && targetFolder.driveId === sourceDriveId)
+    return null
+
+  const sourcePath = entries[0].path
+  if (!targetFolder.driveId) {
+    const targetPath = joinPath(targetFolder.path, entries[0].name)
+    const sharedParentPath =
+      !sourceDriveId && sourcePath && getSharedParentPath(sourcePath)
+    if (
+      sharedParentPath &&
+      targetPath.startsWith(joinPath(sharedParentPath, ''))
+    )
+      return null
+    if (!hasSharedParent(targetPath)) {
+      return sourceDriveId || hasSharedParent(sourcePath || '')
+        ? 'moveOutside'
+        : null
+    }
+  }
+
+  return hasOneOfEntriesShared(entries, byDocId)
+    ? 'moveSharedInside'
+    : 'moveInside'
+}
+
 export function isDirectoryItem(item) {
   return Boolean(item) && models.file.isDirectory(item)
 }

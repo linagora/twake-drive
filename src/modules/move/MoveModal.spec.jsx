@@ -171,6 +171,7 @@ describe('MoveModal component', () => {
     mockClient.resetQuery = jest.fn()
     delete defaultTargetFolder.driveId
     delete defaultTargetFolder.cozyMetadata
+    defaultTargetFolder.path = '/Destination Folder'
     moveRelateToSharedDrive.mockReset()
     moveRelateToSharedDrive.mockResolvedValue({ deleted: null, moved: true })
   })
@@ -535,6 +536,27 @@ describe('MoveModal component', () => {
   })
 
   describe('move inside shared folder', () => {
+    it.each(['/bills/Inbox', '/Owner/bills/Inbox'])(
+      'asks before moving from a locally shared folder into another drive at %s',
+      async targetPath => {
+        defaultTargetFolder.driveId = 'other-drive'
+        defaultTargetFolder.path = targetPath
+        setup({
+          entries: defaultEntries.slice(0, 1),
+          sharedPaths: ['/bills'],
+          getSharedParentPath: path =>
+            path.startsWith('/bills/') ? '/bills' : null
+        })
+
+        fireEvent.click(await screen.findByText('Move'))
+
+        expect(
+          await screen.findByText('Move to a shared folder?')
+        ).toBeInTheDocument()
+        expect(moveRelateToSharedDrive).not.toHaveBeenCalled()
+      }
+    )
+
     it('should display an alert when moving files inside a shared folder', async () => {
       setup({
         sharedPaths: ['/Destination Folder'],

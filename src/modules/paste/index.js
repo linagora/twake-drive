@@ -10,8 +10,7 @@ import { resolveNameConflictsForCut } from './utils'
 import { ROOT_DIR_ID, NEXTCLOUD_FILE_ID } from '@/constants/config'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
-import { joinPath } from '@/lib/path'
-import { hasOneOfEntriesShared } from '@/modules/move/helpers'
+import { getMoveWarningType } from '@/modules/move/helpers'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { buildSharedDriveIdQuery } from '@/queries'
 
@@ -273,40 +272,6 @@ const createMoveWithConfirmation = (
 }
 
 /**
- * Determines the sharing context for a file and target folder.
- *
- * @param {import('@/components/FolderPicker/types').File} file - File to analyze
- * @param {import('@/components/FolderPicker/types').File} targetFolder - Target folder
- * @param {Object} sharingContext - Sharing context with helper functions
- * @returns {Object} Sharing analysis result
- */
-const analyzeSharingContext = (file, targetFolder, sharingContext) => {
-  const { getSharedParentPath, hasSharedParent, byDocId } = sharingContext
-
-  const sharedParentPath = file.path ? getSharedParentPath(file.path) : ''
-  const targetPath = joinPath(targetFolder.path, file.name)
-
-  const areMovedFilesShared = hasOneOfEntriesShared([file], byDocId)
-  const isOriginParentShared =
-    hasSharedParent(file.path || '') || !!file.driveId
-  const isTargetShared =
-    hasSharedParent(targetPath || '') ||
-    (!!targetFolder.driveId && targetFolder.driveId !== file.driveId)
-  const isInsideSameSharedFolder =
-    (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
-    (!!file.driveId &&
-      !!targetFolder.driveId &&
-      file.driveId === targetFolder.driveId)
-
-  return {
-    areMovedFilesShared,
-    isOriginParentShared,
-    isTargetShared,
-    isInsideSameSharedFolder
-  }
-}
-
-/**
  * Handles sharing validation and shows appropriate modals if needed.
  *
  * @param {import('@/components/FolderPicker/types').File} file - File to move
@@ -335,46 +300,16 @@ const handleSharingValidation = async (
   if (!needsSharingValidation) return null
 
   try {
-    const sharingAnalysis = analyzeSharingContext(
-      file,
+    const type = getMoveWarningType(
+      [file],
+      file.driveId,
       targetFolder,
       sharingContext
     )
-    const {
-      areMovedFilesShared,
-      isOriginParentShared,
-      isTargetShared,
-      isInsideSameSharedFolder
-    } = sharingAnalysis
-
-    if (isInsideSameSharedFolder) return null
-
-    if (isOriginParentShared && !isTargetShared) {
+    if (type) {
       return createMoveWithConfirmation(
         showMoveValidationModal,
-        'moveOutside',
-        file,
-        targetFolder,
-        client,
-        sourceDirectory
-      )
-    }
-
-    if (!areMovedFilesShared && isTargetShared) {
-      return createMoveWithConfirmation(
-        showMoveValidationModal,
-        'moveInside',
-        file,
-        targetFolder,
-        client,
-        sourceDirectory
-      )
-    }
-
-    if (areMovedFilesShared && isTargetShared) {
-      return createMoveWithConfirmation(
-        showMoveValidationModal,
-        'moveSharedInside',
+        type,
         file,
         targetFolder,
         client,
