@@ -140,7 +140,7 @@ export const resetStackSearchAvailability = () => {
  */
 export const makeNormalizedStackHit = (file, officeEnabled = false) => {
   const isDir = file.type === TYPE_DIRECTORY
-  const driveId = file.drive_id
+  const driveId = file.driveId
   const folderUrl = id =>
     driveId ? `/shareddrive/${driveId}/${id}` : `/folder/${id}`
   const dirUrl = folderUrl(isDir ? file._id : file.dir_id)
@@ -166,7 +166,10 @@ export const makeNormalizedStackHit = (file, officeEnabled = false) => {
     name: file.name,
     mime: file.mime,
     class: file.class,
-    path: file.path,
+    // Like the local index: the path of a folder, the folder of a file
+    path: isDir
+      ? file.path
+      : file.path.slice(0, file.path.lastIndexOf('/')) || '/',
     url,
     parentUrl: isDir ? dirUrl : folderUrl(file.dir_id),
     openOn

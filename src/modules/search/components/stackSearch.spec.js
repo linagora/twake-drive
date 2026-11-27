@@ -20,7 +20,7 @@ describe('makeNormalizedStackHit', () => {
         name: 'a.txt',
         mime: 'text/plain',
         dir_id: 'd1',
-        path: '/Documents'
+        path: '/Documents/a.txt'
       })
     ).toEqual({
       id: 'f1',
@@ -41,19 +41,23 @@ describe('makeNormalizedStackHit', () => {
       type: 'file',
       name: 'a.txt',
       dir_id: 'd1',
-      drive_id: 's1'
+      path: '/Team/a.txt',
+      driveId: 's1'
     })
     expect(file.url).toBe('/shareddrive/s1/d1/file/f1')
     expect(file.parentUrl).toBe('/shareddrive/s1/d1')
+    expect(file.path).toBe('/Team')
 
     const dir = makeNormalizedStackHit({
       _id: 'd2',
       type: 'directory',
       name: 'Specs',
       dir_id: 'd1',
-      drive_id: 's1'
+      path: '/Team/Specs',
+      driveId: 's1'
     })
     expect(dir.url).toBe('/shareddrive/s1/d2')
+    expect(dir.path).toBe('/Team/Specs')
   })
 
   it('routes the shortcuts and the own notes like the local index', () => {
@@ -61,19 +65,26 @@ describe('makeNormalizedStackHit', () => {
       _id: 'f1',
       type: 'file',
       class: 'shortcut',
-      dir_id: 'd1'
+      dir_id: 'd1',
+      path: '/a.url'
     }
     expect(makeNormalizedStackHit(shortcut).url).toBe('/external/f1')
-    expect(makeNormalizedStackHit({ ...shortcut, drive_id: 's1' }).url).toBe(
+    expect(makeNormalizedStackHit({ ...shortcut, driveId: 's1' }).url).toBe(
       '/external/s1/f1'
     )
 
-    const note = { _id: 'f2', type: 'file', name: 'a.cozy-note', dir_id: 'd1' }
+    const note = {
+      _id: 'f2',
+      type: 'file',
+      name: 'a.cozy-note',
+      dir_id: 'd1',
+      path: '/a.cozy-note'
+    }
     expect(makeNormalizedStackHit(note)).toMatchObject({
       url: '/n/f2',
       openOn: 'notes'
     })
-    expect(makeNormalizedStackHit({ ...note, drive_id: 's1' }).url).toBe(
+    expect(makeNormalizedStackHit({ ...note, driveId: 's1' }).url).toBe(
       '/shareddrive/s1/d1/file/f2'
     )
   })
@@ -81,7 +92,13 @@ describe('makeNormalizedStackHit', () => {
   it('routes the OnlyOffice files to the editor', () => {
     models.file.shouldBeOpenedByOnlyOffice.mockReturnValueOnce(true)
     const file = makeNormalizedStackHit(
-      { _id: 'f1', type: 'file', name: 'a.docx', dir_id: 'd1' },
+      {
+        _id: 'f1',
+        type: 'file',
+        name: 'a.docx',
+        dir_id: 'd1',
+        path: '/a.docx'
+      },
       true
     )
     expect(file.url).toContain('/onlyoffice/f1')
@@ -95,7 +112,9 @@ describe('searchFilesOnStack', () => {
 
   it('returns a page of normalized files', async () => {
     const search = jest.fn().mockResolvedValue({
-      data: [{ _id: 'f1', type: 'file', name: 'a.txt', dir_id: 'd1' }],
+      data: [
+        { _id: 'f1', type: 'file', name: 'a.txt', dir_id: 'd1', path: '/a.txt' }
+      ],
       cursor: 'next'
     })
     const page = await searchFilesOnStack(makeClient(search), 'a', {
