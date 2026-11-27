@@ -15,6 +15,13 @@ jest.mock('./Upload', () => ({
     <div data-testid="upload-service">{service.getData().name}</div>
   )
 }))
+jest.mock('./Lookup', () => ({
+  Lookup: ({ service }) => (
+    <div data-testid="lookup-service">
+      {service.getData().references.length}
+    </div>
+  )
+}))
 
 const mockClient = { query: jest.fn() }
 const mockCreateService = jest.fn()
@@ -213,6 +220,23 @@ describe('IntentHandler', () => {
     const { queryByTestId } = render(<IntentHandler intentId="upload-id" />)
     await waitFor(() =>
       expect(queryByTestId('upload-service')).toHaveTextContent('upload.bin')
+    )
+    expect(queryByTestId('picker')).toBe(null)
+    expect(buildContentFolderQuery).not.toHaveBeenCalled()
+  })
+
+  it('routes LOOKUP to its service component without picker initialization', async () => {
+    const intent = { attributes: { action: 'LOOKUP', type: 'io.cozy.files' } }
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue({
+      getIntent: () => intent,
+      getData: () => ({
+        references: [{ type: 'io.cozy.mails.attachments', id: 'a1:e1:b1' }]
+      })
+    })
+    const { queryByTestId } = render(<IntentHandler intentId="lookup-id" />)
+    await waitFor(() =>
+      expect(queryByTestId('lookup-service')).toHaveTextContent('1')
     )
     expect(queryByTestId('picker')).toBe(null)
     expect(buildContentFolderQuery).not.toHaveBeenCalled()

@@ -57,7 +57,7 @@ Add `reference` to record where the file comes from, so that the calling app fin
 }
 ```
 
-- Drive adds it to the `referenced_by` of the stored file. The app lists the files of a reference with `GET /data/:type/:id/relationships/references` (`include=files` gives their documents, `trashed` included), with a `GET` permission on `type` only.
+- Drive adds it to the `referenced_by` of the stored file. The app finds the files of its references again with the [Lookup intent](lookup-intent.md), without any permission on the files.
 - `type` must be `io.cozy.mails.attachments` (an attachment of an email: `<accountId>:<emailId>:<blobId>`). Other doctypes are refused, so that an app cannot put a file in a list it does not own, such as a photo album.
 - `id` has the shape of its doctype: `<accountId>:<emailId>:<blobId>`, three nonempty parts without `:` or `/`, 256 characters at most.
 - The returned document carries the revision and the references of that write (`_rev`, `relationships.referenced_by`).

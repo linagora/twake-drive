@@ -9,6 +9,7 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
+import { Lookup } from './Lookup'
 import { MoveIntent } from './MoveIntent'
 import {
   getMoveIntentConfig,
@@ -18,6 +19,14 @@ import Picker from './Picker'
 import { Upload } from './Upload'
 import { getIntentData, getPickerNavigationConfig } from './intentConfig'
 import { initializePickerNavigation } from './pickerNavigation'
+
+// The intents served without an interface
+const BACKGROUND_SERVICES = { UPLOAD: Upload, LOOKUP: Lookup }
+
+function getBackgroundService(intent) {
+  if (intent?.attributes?.type !== 'io.cozy.files') return null
+  return BACKGROUND_SERVICES[intent.attributes.action] ?? null
+}
 
 function isFileNavigationIntent(intent) {
   return (
@@ -64,10 +73,7 @@ const IntentHandler = ({ intentId }) => {
         service = await servicePromise
         if (!isActive) return
         const intent = service.getIntent()
-        const isUploadIntent =
-          intent?.attributes?.action === 'UPLOAD' &&
-          intent?.attributes?.type === 'io.cozy.files'
-        let component = isUploadIntent ? Upload : null
+        let component = getBackgroundService(intent)
         let pickerConfig = null
         if (isFileNavigationIntent(intent)) {
           const serviceData = service.getData?.()

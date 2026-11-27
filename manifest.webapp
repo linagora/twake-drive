@@ -129,6 +129,11 @@
       "action": "UPLOAD",
       "type": ["io.cozy.files"],
       "href": "/intents"
+    },
+    {
+      "action": "LOOKUP",
+      "type": ["io.cozy.files"],
+      "href": "/intents"
     }
   ],
   "entrypoints": [
