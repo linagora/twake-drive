@@ -73,3 +73,17 @@ Categories: UX, UI, Product, Architecture, Infra, Tech.
 - Decided by: Crash-- (CTO), 2026-11-26
 - Why: Twake Mail and Twake Calendar open the MOVE intent to organize a file they just saved, where the mockups say "Save to".
 - Scope: the MOVE intent (`docs/move-intent.md`).
+
+## 2026-11-27, [Architecture] The LOOKUP intent tells an app which files it stored
+
+- Decision: Drive serves a `LOOKUP` intent on `io.cozy.files`, with no interface: it takes 1 to 100 references with the rules of the UPLOAD intent and answers, for each id, `null` or `{ fileId, name, dirId, trashed }` of the first file that references it, out of the trash first. Nothing else about the file is given.
+- Decided by: Crash-- (CTO), 2026-11-27
+- Why: Twake Mail (web and Flutter) shows "See in Drive" on an attachment already saved without calling the Stack itself nor holding a permission on its references; Drive, which reads the files anyway, also says when the file is in the trash.
+- Scope: the LOOKUP intent (`docs/lookup-intent.md`); it replaces the reading of the references by the app in the UPLOAD decision of 2026-11-26.
+
+## 2026-11-27, [Security] The LOOKUP intent is open to every app
+
+- Decision: Drive answers the `LOOKUP` intent of any app, with no list of allowed origins.
+- Decided by: Crash-- (CTO), 2026-11-27
+- Why: an app learns about a file only if it knows the id of the item it comes from, and the answer goes to its own origin only; a list of origins would have to be kept per environment.
+- Scope: the LOOKUP intent.

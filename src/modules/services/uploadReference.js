@@ -22,10 +22,9 @@ function isReferenceId(type, id) {
   )
 }
 
-function isReference(reference) {
+export function isReference(reference) {
   return (
-    typeof reference === 'object' &&
-    isReferenceType(reference.type) &&
+    isReferenceType(reference?.type) &&
     isReferenceId(reference.type, reference.id)
   )
 }
