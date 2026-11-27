@@ -28,7 +28,10 @@ function isInsideSameSharedFolder({
   isPublic
 }) {
   return (
-    (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
+    (!sourceDriveId &&
+      !folder.driveId &&
+      sharedParentPath &&
+      targetPath.startsWith(joinPath(sharedParentPath, ''))) ||
     (!!folder.driveId && !!sourceDriveId && folder.driveId === sourceDriveId) ||
     isPublic
   )

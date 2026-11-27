@@ -293,7 +293,10 @@ const analyzeSharingContext = (file, targetFolder, sharingContext) => {
     hasSharedParent(targetPath || '') ||
     (!!targetFolder.driveId && targetFolder.driveId !== file.driveId)
   const isInsideSameSharedFolder =
-    (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
+    (!file.driveId &&
+      !targetFolder.driveId &&
+      sharedParentPath &&
+      targetPath.startsWith(joinPath(sharedParentPath, ''))) ||
     (!!file.driveId &&
       !!targetFolder.driveId &&
       file.driveId === targetFolder.driveId)

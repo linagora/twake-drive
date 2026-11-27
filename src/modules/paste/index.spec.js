@@ -237,6 +237,7 @@ describe('handlePasteOperation', () => {
         _id: 'shared-file',
         driveId: 'source-drive',
         name: 'shared.txt',
+        path: '/Team/shared.txt',
         type: 'file',
         cozyMetadata: { createdOn: 'https://alice.mycozy.cloud' }
       }
@@ -244,10 +245,19 @@ describe('handlePasteOperation', () => {
         _id: 'target-folder',
         driveId: 'destination-drive',
         name: 'Target Folder',
-        path: '/Target Folder',
+        path: '/Team/Inbox',
         cozyMetadata: { createdOn: 'https://charlie.mycozy.cloud' }
       }
       resolveNameConflictsForCut.mockResolvedValue([sharedFile])
+
+      mockOptions.sharingContext = {
+        byDocId: {},
+        getSharedParentPath: () => '/Team',
+        hasSharedParent: () => true
+      }
+      mockOptions.showMoveValidationModal = jest.fn(
+        (_type, _file, _target, confirm) => confirm()
+      )
 
       const result = await handlePasteOperation(
         mockClient,
@@ -258,6 +268,13 @@ describe('handlePasteOperation', () => {
         mockOptions
       )
 
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveInside',
+        sharedFile,
+        sharedTarget,
+        expect.any(Function),
+        expect.any(Function)
+      )
       expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
         mockClient,
         {
